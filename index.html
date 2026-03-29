@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Task Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+        }
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 85vh;
+            background: #0c0c0c;
+            border-radius: 28px;
+            border: 1px solid #222;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        /* Нижнее меню */
+        .nav-bar {
+            display: flex;
+            background: #0c0c0c;
+            border-top: 1px solid #222;
+            padding: 8px 16px 12px;
+            gap: 8px;
+        }
+        .nav-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            border-radius: 40px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .nav-btn.active {
+            background: #36FF00;
+            color: #000;
+        }
+        .screens-container {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+        }
+        .screens-container::-webkit-scrollbar {
+            display: none;
+        }
+        .screen {
+            flex: 0 0 100%;
+            scroll-snap-align: start;
+            padding: 16px;
+            overflow-y: auto;
+            height: 100%;
+        }
+        /* Общие элементы */
+        input, textarea, .custom-select, .select-button, button {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        input, textarea, .select-button {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+        }
+        input:focus, textarea:focus {
+            border-color: #36FF00;
+        }
+        .slider-container {
+            margin-bottom: 16px;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #ccc;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 8px 0;
+        }
+        .slider-value {
+            display: inline-block;
+            background: #36FF00;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        button {
+            background: #36FF00;
+            border: none;
+            border-radius: 60px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #000;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:disabled {
+            background: #2a2a2a;
+            color: #666;
+            cursor: not-allowed;
+        }
+        .task-card {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #333;
+        }
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .task-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .task-category {
+            font-size: 12px;
+            color: #36FF00;
+        }
+        .task-priority {
+            font-size: 12px;
+            color: #FFDD21;
+        }
+        .task-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .task-actions button {
+            flex: 1;
+            padding: 6px;
+            font-size: 12px;
+            margin-bottom: 0;
+            background: #333;
+            color: #fff;
+        }
+        .task-actions button.edit-btn {
+            background: #4069FF;
+        }
+        .edit-icon {
+            cursor: pointer;
+            font-size: 18px;
+            margin-left: 8px;
+        }
+        .microsteps {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 6px;
+            padding-left: 8px;
+            border-left: 2px solid #36FF00;
+        }
+        /* Модалки */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: #0c0c0c;
+            border: 2px solid #36FF00;
+            border-radius: 28px;
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            text-align: center;
+            color: #36FF00;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .modal-buttons button {
+            margin-bottom: 0;
+        }
+        /* Пульс */
+        .pulse-value {
+            font-size: 64px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #36FF00;
+        }
+        .recommendation-card {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 16px 0;
+            border-left: 4px solid #36FF00;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        /* GET экран */
+        .weeks-counter {
+            text-align: center;
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            background: #333;
+            border-radius: 20px;
+            height: 12px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+        .progress-fill {
+            background: #36FF00;
+            height: 100%;
+            width: 0%;
+        }
+        .connection-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .connection-card {
+            background: #0c0c0c;
+            border: 1px solid #36FF00;
+            border-radius: 28px;
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="loading-screen" id="loadingScreen">Загрузка...</div>
+<div class="connection-overlay" id="connectionOverlay">
+    <div class="connection-card">
+        <h3>Подключение к Apps Script</h3>
+        <input type="text" id="appUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+        <button id="saveConnectionBtn">Сохранить</button>
+        <div id="connectionStatus" style="margin-top: 10px; color: #aaa;"></div>
+    </div>
+</div>
+
+<div class="app-container" id="appContainer" style="display: none;">
+    <div class="screens-container" id="screensContainer">
+        <!-- ADD экран -->
+        <div class="screen" id="screenAdd">
+            <h3 style="margin-bottom: 12px;">➕ Новая задача</h3>
+            <div class="custom-select" id="categoryContainer">
+                <select id="categorySelect" style="width:100%; padding:12px; background:#1a1a1a; border-radius:16px; color:#fff;">
+                    <option value="">Выберите категорию</option>
+                </select>
+            </div>
+            <input type="text" id="taskTitle" placeholder="Название задачи">
+            <div id="microstepsContainer">
+                <input type="text" placeholder="Микрошаг 1" class="microstep">
+                <input type="text" placeholder="Микрошаг 2" class="microstep">
+                <input type="text" placeholder="Микрошаг 3" class="microstep">
+                <input type="text" placeholder="Микрошаг 4" class="microstep">
+                <input type="text" placeholder="Микрошаг 5" class="microstep">
+            </div>
+            <!-- Ползунки -->
+            <div class="slider-container"><label>Сложность (0-10)</label><input type="range" id="complexity" min="0" max="10" step="1" value="5"><span id="complexityVal" class="slider-value">5</span></div>
+            <div class="slider-container"><label>Творчество (0-10)</label><input type="range" id="creativity" min="0" max="10" step="1" value="5"><span id="creativityVal" class="slider-value">5</span></div>
+            <div class="slider-container"><label>Фокусировка (0-10)</label><input type="range" id="focus" min="0" max="10" step="1" value="5"><span id="focusVal" class="slider-value">5</span></div>
+            <div class="slider-container"><label>Стоимость (0-10)</label><input type="range" id="cost" min="0" max="10" step="1" value="0"><span id="costVal" class="slider-value">0</span></div>
+            <div class="slider-container"><label>Стресс (0-10)</label><input type="range" id="stress" min="0" max="10" step="1" value="5"><span id="stressVal" class="slider-value">5</span></div>
+            <input type="date" id="deadline" placeholder="Дедлайн (необязательно)">
+            <button id="saveTaskBtn">Сохранить задачу</button>
+            <div id="addStatus" class="status"></div>
+        </div>
+
+        <!-- DRIFT экран (список задач) -->
+        <div class="screen" id="screenDrift">
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <button id="refreshTasksBtn">Обновить</button>
+                <button id="top3Btn">Топ-3 на сегодня</button>
+            </div>
+            <div id="tasksList"></div>
+        </div>
+
+        <!-- PULSE экран -->
+        <div class="screen" id="screenPulse">
+            <h3>Ваш пульс</h3>
+            <div class="pulse-value" id="pulseValue">--</div>
+            <div class="recommendation-card" id="recommendationCard">
+                <div id="recommendationText">Загрузка...</div>
+            </div>
+            <div class="stat-row"><span>Точность прогнозов:</span><span id="accuracyStat">--</span></div>
+            <div class="stat-row"><span>Выполнено задач:</span><span id="completionStat">--</span></div>
+            <div class="stat-row"><span>Средний стресс (открытые):</span><span id="stressStat">--</span></div>
+        </div>
+
+        <!-- GET экран (4000 недель) -->
+        <div class="screen" id="screenGet">
+            <h3>⏳ 4000 недель</h3>
+            <div class="weeks-counter" id="weeksLived">--</div>
+            <div class="progress-bar"><div class="progress-fill" id="weeksProgress"></div></div>
+            <div id="weeksLeft">-- недель осталось</div>
+            <div id="financialForecast" style="margin-top: 20px;"></div>
+            <div id="tasksForecast"></div>
+        </div>
+    </div>
+    <div class="nav-bar">
+        <button class="nav-btn" data-screen="add">ADD</button>
+        <button class="nav-btn" data-screen="drift">DRIFT</button>
+        <button class="nav-btn" data-screen="pulse">PULSE</button>
+        <button class="nav-btn" data-screen="get">GET</button>
+    </div>
+</div>
+
+<!-- Модалка выполнения задачи -->
+<div class="modal" id="completeModal">
+    <div class="modal-content">
+        <div class="modal-title">Выполнение задачи</div>
+        <div id="completeTaskTitle"></div>
+        <div class="slider-container"><label>Факт. сложность</label><input type="range" id="actualComplexity" min="0" max="10" step="1" value="5"><span id="actualComplexityVal">5</span></div>
+        <div class="slider-container"><label>Факт. творчество</label><input type="range" id="actualCreativity" min="0" max="10" step="1" value="5"><span id="actualCreativityVal">5</span></div>
+        <div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal">5</span></div>
+        <div class="slider-container"><label>Факт. стоимость</label><input type="range" id="actualCost" min="0" max="10" step="1" value="0"><span id="actualCostVal">0</span></div>
+        <div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal">5</span></div>
+        <div class="modal-buttons">
+            <button id="cancelCompleteBtn">Отмена</button>
+            <button id="confirmCompleteBtn">Завершить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модалка редактирования задачи -->
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <div class="modal-title">Редактировать задачу</div>
+        <input type="text" id="editTaskId" style="display:none;">
+        <input type="text" id="editTitle" placeholder="Название">
+        <select id="editCategory" style="width:100%; padding:12px; background:#1a1a1a; border-radius:16px; color:#fff;"></select>
+        <div id="editMicrostepsContainer"></div>
+        <div class="slider-container"><label>Сложность</label><input type="range" id="editComplexity" min="0" max="10" step="1"><span id="editComplexityVal"></span></div>
+        <div class="slider-container"><label>Творчество</label><input type="range" id="editCreativity" min="0" max="10" step="1"><span id="editCreativityVal"></span></div>
+        <div class="slider-container"><label>Фокусировка</label><input type="range" id="editFocus" min="0" max="10" step="1"><span id="editFocusVal"></span></div>
+        <div class="slider-container"><label>Стоимость</label><input type="range" id="editCost" min="0" max="10" step="1"><span id="editCostVal"></span></div>
+        <div class="slider-container"><label>Стресс</label><input type="range" id="editStress" min="0" max="10" step="1"><span id="editStressVal"></span></div>
+        <input type="date" id="editDeadline">
+        <div class="modal-buttons">
+            <button id="cancelEditBtn">Отмена</button>
+            <button id="saveEditBtn">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- НАСТРОЙКИ ПОДКЛЮЧЕНИЯ ----------
+    const APP_URL_STORAGE_KEY = 'taskTracker_appUrl';
+    let cachedAppUrl = null;
+    let categoriesList = [];
+
+    function normalizeUrl(url) {
+        if (!url) return '';
+        let u = url.trim();
+        u = u.split('#')[0];
+        u = u.split('?')[0];
+        u = u.replace(/\/+$/, '');
+        return u;
+    }
+    function getAppUrl() {
+        if (cachedAppUrl) return cachedAppUrl;
+        const saved = localStorage.getItem(APP_URL_STORAGE_KEY);
+        cachedAppUrl = normalizeUrl(saved);
+        return cachedAppUrl;
+    }
+    function saveAppUrl(url) {
+        const normalized = normalizeUrl(url);
+        localStorage.setItem(APP_URL_STORAGE_KEY, normalized);
+        cachedAppUrl = normalized;
+    }
+    async function testConnection(url) {
+        const res = await fetch(`${url}?action=categories`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        return true;
+    }
+
+    // ---------- ОБЩИЕ ФУНКЦИИ ----------
+    async function apiCall(params, method = 'GET') {
+        const url = getAppUrl();
+        if (!url) throw new Error('URL не настроен');
+        let query = '';
+        if (method === 'GET') {
+            query = '?' + new URLSearchParams(params).toString();
+            const res = await fetch(url + query);
+            return await res.json();
+        } else {
+            const formData = new URLSearchParams(params);
+            const res = await fetch(url, { method: 'POST', body: formData });
+            return await res.json();
+        }
+    }
+
+    async function loadCategories() {
+        try {
+            const data = await apiCall({ action: 'categories' });
+            if (data.error) throw new Error(data.error);
+            categoriesList = data;
+            const select = document.getElementById('categorySelect');
+            select.innerHTML = '<option value="">Выберите категорию</option>';
+            categoriesList.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                select.appendChild(option);
+            });
+            // Для модалки редактирования
+            const editSelect = document.getElementById('editCategory');
+            editSelect.innerHTML = '<option value="">Выберите категорию</option>';
+            categoriesList.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                editSelect.appendChild(option);
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    // Добавление задачи
+    document.getElementById('saveTaskBtn').addEventListener('click', async () => {
+        const category = document.getElementById('categorySelect').value;
+        const title = document.getElementById('taskTitle').value;
+        if (!category || !title) { alert('Заполните категорию и название'); return; }
+        const microsteps = Array.from(document.querySelectorAll('#microstepsContainer .microstep')).map(inp => inp.value).filter(v=>v.trim());
+        const complexity = document.getElementById('complexity').value;
+        const creativity = document.getElementById('creativity').value;
+        const focus = document.getElementById('focus').value;
+        const cost = document.getElementById('cost').value;
+        const stress = document.getElementById('stress').value;
+        const deadline = document.getElementById('deadline').value;
+        const params = {
+            action: 'addTask',
+            category, title, microsteps: JSON.stringify(microsteps),
+            complexity, creativity, focus, cost, stress, deadline
+        };
+        try {
+            const res = await apiCall(params, 'POST');
+            if (res.error) throw new Error(res.error);
+            document.getElementById('addStatus').innerHTML = '✅ Задача добавлена';
+            setTimeout(() => document.getElementById('addStatus').innerHTML = '', 2000);
+            // очистка формы
+            document.getElementById('taskTitle').value = '';
+            document.querySelectorAll('#microstepsContainer .microstep').forEach(inp => inp.value = '');
+            document.getElementById('complexity').value = 5; document.getElementById('complexityVal').innerText = 5;
+            document.getElementById('creativity').value = 5; document.getElementById('creativityVal').innerText = 5;
+            document.getElementById('focus').value = 5; document.getElementById('focusVal').innerText = 5;
+            document.getElementById('cost').value = 0; document.getElementById('costVal').innerText = 0;
+            document.getElementById('stress').value = 5; document.getElementById('stressVal').innerText = 5;
+            document.getElementById('deadline').value = '';
+            loadTasks(); // обновить список
+            loadPulse();
+        } catch(e) { alert('Ошибка: '+e.message); }
+    });
+
+    // Загрузка задач для DRIFT
+    async function loadTasks() {
+        try {
+            const data = await apiCall({ action: 'tasks', status: 'open' });
+            if (data.error) throw new Error(data.error);
+            renderTasks(data);
+        } catch(e) { document.getElementById('tasksList').innerHTML = '<div>Ошибка загрузки</div>'; }
+    }
+    function renderTasks(tasks) {
+        const container = document.getElementById('tasksList');
+        if (!tasks.length) { container.innerHTML = '<div>Нет открытых задач</div>'; return; }
+        container.innerHTML = '';
+        tasks.forEach(task => {
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.innerHTML = `
+                <div class="task-header">
+                    <span class="task-title">${escapeHtml(task.title)}</span>
+                    <span class="task-priority">⭐ ${task.priority.toFixed(1)}</span>
+                </div>
+                <div class="task-category">${escapeHtml(task.category)}</div>
+                <div class="microsteps">${task.microsteps ? JSON.parse(task.microsteps).slice(0,3).join(' • ') : ''}</div>
+                <div class="task-actions">
+                    <button class="complete-btn" data-id="${task.id}">✅ Выполнить</button>
+                    <button class="edit-btn" data-id="${task.id}">✏️ Редактировать</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+        document.querySelectorAll('.complete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = btn.dataset.id;
+                const task = tasks.find(t => t.id == id);
+                openCompleteModal(task);
+            });
+        });
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = btn.dataset.id;
+                const task = tasks.find(t => t.id == id);
+                openEditModal(task);
+            });
+        });
+    }
+
+    // Топ-3
+    async function showTop3() {
+        try {
+            const data = await apiCall({ action: 'top3' });
+            if (data.error) throw new Error(data.error);
+            let html = '<h4>🔥 Топ-3 на сегодня</h4>';
+            data.forEach(task => {
+                html += `<div class="task-card"><b>${escapeHtml(task.title)}</b> (${task.category})<br>Приоритет: ${task.dynamicPriority.toFixed(1)}</div>`;
+            });
+            document.getElementById('tasksList').innerHTML = html;
+        } catch(e) { alert(e.message); }
+    }
+    document.getElementById('top3Btn').addEventListener('click', showTop3);
+    document.getElementById('refreshTasksBtn').addEventListener('click', loadTasks);
+
+    // Выполнение задачи
+    let currentCompleteTaskId = null;
+    function openCompleteModal(task) {
+        currentCompleteTaskId = task.id;
+        document.getElementById('completeTaskTitle').innerText = task.title;
+        // сброс ползунков
+        document.getElementById('actualComplexity').value = task.complexity || 5;
+        document.getElementById('actualCreativity').value = task.creativity || 5;
+        document.getElementById('actualFocus').value = task.focus || 5;
+        document.getElementById('actualCost').value = task.cost || 0;
+        document.getElementById('actualStress').value = task.stress || 5;
+        document.getElementById('actualComplexityVal').innerText = task.complexity || 5;
+        document.getElementById('actualCreativityVal').innerText = task.creativity || 5;
+        document.getElementById('actualFocusVal').innerText = task.focus || 5;
+        document.getElementById('actualCostVal').innerText = task.cost || 0;
+        document.getElementById('actualStressVal').innerText = task.stress || 5;
+        document.getElementById('completeModal').classList.add('show');
+    }
+    document.getElementById('cancelCompleteBtn').addEventListener('click', () => {
+        document.getElementById('completeModal').classList.remove('show');
+    });
+    document.getElementById('confirmCompleteBtn').addEventListener('click', async () => {
+        const params = {
+            action: 'completeTask',
+            id: currentCompleteTaskId,
+            actual_complexity: document.getElementById('actualComplexity').value,
+            actual_creativity: document.getElementById('actualCreativity').value,
+            actual_focus: document.getElementById('actualFocus').value,
+            actual_cost: document.getElementById('actualCost').value,
+            actual_stress: document.getElementById('actualStress').value
+        };
+        try {
+            const res = await apiCall(params, 'POST');
+            if (res.error) throw new Error(res.error);
+            document.getElementById('completeModal').classList.remove('show');
+            loadTasks();
+            loadPulse();
+        } catch(e) { alert('Ошибка: '+e.message); }
+    });
+
+    // Редактирование задачи
+    let currentEditId = null;
+    async function openEditModal(task) {
+        currentEditId = task.id;
+        document.getElementById('editTaskId').value = task.id;
+        document.getElementById('editTitle').value = task.title;
+        document.getElementById('editCategory').value = task.category;
+        // микрошаги
+        let microsteps = [];
+        try { microsteps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
+        const container = document.getElementById('editMicrostepsContainer');
+        container.innerHTML = '';
+        for (let i=0; i<5; i++) {
+            const inp = document.createElement('input');
+            inp.type = 'text';
+            inp.placeholder = `Микрошаг ${i+1}`;
+            inp.value = microsteps[i] || '';
+            inp.classList.add('microstep-edit');
+            container.appendChild(inp);
+        }
+        document.getElementById('editComplexity').value = task.complexity || 5;
+        document.getElementById('editCreativity').value = task.creativity || 5;
+        document.getElementById('editFocus').value = task.focus || 5;
+        document.getElementById('editCost').value = task.cost || 0;
+        document.getElementById('editStress').value = task.stress || 5;
+        document.getElementById('editDeadline').value = task.deadline ? task.deadline.split('T')[0] : '';
+        // обновить отображение значений
+        document.getElementById('editComplexityVal').innerText = task.complexity || 5;
+        document.getElementById('editCreativityVal').innerText = task.creativity || 5;
+        document.getElementById('editFocusVal').innerText = task.focus || 5;
+        document.getElementById('editCostVal').innerText = task.cost || 0;
+        document.getElementById('editStressVal').innerText = task.stress || 5;
+        document.getElementById('editModal').classList.add('show');
+    }
+    document.getElementById('cancelEditBtn').addEventListener('click', () => {
+        document.getElementById('editModal').classList.remove('show');
+    });
+    document.getElementById('saveEditBtn').addEventListener('click', async () => {
+        const microsteps = Array.from(document.querySelectorAll('#editMicrostepsContainer input')).map(inp => inp.value).filter(v=>v.trim());
+        const params = {
+            action: 'updateTask',
+            id: currentEditId,
+            title: document.getElementById('editTitle').value,
+            category: document.getElementById('editCategory').value,
+            microsteps: JSON.stringify(microsteps),
+            complexity: document.getElementById('editComplexity').value,
+            creativity: document.getElementById('editCreativity').value,
+            focus: document.getElementById('editFocus').value,
+            cost: document.getElementById('editCost').value,
+            stress: document.getElementById('editStress').value,
+            deadline: document.getElementById('editDeadline').value
+        };
+        try {
+            const res = await apiCall(params, 'POST');
+            if (res.error) throw new Error(res.error);
+            document.getElementById('editModal').classList.remove('show');
+            loadTasks();
+            loadPulse();
+        } catch(e) { alert('Ошибка: '+e.message); }
+    });
+
+    // PULSE
+    async function loadPulse() {
+        try {
+            const data = await apiCall({ action: 'stats' });
+            if (data.error) throw new Error(data.error);
+            document.getElementById('pulseValue').innerText = data.pulse;
+            document.getElementById('accuracyStat').innerText = data.accuracy + '%';
+            document.getElementById('completionStat').innerText = data.completionRate + '%';
+            document.getElementById('stressStat').innerText = data.avgOpenStress.toFixed(1);
+            if (data.recommendation) {
+                document.getElementById('recommendationText').innerHTML = `🎯 Рекомендация: выполните задачу <strong>${escapeHtml(data.recommendation.title)}</strong><br>➕ Повысит пульс на +${data.recommendation.boost}`;
+            } else {
+                document.getElementById('recommendationText').innerHTML = 'Отличная работа! Продолжайте в том же духе.';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // GET - 4000 недель
+    async function loadWeeks() {
+        try {
+            const data = await apiCall({ action: 'weeks' });
+            if (data.error) throw new Error(data.error);
+            document.getElementById('weeksLived').innerHTML = `${data.livedWeeks} / ${data.weekTarget}`;
+            const percent = (data.livedWeeks / data.weekTarget) * 100;
+            document.getElementById('weeksProgress').style.width = percent + '%';
+            document.getElementById('weeksLeft').innerHTML = `${data.remainingWeeks} недель осталось`;
+            document.getElementById('financialForecast').innerHTML = `💰 Финансовый прогноз: ${data.financialForecast}`;
+            document.getElementById('tasksForecast').innerHTML = `📋 Задач останется выполнить: ~${data.tasksForecast}`;
+        } catch(e) { console.error(e); }
+    }
+
+    // Навигация и синхронизация
+    const screensContainer = document.getElementById('screensContainer');
+    const navBtns = document.querySelectorAll('.nav-btn');
+    function switchScreen(screenId) {
+        const index = { add:0, drift:1, pulse:2, get:3 }[screenId];
+        screensContainer.scrollTo({ left: screensContainer.clientWidth * index, behavior: 'smooth' });
+        navBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.screen === screenId);
+        });
+    }
+    navBtns.forEach(btn => {
+        btn.addEventListener('click', () => switchScreen(btn.dataset.screen));
+    });
+    screensContainer.addEventListener('scroll', () => {
+        const width = screensContainer.clientWidth;
+        const scrollLeft = screensContainer.scrollLeft;
+        const activeIndex = Math.round(scrollLeft / width);
+        const screens = ['add','drift','pulse','get'];
+        navBtns.forEach((btn, i) => {
+            btn.classList.toggle('active', i === activeIndex);
+        });
+    });
+
+    // Ползунки (синхронизация значений)
+    function bindSlider(sliderId, spanId) {
+        const slider = document.getElementById(sliderId);
+        const span = document.getElementById(spanId);
+        slider.addEventListener('input', () => span.innerText = slider.value);
+    }
+    bindSlider('complexity','complexityVal');
+    bindSlider('creativity','creativityVal');
+    bindSlider('focus','focusVal');
+    bindSlider('cost','costVal');
+    bindSlider('stress','stressVal');
+    bindSlider('actualComplexity','actualComplexityVal');
+    bindSlider('actualCreativity','actualCreativityVal');
+    bindSlider('actualFocus','actualFocusVal');
+    bindSlider('actualCost','actualCostVal');
+    bindSlider('actualStress','actualStressVal');
+    bindSlider('editComplexity','editComplexityVal');
+    bindSlider('editCreativity','editCreativityVal');
+    bindSlider('editFocus','editFocusVal');
+    bindSlider('editCost','editCostVal');
+    bindSlider('editStress','editStressVal');
+
+    // Инициализация приложения
+    async function initApp() {
+        const url = getAppUrl();
+        if (!url) {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('connectionOverlay').style.display = 'flex';
+            return;
+        }
+        try {
+            await testConnection(url);
+            document.getElementById('connectionOverlay').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'flex';
+            document.getElementById('loadingScreen').classList.add('hidden');
+            await loadCategories();
+            await loadTasks();
+            await loadPulse();
+            await loadWeeks();
+        } catch(e) {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('connectionOverlay').style.display = 'flex';
+            document.getElementById('connectionStatus').innerText = 'Ошибка подключения: ' + e.message;
+        }
+    }
+
+    document.getElementById('saveConnectionBtn').addEventListener('click', async () => {
+        const url = document.getElementById('appUrlInput').value;
+        try {
+            await testConnection(url);
+            saveAppUrl(url);
+            document.getElementById('connectionOverlay').style.display = 'none';
+            initApp();
+        } catch(e) {
+            document.getElementById('connectionStatus').innerText = 'Неверный URL: ' + e.message;
+        }
+    });
+
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    initApp();
+</script>
+</body>
+</html>
