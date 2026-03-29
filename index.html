@@ -30,12 +30,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-direction: column;
             z-index: 1000;
             transition: opacity 0.3s;
         }
         .loading-screen.hidden {
             opacity: 0;
             pointer-events: none;
+        }
+        .loading-logo {
+            max-width: 120px;
+            height: auto;
         }
         .app-container {
             width: 100%;
@@ -49,7 +54,6 @@
             overflow: hidden;
             position: relative;
         }
-        /* Нижнее меню */
         .nav-bar {
             display: flex;
             background: #0c0c0c;
@@ -93,12 +97,74 @@
             overflow-y: auto;
             height: 100%;
         }
-        /* Общие элементы */
-        input, textarea, .custom-select, .select-button, button {
+        /* Кастомные селекты (как в фин. приложении) */
+        .custom-select {
+            position: relative;
             width: 100%;
             margin-bottom: 12px;
         }
-        input, textarea, .select-button {
+        .select-button {
+            width: 100%;
+            padding: 12px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            font-size: 16px;
+            color: #fff;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border 0.2s;
+        }
+        .select-button .arrow {
+            width: 16px;
+            height: 16px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aaaaaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform 0.2s;
+        }
+        .select-button.open .arrow {
+            transform: rotate(180deg);
+        }
+        .select-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 20;
+            display: none;
+        }
+        .select-dropdown.show {
+            display: block;
+        }
+        .select-option {
+            padding: 12px;
+            cursor: pointer;
+            color: #fff;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .select-option:last-child {
+            border-bottom: none;
+        }
+        .select-option:hover {
+            background: #333;
+        }
+        .select-option.selected {
+            background: #36FF00;
+            color: #000;
+        }
+        /* Общие элементы */
+        input, textarea {
+            width: 100%;
+            margin-bottom: 12px;
             background: #1a1a1a;
             border: 1px solid #333;
             border-radius: 16px;
@@ -111,27 +177,30 @@
             border-color: #36FF00;
         }
         .slider-container {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
         }
         .slider-container label {
-            display: block;
-            margin-bottom: 5px;
+            flex: 1;
             font-size: 14px;
             color: #ccc;
         }
-        input[type="range"] {
-            width: 100%;
-            margin: 8px 0;
+        .slider-container input {
+            flex: 3;
+            margin: 0 12px 0 0;
         }
         .slider-value {
-            display: inline-block;
             background: #36FF00;
             color: #000;
-            padding: 2px 8px;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
-            margin-left: 8px;
+            min-width: 45px;
+            text-align: center;
         }
         button {
             background: #36FF00;
@@ -143,6 +212,8 @@
             color: #000;
             cursor: pointer;
             transition: 0.2s;
+            width: 100%;
+            margin-top: 8px;
         }
         button:disabled {
             background: #2a2a2a;
@@ -155,6 +226,10 @@
             padding: 12px;
             margin-bottom: 12px;
             border: 1px solid #333;
+        }
+        .task-card.top3 {
+            background: #2a3a1a;
+            border-left: 4px solid #36FF00;
         }
         .task-header {
             display: flex;
@@ -189,11 +264,6 @@
         }
         .task-actions button.edit-btn {
             background: #4069FF;
-        }
-        .edit-icon {
-            cursor: pointer;
-            font-size: 18px;
-            margin-left: 8px;
         }
         .microsteps {
             font-size: 12px;
@@ -263,7 +333,6 @@
             justify-content: space-between;
             margin-bottom: 8px;
         }
-        /* GET экран */
         .weeks-counter {
             text-align: center;
             font-size: 48px;
@@ -286,10 +355,13 @@
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.95);
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             z-index: 2000;
+        }
+        .connection-overlay.show {
+            display: flex;
         }
         .connection-card {
             background: #0c0c0c;
@@ -302,10 +374,30 @@
         .hidden {
             display: none;
         }
+        .status {
+            margin-top: 8px;
+            text-align: center;
+            padding: 8px;
+            border-radius: 16px;
+        }
+        .status.success {
+            background: rgba(54,255,0,0.2);
+            color: #36FF00;
+        }
+        .status.error {
+            background: rgba(255,70,70,0.2);
+            color: #ff4646;
+        }
+        input[type="date"] {
+            color-scheme: dark;
+        }
     </style>
 </head>
 <body>
-<div class="loading-screen" id="loadingScreen">Загрузка...</div>
+<div class="loading-screen" id="loadingScreen">
+    <img src="logo.png" alt="Logo" class="loading-logo">
+    <div style="margin-top: 16px;">Загрузка...</div>
+</div>
 <div class="connection-overlay" id="connectionOverlay">
     <div class="connection-card">
         <h3>Подключение к Apps Script</h3>
@@ -317,40 +409,32 @@
 
 <div class="app-container" id="appContainer" style="display: none;">
     <div class="screens-container" id="screensContainer">
+        <!-- DRIFT экран (теперь первый) -->
+        <div class="screen" id="screenDrift">
+            <div id="tasksList"></div>
+        </div>
+
         <!-- ADD экран -->
         <div class="screen" id="screenAdd">
             <h3 style="margin-bottom: 12px;">➕ Новая задача</h3>
             <div class="custom-select" id="categoryContainer">
-                <select id="categorySelect" style="width:100%; padding:12px; background:#1a1a1a; border-radius:16px; color:#fff;">
-                    <option value="">Выберите категорию</option>
-                </select>
+                <div class="select-button" id="categoryButton">
+                    <span id="categorySelectedText">Выберите категорию</span>
+                    <span class="arrow"></span>
+                </div>
+                <div class="select-dropdown" id="categoryDropdown"></div>
             </div>
             <input type="text" id="taskTitle" placeholder="Название задачи">
-            <div id="microstepsContainer">
-                <input type="text" placeholder="Микрошаг 1" class="microstep">
-                <input type="text" placeholder="Микрошаг 2" class="microstep">
-                <input type="text" placeholder="Микрошаг 3" class="microstep">
-                <input type="text" placeholder="Микрошаг 4" class="microstep">
-                <input type="text" placeholder="Микрошаг 5" class="microstep">
-            </div>
+            <div id="microstepsContainer"></div>
             <!-- Ползунки -->
             <div class="slider-container"><label>Сложность (0-10)</label><input type="range" id="complexity" min="0" max="10" step="1" value="5"><span id="complexityVal" class="slider-value">5</span></div>
             <div class="slider-container"><label>Творчество (0-10)</label><input type="range" id="creativity" min="0" max="10" step="1" value="5"><span id="creativityVal" class="slider-value">5</span></div>
             <div class="slider-container"><label>Фокусировка (0-10)</label><input type="range" id="focus" min="0" max="10" step="1" value="5"><span id="focusVal" class="slider-value">5</span></div>
-            <div class="slider-container"><label>Стоимость (0-10)</label><input type="range" id="cost" min="0" max="10" step="1" value="0"><span id="costVal" class="slider-value">0</span></div>
+            <div class="slider-container"><label>Стоимость ($)</label><input type="range" id="cost" min="0" max="2000" step="50" value="0"><span id="costVal" class="slider-value">$0</span></div>
             <div class="slider-container"><label>Стресс (0-10)</label><input type="range" id="stress" min="0" max="10" step="1" value="5"><span id="stressVal" class="slider-value">5</span></div>
             <input type="date" id="deadline" placeholder="Дедлайн (необязательно)">
             <button id="saveTaskBtn">Сохранить задачу</button>
             <div id="addStatus" class="status"></div>
-        </div>
-
-        <!-- DRIFT экран (список задач) -->
-        <div class="screen" id="screenDrift">
-            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                <button id="refreshTasksBtn">Обновить</button>
-                <button id="top3Btn">Топ-3 на сегодня</button>
-            </div>
-            <div id="tasksList"></div>
         </div>
 
         <!-- PULSE экран -->
@@ -376,8 +460,8 @@
         </div>
     </div>
     <div class="nav-bar">
-        <button class="nav-btn" data-screen="add">ADD</button>
         <button class="nav-btn" data-screen="drift">DRIFT</button>
+        <button class="nav-btn" data-screen="add">ADD</button>
         <button class="nav-btn" data-screen="pulse">PULSE</button>
         <button class="nav-btn" data-screen="get">GET</button>
     </div>
@@ -387,12 +471,12 @@
 <div class="modal" id="completeModal">
     <div class="modal-content">
         <div class="modal-title">Выполнение задачи</div>
-        <div id="completeTaskTitle"></div>
-        <div class="slider-container"><label>Факт. сложность</label><input type="range" id="actualComplexity" min="0" max="10" step="1" value="5"><span id="actualComplexityVal">5</span></div>
-        <div class="slider-container"><label>Факт. творчество</label><input type="range" id="actualCreativity" min="0" max="10" step="1" value="5"><span id="actualCreativityVal">5</span></div>
-        <div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal">5</span></div>
-        <div class="slider-container"><label>Факт. стоимость</label><input type="range" id="actualCost" min="0" max="10" step="1" value="0"><span id="actualCostVal">0</span></div>
-        <div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal">5</span></div>
+        <div id="completeTaskTitle" style="margin-bottom: 12px;"></div>
+        <div class="slider-container"><label>Факт. сложность</label><input type="range" id="actualComplexity" min="0" max="10" step="1" value="5"><span id="actualComplexityVal" class="slider-value">5</span></div>
+        <div class="slider-container"><label>Факт. творчество</label><input type="range" id="actualCreativity" min="0" max="10" step="1" value="5"><span id="actualCreativityVal" class="slider-value">5</span></div>
+        <div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal" class="slider-value">5</span></div>
+        <div class="slider-container"><label>Факт. стоимость ($)</label><input type="range" id="actualCost" min="0" max="2000" step="50" value="0"><span id="actualCostVal" class="slider-value">$0</span></div>
+        <div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal" class="slider-value">5</span></div>
         <div class="modal-buttons">
             <button id="cancelCompleteBtn">Отмена</button>
             <button id="confirmCompleteBtn">Завершить</button>
@@ -404,15 +488,21 @@
 <div class="modal" id="editModal">
     <div class="modal-content">
         <div class="modal-title">Редактировать задачу</div>
-        <input type="text" id="editTaskId" style="display:none;">
+        <input type="hidden" id="editTaskId">
         <input type="text" id="editTitle" placeholder="Название">
-        <select id="editCategory" style="width:100%; padding:12px; background:#1a1a1a; border-radius:16px; color:#fff;"></select>
+        <div class="custom-select" id="editCategoryContainer">
+            <div class="select-button" id="editCategoryButton">
+                <span id="editCategorySelectedText">Выберите категорию</span>
+                <span class="arrow"></span>
+            </div>
+            <div class="select-dropdown" id="editCategoryDropdown"></div>
+        </div>
         <div id="editMicrostepsContainer"></div>
-        <div class="slider-container"><label>Сложность</label><input type="range" id="editComplexity" min="0" max="10" step="1"><span id="editComplexityVal"></span></div>
-        <div class="slider-container"><label>Творчество</label><input type="range" id="editCreativity" min="0" max="10" step="1"><span id="editCreativityVal"></span></div>
-        <div class="slider-container"><label>Фокусировка</label><input type="range" id="editFocus" min="0" max="10" step="1"><span id="editFocusVal"></span></div>
-        <div class="slider-container"><label>Стоимость</label><input type="range" id="editCost" min="0" max="10" step="1"><span id="editCostVal"></span></div>
-        <div class="slider-container"><label>Стресс</label><input type="range" id="editStress" min="0" max="10" step="1"><span id="editStressVal"></span></div>
+        <div class="slider-container"><label>Сложность</label><input type="range" id="editComplexity" min="0" max="10" step="1"><span id="editComplexityVal" class="slider-value"></span></div>
+        <div class="slider-container"><label>Творчество</label><input type="range" id="editCreativity" min="0" max="10" step="1"><span id="editCreativityVal" class="slider-value"></span></div>
+        <div class="slider-container"><label>Фокусировка</label><input type="range" id="editFocus" min="0" max="10" step="1"><span id="editFocusVal" class="slider-value"></span></div>
+        <div class="slider-container"><label>Стоимость ($)</label><input type="range" id="editCost" min="0" max="2000" step="50"><span id="editCostVal" class="slider-value"></span></div>
+        <div class="slider-container"><label>Стресс</label><input type="range" id="editStress" min="0" max="10" step="1"><span id="editStressVal" class="slider-value"></span></div>
         <input type="date" id="editDeadline">
         <div class="modal-buttons">
             <button id="cancelEditBtn">Отмена</button>
@@ -469,37 +559,102 @@
         }
     }
 
+    // ---------- КАСТОМНЫЕ СЕЛЕКТЫ ----------
+    let activeDropdown = null;
+    function closeAllDropdowns() {
+        if (activeDropdown) {
+            activeDropdown.dropdown.classList.remove('show');
+            activeDropdown.button.classList.remove('open');
+            activeDropdown = null;
+        }
+    }
+    function initCustomSelect(buttonId, dropdownId, items, onSelect, selectedValue = null) {
+        const button = document.getElementById(buttonId);
+        const dropdown = document.getElementById(dropdownId);
+        if (!button || !dropdown) return;
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllDropdowns();
+            dropdown.classList.add('show');
+            button.classList.add('open');
+            activeDropdown = { dropdown, button };
+        });
+        function renderOptions() {
+            dropdown.innerHTML = '';
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'select-option';
+                div.textContent = item;
+                if (selectedValue === item) div.classList.add('selected');
+                div.addEventListener('click', () => {
+                    onSelect(item);
+                    closeAllDropdowns();
+                });
+                dropdown.appendChild(div);
+            });
+        }
+        renderOptions();
+        return { update: (newItems, newSelected) => {
+            items = newItems;
+            selectedValue = newSelected;
+            renderOptions();
+        } };
+    }
+
+    // ---------- МИКРОШАГИ (динамические) ----------
+    let microstepCount = 0;
+    function renderMicrosteps(container, values = []) {
+        container.innerHTML = '';
+        microstepCount = 0;
+        function addStep(value = '') {
+            if (microstepCount >= 5) return;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = `Микрошаг ${microstepCount+1}`;
+            input.value = value;
+            input.classList.add('microstep');
+            input.addEventListener('input', function(e) {
+                if (e.target.value.trim() !== '' && microstepCount === Array.from(container.children).indexOf(e.target) + 1 && microstepCount < 5) {
+                    addStep();
+                }
+            });
+            container.appendChild(input);
+            microstepCount++;
+        }
+        for (let i = 0; i < values.length; i++) {
+            addStep(values[i]);
+        }
+        if (values.length === 0) addStep();
+    }
+    function getMicrosteps(container) {
+        return Array.from(container.querySelectorAll('.microstep')).map(inp => inp.value).filter(v => v.trim() !== '');
+    }
+
+    // ---------- ЗАГРУЗКА КАТЕГОРИЙ ----------
     async function loadCategories() {
         try {
             const data = await apiCall({ action: 'categories' });
             if (data.error) throw new Error(data.error);
             categoriesList = data;
-            const select = document.getElementById('categorySelect');
-            select.innerHTML = '<option value="">Выберите категорию</option>';
-            categoriesList.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat;
-                option.textContent = cat;
-                select.appendChild(option);
+            // ADD селект
+            initCustomSelect('categoryButton', 'categoryDropdown', categoriesList, (value) => {
+                document.getElementById('categorySelectedText').textContent = value;
+                window.selectedCategory = value;
             });
-            // Для модалки редактирования
-            const editSelect = document.getElementById('editCategory');
-            editSelect.innerHTML = '<option value="">Выберите категорию</option>';
-            categoriesList.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat;
-                option.textContent = cat;
-                editSelect.appendChild(option);
+            // EDIT селект
+            initCustomSelect('editCategoryButton', 'editCategoryDropdown', categoriesList, (value) => {
+                document.getElementById('editCategorySelectedText').textContent = value;
+                window.editSelectedCategory = value;
             });
         } catch(e) { console.error(e); }
     }
 
-    // Добавление задачи
+    // ---------- ДОБАВЛЕНИЕ ЗАДАЧИ ----------
     document.getElementById('saveTaskBtn').addEventListener('click', async () => {
-        const category = document.getElementById('categorySelect').value;
+        const category = window.selectedCategory || '';
         const title = document.getElementById('taskTitle').value;
-        if (!category || !title) { alert('Заполните категорию и название'); return; }
-        const microsteps = Array.from(document.querySelectorAll('#microstepsContainer .microstep')).map(inp => inp.value).filter(v=>v.trim());
+        if (!category || !title) { showStatus('addStatus', 'Заполните категорию и название', 'error'); return; }
+        const microsteps = getMicrosteps(document.getElementById('microstepsContainer'));
         const complexity = document.getElementById('complexity').value;
         const creativity = document.getElementById('creativity').value;
         const focus = document.getElementById('focus').value;
@@ -514,23 +669,24 @@
         try {
             const res = await apiCall(params, 'POST');
             if (res.error) throw new Error(res.error);
-            document.getElementById('addStatus').innerHTML = '✅ Задача добавлена';
-            setTimeout(() => document.getElementById('addStatus').innerHTML = '', 2000);
-            // очистка формы
+            showStatus('addStatus', '✅ Задача добавлена', 'success');
+            // очистка
             document.getElementById('taskTitle').value = '';
-            document.querySelectorAll('#microstepsContainer .microstep').forEach(inp => inp.value = '');
-            document.getElementById('complexity').value = 5; document.getElementById('complexityVal').innerText = 5;
-            document.getElementById('creativity').value = 5; document.getElementById('creativityVal').innerText = 5;
-            document.getElementById('focus').value = 5; document.getElementById('focusVal').innerText = 5;
-            document.getElementById('cost').value = 0; document.getElementById('costVal').innerText = 0;
-            document.getElementById('stress').value = 5; document.getElementById('stressVal').innerText = 5;
+            document.getElementById('categorySelectedText').textContent = 'Выберите категорию';
+            window.selectedCategory = '';
+            renderMicrosteps(document.getElementById('microstepsContainer'), []);
+            document.getElementById('complexity').value = 5; document.getElementById('complexityVal').innerText = '5';
+            document.getElementById('creativity').value = 5; document.getElementById('creativityVal').innerText = '5';
+            document.getElementById('focus').value = 5; document.getElementById('focusVal').innerText = '5';
+            document.getElementById('cost').value = 0; document.getElementById('costVal').innerText = '$0';
+            document.getElementById('stress').value = 5; document.getElementById('stressVal').innerText = '5';
             document.getElementById('deadline').value = '';
-            loadTasks(); // обновить список
+            loadTasks();
             loadPulse();
-        } catch(e) { alert('Ошибка: '+e.message); }
+        } catch(e) { showStatus('addStatus', 'Ошибка: '+e.message, 'error'); }
     });
 
-    // Загрузка задач для DRIFT
+    // ---------- ЗАГРУЗКА ЗАДАЧ ДЛЯ DRIFT ----------
     async function loadTasks() {
         try {
             const data = await apiCall({ action: 'tasks', status: 'open' });
@@ -541,10 +697,12 @@
     function renderTasks(tasks) {
         const container = document.getElementById('tasksList');
         if (!tasks.length) { container.innerHTML = '<div>Нет открытых задач</div>'; return; }
+        tasks.sort((a,b) => b.priority - a.priority);
         container.innerHTML = '';
-        tasks.forEach(task => {
+        tasks.forEach((task, idx) => {
+            const isTop3 = idx < 3;
             const card = document.createElement('div');
-            card.className = 'task-card';
+            card.className = 'task-card' + (isTop3 ? ' top3' : '');
             card.innerHTML = `
                 <div class="task-header">
                     <span class="task-title">${escapeHtml(task.title)}</span>
@@ -561,57 +719,46 @@
         });
         document.querySelectorAll('.complete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const id = btn.dataset.id;
+                const id = parseInt(btn.dataset.id);
                 const task = tasks.find(t => t.id == id);
-                openCompleteModal(task);
+                if (task) openCompleteModal(task);
+                else alert('Задача не найдена');
             });
         });
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const id = btn.dataset.id;
+                const id = parseInt(btn.dataset.id);
                 const task = tasks.find(t => t.id == id);
-                openEditModal(task);
+                if (task) openEditModal(task);
+                else alert('Задача не найдена');
             });
         });
     }
 
-    // Топ-3
-    async function showTop3() {
-        try {
-            const data = await apiCall({ action: 'top3' });
-            if (data.error) throw new Error(data.error);
-            let html = '<h4>🔥 Топ-3 на сегодня</h4>';
-            data.forEach(task => {
-                html += `<div class="task-card"><b>${escapeHtml(task.title)}</b> (${task.category})<br>Приоритет: ${task.dynamicPriority.toFixed(1)}</div>`;
-            });
-            document.getElementById('tasksList').innerHTML = html;
-        } catch(e) { alert(e.message); }
-    }
-    document.getElementById('top3Btn').addEventListener('click', showTop3);
-    document.getElementById('refreshTasksBtn').addEventListener('click', loadTasks);
-
-    // Выполнение задачи
+    // ---------- ВЫПОЛНЕНИЕ (пустые ползунки) ----------
     let currentCompleteTaskId = null;
     function openCompleteModal(task) {
         currentCompleteTaskId = task.id;
         document.getElementById('completeTaskTitle').innerText = task.title;
-        // сброс ползунков
-        document.getElementById('actualComplexity').value = task.complexity || 5;
-        document.getElementById('actualCreativity').value = task.creativity || 5;
-        document.getElementById('actualFocus').value = task.focus || 5;
-        document.getElementById('actualCost').value = task.cost || 0;
-        document.getElementById('actualStress').value = task.stress || 5;
-        document.getElementById('actualComplexityVal').innerText = task.complexity || 5;
-        document.getElementById('actualCreativityVal').innerText = task.creativity || 5;
-        document.getElementById('actualFocusVal').innerText = task.focus || 5;
-        document.getElementById('actualCostVal').innerText = task.cost || 0;
-        document.getElementById('actualStressVal').innerText = task.stress || 5;
+        // Сброс ползунков на нейтральные значения (не ожидаемые)
+        document.getElementById('actualComplexity').value = 5;
+        document.getElementById('actualCreativity').value = 5;
+        document.getElementById('actualFocus').value = 5;
+        document.getElementById('actualCost').value = 0;
+        document.getElementById('actualStress').value = 5;
+        document.getElementById('actualComplexityVal').innerText = '5';
+        document.getElementById('actualCreativityVal').innerText = '5';
+        document.getElementById('actualFocusVal').innerText = '5';
+        document.getElementById('actualCostVal').innerText = '$0';
+        document.getElementById('actualStressVal').innerText = '5';
         document.getElementById('completeModal').classList.add('show');
     }
     document.getElementById('cancelCompleteBtn').addEventListener('click', () => {
         document.getElementById('completeModal').classList.remove('show');
+        currentCompleteTaskId = null;
     });
     document.getElementById('confirmCompleteBtn').addEventListener('click', async () => {
+        if (!currentCompleteTaskId) { alert('Ошибка: задача не выбрана'); return; }
         const params = {
             action: 'completeTask',
             id: currentCompleteTaskId,
@@ -625,55 +772,49 @@
             const res = await apiCall(params, 'POST');
             if (res.error) throw new Error(res.error);
             document.getElementById('completeModal').classList.remove('show');
+            currentCompleteTaskId = null;
             loadTasks();
             loadPulse();
+            loadWeeks();
         } catch(e) { alert('Ошибка: '+e.message); }
     });
 
-    // Редактирование задачи
+    // ---------- РЕДАКТИРОВАНИЕ ----------
     let currentEditId = null;
     async function openEditModal(task) {
         currentEditId = task.id;
         document.getElementById('editTaskId').value = task.id;
         document.getElementById('editTitle').value = task.title;
-        document.getElementById('editCategory').value = task.category;
-        // микрошаги
+        document.getElementById('editCategorySelectedText').textContent = task.category;
+        window.editSelectedCategory = task.category;
         let microsteps = [];
         try { microsteps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
-        const container = document.getElementById('editMicrostepsContainer');
-        container.innerHTML = '';
-        for (let i=0; i<5; i++) {
-            const inp = document.createElement('input');
-            inp.type = 'text';
-            inp.placeholder = `Микрошаг ${i+1}`;
-            inp.value = microsteps[i] || '';
-            inp.classList.add('microstep-edit');
-            container.appendChild(inp);
-        }
+        renderMicrosteps(document.getElementById('editMicrostepsContainer'), microsteps);
         document.getElementById('editComplexity').value = task.complexity || 5;
         document.getElementById('editCreativity').value = task.creativity || 5;
         document.getElementById('editFocus').value = task.focus || 5;
         document.getElementById('editCost').value = task.cost || 0;
         document.getElementById('editStress').value = task.stress || 5;
         document.getElementById('editDeadline').value = task.deadline ? task.deadline.split('T')[0] : '';
-        // обновить отображение значений
         document.getElementById('editComplexityVal').innerText = task.complexity || 5;
         document.getElementById('editCreativityVal').innerText = task.creativity || 5;
         document.getElementById('editFocusVal').innerText = task.focus || 5;
-        document.getElementById('editCostVal').innerText = task.cost || 0;
+        document.getElementById('editCostVal').innerText = `$${task.cost || 0}`;
         document.getElementById('editStressVal').innerText = task.stress || 5;
         document.getElementById('editModal').classList.add('show');
     }
     document.getElementById('cancelEditBtn').addEventListener('click', () => {
         document.getElementById('editModal').classList.remove('show');
+        currentEditId = null;
     });
     document.getElementById('saveEditBtn').addEventListener('click', async () => {
-        const microsteps = Array.from(document.querySelectorAll('#editMicrostepsContainer input')).map(inp => inp.value).filter(v=>v.trim());
+        if (!currentEditId) return;
+        const microsteps = getMicrosteps(document.getElementById('editMicrostepsContainer'));
         const params = {
             action: 'updateTask',
             id: currentEditId,
             title: document.getElementById('editTitle').value,
-            category: document.getElementById('editCategory').value,
+            category: window.editSelectedCategory || '',
             microsteps: JSON.stringify(microsteps),
             complexity: document.getElementById('editComplexity').value,
             creativity: document.getElementById('editCreativity').value,
@@ -686,12 +827,13 @@
             const res = await apiCall(params, 'POST');
             if (res.error) throw new Error(res.error);
             document.getElementById('editModal').classList.remove('show');
+            currentEditId = null;
             loadTasks();
             loadPulse();
         } catch(e) { alert('Ошибка: '+e.message); }
     });
 
-    // PULSE
+    // ---------- PULSE ----------
     async function loadPulse() {
         try {
             const data = await apiCall({ action: 'stats' });
@@ -708,7 +850,7 @@
         } catch(e) { console.error(e); }
     }
 
-    // GET - 4000 недель
+    // ---------- GET (4000 недель) ----------
     async function loadWeeks() {
         try {
             const data = await apiCall({ action: 'weeks' });
@@ -722,11 +864,12 @@
         } catch(e) { console.error(e); }
     }
 
-    // Навигация и синхронизация
+    // ---------- НАВИГАЦИЯ ----------
     const screensContainer = document.getElementById('screensContainer');
     const navBtns = document.querySelectorAll('.nav-btn');
     function switchScreen(screenId) {
-        const index = { add:0, drift:1, pulse:2, get:3 }[screenId];
+        const order = { drift:0, add:1, pulse:2, get:3 };
+        const index = order[screenId];
         screensContainer.scrollTo({ left: screensContainer.clientWidth * index, behavior: 'smooth' });
         navBtns.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.screen === screenId);
@@ -739,54 +882,71 @@
         const width = screensContainer.clientWidth;
         const scrollLeft = screensContainer.scrollLeft;
         const activeIndex = Math.round(scrollLeft / width);
-        const screens = ['add','drift','pulse','get'];
+        const screens = ['drift','add','pulse','get'];
         navBtns.forEach((btn, i) => {
             btn.classList.toggle('active', i === activeIndex);
         });
     });
 
-    // Ползунки (синхронизация значений)
-    function bindSlider(sliderId, spanId) {
+    // ---------- ВСПОМОГАТЕЛЬНЫЕ ----------
+    function showStatus(elementId, message, type) {
+        const el = document.getElementById(elementId);
+        el.textContent = message;
+        el.className = `status ${type}`;
+        setTimeout(() => { if (el) el.className = 'status'; }, 3000);
+    }
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    // Ползунки: синхронизация значения и отображение в долларах для cost
+    function bindSlider(sliderId, spanId, isMoney = false) {
         const slider = document.getElementById(sliderId);
         const span = document.getElementById(spanId);
-        slider.addEventListener('input', () => span.innerText = slider.value);
+        slider.addEventListener('input', () => {
+            let val = slider.value;
+            span.innerText = isMoney ? `$${val}` : val;
+        });
     }
     bindSlider('complexity','complexityVal');
     bindSlider('creativity','creativityVal');
     bindSlider('focus','focusVal');
-    bindSlider('cost','costVal');
+    bindSlider('cost','costVal', true);
     bindSlider('stress','stressVal');
     bindSlider('actualComplexity','actualComplexityVal');
     bindSlider('actualCreativity','actualCreativityVal');
     bindSlider('actualFocus','actualFocusVal');
-    bindSlider('actualCost','actualCostVal');
+    bindSlider('actualCost','actualCostVal', true);
     bindSlider('actualStress','actualStressVal');
     bindSlider('editComplexity','editComplexityVal');
     bindSlider('editCreativity','editCreativityVal');
     bindSlider('editFocus','editFocusVal');
-    bindSlider('editCost','editCostVal');
+    bindSlider('editCost','editCostVal', true);
     bindSlider('editStress','editStressVal');
 
-    // Инициализация приложения
+    // Инициализация микрошагов на ADD и EDIT
+    renderMicrosteps(document.getElementById('microstepsContainer'), []);
+    renderMicrosteps(document.getElementById('editMicrostepsContainer'), []);
+
+    // ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
     async function initApp() {
         const url = getAppUrl();
         if (!url) {
             document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('connectionOverlay').style.display = 'flex';
+            document.getElementById('connectionOverlay').classList.add('show');
             return;
         }
         try {
             await testConnection(url);
-            document.getElementById('connectionOverlay').style.display = 'none';
+            document.getElementById('connectionOverlay').classList.remove('show');
             document.getElementById('appContainer').style.display = 'flex';
             document.getElementById('loadingScreen').classList.add('hidden');
             await loadCategories();
             await loadTasks();
             await loadPulse();
             await loadWeeks();
+            switchScreen('drift'); // показываем DRIFT первым
         } catch(e) {
             document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('connectionOverlay').style.display = 'flex';
+            document.getElementById('connectionOverlay').classList.add('show');
             document.getElementById('connectionStatus').innerText = 'Ошибка подключения: ' + e.message;
         }
     }
@@ -796,14 +956,12 @@
         try {
             await testConnection(url);
             saveAppUrl(url);
-            document.getElementById('connectionOverlay').style.display = 'none';
+            document.getElementById('connectionOverlay').classList.remove('show');
             initApp();
         } catch(e) {
             document.getElementById('connectionStatus').innerText = 'Неверный URL: ' + e.message;
         }
     });
-
-    function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
 
     initApp();
 </script>
