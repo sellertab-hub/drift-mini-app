@@ -156,8 +156,24 @@
 
         /* ====== TASK CARDS ====== */
         .task-card {
-            background: #1a1a1a; border-radius: 16px; padding: 12px;
-            margin-bottom: 12px; border: 1px solid #2a2a2a;
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #2a2a2a;
+            transition: opacity 0.2s;
+        }
+        .task-card.completed {
+            opacity: 0.6;
+            background: #111;
+        }
+        .task-card.completed .task-title {
+            text-decoration: line-through;
+            color: #777;
+        }
+        .task-card.completed .drift-task-btn {
+            opacity: 0.5;
+            pointer-events: none;
         }
         .task-header {
             display: flex; justify-content: space-between;
@@ -221,17 +237,20 @@
         .edit-icon-btn:hover { background: #2e2e50; border-color: #5a6aff; }
         .edit-icon-btn svg { width: 15px; height: 15px; }
 
-        /* ====== GREAT SEPARATOR ====== */
-        .great-separator {
-            display: flex; align-items: center; gap: 10px;
-            margin: 4px 0 16px 0;
+        /* DRIFT MORE кнопка */
+        .drift-more-btn {
+            background: #252535;
+            color: #36FF00;
+            border: 1px solid #36FF00;
+            margin-top: 8px;
+            margin-bottom: 8px;
         }
-        .great-separator .sep-line {
-            flex: 1; height: 1px; background: #333;
+        .more-tasks-container {
+            display: none;
+            margin-top: 8px;
         }
-        .great-separator .sep-label {
-            font-size: 10px; font-weight: 700; color: #555;
-            letter-spacing: 2px; text-transform: uppercase;
+        .more-tasks-container.show {
+            display: block;
         }
 
         /* Модалки */
@@ -311,7 +330,11 @@
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
             </div>
-            <div id="tasksList"></div>
+            <!-- 3 слота -->
+            <div id="slotsContainer"></div>
+            <!-- Кнопка DRIFT MORE -->
+            <button id="driftMoreBtn" class="drift-more-btn">DRIFT MORE ⬇️</button>
+            <div id="moreTasksContainer" class="more-tasks-container"></div>
         </div>
 
         <!-- ADD экран -->
@@ -406,10 +429,13 @@
     let cachedAppUrl = null;
     let categoriesList = [];
     // Глобальные данные
-    let allTasksCache = [];      // все открытые задачи (для lookup)
-    let top3Tasks = [];          // только топ-3 (для прогресса)
-    let restTasks = [];          // остальные
-    let checkedMicrosteps = {};  // { taskId: [index1, index2] } – загружается с сервера
+    let allOpenTasks = [];      // все открытые задачи (сортированы по приоритету)
+    let top3Tasks = [];         // три задачи в слотах (может содержать выполненные, но они будут помечены)
+    let restTasks = [];         // остальные открытые задачи
+    let checkedMicrosteps = {}; // { taskId: [index1, index2] }
+
+    // Храним день, для которого зафиксированы топ3 (чтобы обновлять раз в сутки)
+    let currentDayStr = new Date().toDateString();
 
     function normalizeUrl(url) {
         if (!url) return '';
@@ -518,8 +544,6 @@
     function getMicrosteps(container) {
         return Array.from(container.querySelectorAll('.microstep')).map(i => i.value).filter(v => v.trim() !== '');
     }
-
-    // Алиас для совместимости
     const renderMicrosteps = renderMicrostepsDynamic;
 
     // ---------- ВЕС ЗАДАЧИ ДЛЯ ПРОГРЕССА ----------
@@ -529,7 +553,7 @@
         return 2 + steps.length;
     }
 
-    // ---------- РАСЧЁТ ПРОГРЕССА (только по top3) ----------
+    // ---------- РАСЧЁТ ПРОГРЕССА (только по top3 слотам, учитываем выполненные задачи? по логике прогресс только по открытым микрошагам, выполненные задачи не дают вес) ----------
     function calculateProgress() {
         if (!top3Tasks.length) {
             document.getElementById('progressFill').style.width = '0%';
@@ -539,6 +563,8 @@
         let totalWeight = 0;
         let currentWeight = 0;
         for (let task of top3Tasks) {
+            // Если задача выполнена – её вес не учитываем в прогрессе (она уже не влияет)
+            if (task.status === 'done') continue;
             const weight = getTaskWeight(task);
             totalWeight += weight;
             const checked = checkedMicrosteps[task.id] || [];
@@ -549,10 +575,11 @@
         document.getElementById('progressText').innerText = `${currentWeight} / ${totalWeight}`;
     }
 
-    // ---------- РЕНДЕР КАРТОЧКИ ЗАДАЧИ ----------
-    function createTaskCard(task, isTop3 = false) {
+    // ---------- РЕНДЕР КАРТОЧКИ ЗАДАЧИ (универсальный) ----------
+    function createTaskCard(task, isSlot = false) {
         const card = document.createElement('div');
         card.className = 'task-card';
+        if (task.status === 'done') card.classList.add('completed');
         card.dataset.id = String(task.id);
 
         let steps = [];
@@ -599,7 +626,7 @@
             </div>
             ${stepsHtml}
             <div class="task-actions">
-                <button class="drift-task-btn complete-btn" data-id="${task.id}">
+                <button class="drift-task-btn complete-btn" data-id="${task.id}" ${task.status === 'done' ? 'disabled' : ''}>
                     <svg class="flag-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="3" y="3" width="4" height="4" fill="#36FF00"/>
                         <rect x="7" y="3" width="4" height="4" fill="#fff"/>
@@ -633,15 +660,16 @@
         try {
             const res = await apiCall({ action: 'toggleMicrostep', id: taskId, step_index: idx }, 'POST');
             if (res.error) throw new Error(res.error);
-            // Обновляем локальное состояние из ответа сервера (res.progress)
             if (!checkedMicrosteps[taskId]) checkedMicrosteps[taskId] = [];
             const pos = checkedMicrosteps[taskId].indexOf(idx);
             if (pos === -1) checkedMicrosteps[taskId].push(idx);
             else checkedMicrosteps[taskId].splice(pos, 1);
-            // Перерисовываем карточку
+            // Обновляем интерфейс (перерисовываем карточку этой задачи)
             const card = document.querySelector(`.task-card[data-id="${taskId}"]`);
             if (card) {
-                const task = allTasksCache.find(t => String(t.id) === String(taskId));
+                const task = allOpenTasks.find(t => String(t.id) === String(taskId)) ||
+                             top3Tasks.find(t => String(t.id) === String(taskId)) ||
+                             restTasks.find(t => String(t.id) === String(taskId));
                 if (task) {
                     const newCard = createTaskCard(task, top3Tasks.some(t => String(t.id) === String(taskId)));
                     card.replaceWith(newCard);
@@ -654,10 +682,10 @@
 
     function attachTaskHandlers(card) {
         const completeBtn = card.querySelector('.complete-btn');
-        if (completeBtn) {
+        if (completeBtn && !completeBtn.disabled) {
             completeBtn.addEventListener('click', () => {
                 const id = String(completeBtn.dataset.id);
-                const task = allTasksCache.find(t => String(t.id) === id);
+                const task = allOpenTasks.find(t => String(t.id) === id);
                 if (task) openCompleteModal(task);
                 else alert('Задача не найдена');
             });
@@ -666,7 +694,7 @@
         if (editBtn) {
             editBtn.addEventListener('click', () => {
                 const id = String(editBtn.dataset.id);
-                const task = allTasksCache.find(t => String(t.id) === id);
+                const task = allOpenTasks.find(t => String(t.id) === id);
                 if (task) openEditModal(task);
                 else alert('Задача не найдена');
             });
@@ -699,81 +727,122 @@
         } catch(e) { console.error(e); }
     }
 
-    // ---------- ЗАГРУЗКА ЗАДАЧ ----------
-    async function loadTasks() {
-        const container = document.getElementById('tasksList');
-        container.innerHTML = '<div style="color:#555; text-align:center; padding:20px;">Загрузка...</div>';
+    // ---------- ЗАГРУЗКА ВСЕХ ОТКРЫТЫХ ЗАДАЧ (обновление allOpenTasks) ----------
+    async function loadAllOpenTasks() {
         try {
-            // Получаем топ-3
-            const top3Data = await apiCall({ action: 'top3' });
-            if (top3Data.error) throw new Error(top3Data.error);
-            top3Tasks = top3Data;
-            // Получаем все открытые задачи
-            const allData = await apiCall({ action: 'tasks', status: 'open' });
-            if (allData.error) throw new Error(allData.error);
-            allTasksCache = allData;
-            // Загружаем прогресс микрошагов из поля microstepsProgress
-            for (let task of allTasksCache) {
+            const data = await apiCall({ action: 'tasks', status: 'open' });
+            if (data.error) throw new Error(data.error);
+            allOpenTasks = data;
+            // Загружаем прогресс микрошагов
+            for (let task of allOpenTasks) {
                 if (task.microstepsProgress && Array.isArray(task.microstepsProgress)) {
                     checkedMicrosteps[task.id] = task.microstepsProgress.slice();
                 } else {
                     checkedMicrosteps[task.id] = [];
                 }
             }
-            // Обновляем top3Tasks, чтобы в них тоже был прогресс
-            top3Tasks = top3Tasks.map(t => {
-                const full = allTasksCache.find(f => String(f.id) === String(t.id));
-                return full ? full : t;
-            });
-            // Остальные задачи (не в топ-3)
-            const top3Ids = new Set(top3Tasks.map(t => String(t.id)));
-            restTasks = allTasksCache.filter(t => !top3Ids.has(String(t.id))).sort((a,b) => b.priority - a.priority);
-
-            renderTasks();
+            // Проверяем, нужно ли обновить top3 (новый день)
+            const todayStr = new Date().toDateString();
+            if (todayStr !== currentDayStr) {
+                currentDayStr = todayStr;
+                await refreshTop3();
+            } else {
+                // Иначе просто обновляем списки, сохраняя старые top3 (но если какие-то задачи из top3 теперь выполнены, мы их пометим)
+                // Сначала определим, какие задачи сейчас в top3
+                const currentTop3Ids = new Set(top3Tasks.map(t => String(t.id)));
+                // Новые top3 – получаем из API
+                const freshTop3 = await apiCall({ action: 'top3' });
+                if (!freshTop3.error) {
+                    // Обновляем top3Tasks, сохраняя выполненные задачи, которые всё ещё есть в freshTop3 (т.е. они должны остаться в слотах)
+                    // Но если задача из старых top3 выполнена и её нет в freshTop3 – она должна остаться в слоте как серая? По логике, если задача выполнена, она должна оставаться в слоте серой до следующего дня.
+                    // Мы будем хранить top3Tasks как массив из 3 элементов, где каждый элемент – это либо задача из freshTop3, либо если старый слот был выполнен, оставляем его.
+                    const newTop3 = [];
+                    for (let i = 0; i < 3; i++) {
+                        if (i < freshTop3.length) {
+                            const fresh = freshTop3[i];
+                            const existing = top3Tasks.find(t => String(t.id) === String(fresh.id));
+                            if (existing && existing.status === 'done') {
+                                // Если эта задача уже выполнена и она снова в топе – оставляем её выполненной в слоте
+                                newTop3.push(existing);
+                            } else {
+                                // Иначе берём свежую задачу
+                                const fullTask = allOpenTasks.find(t => String(t.id) === String(fresh.id));
+                                newTop3.push(fullTask || fresh);
+                            }
+                        } else {
+                            // Если freshTop3 меньше 3, оставляем старые слоты (если они есть)
+                            if (top3Tasks[i]) newTop3.push(top3Tasks[i]);
+                        }
+                    }
+                    top3Tasks = newTop3;
+                }
+                // Обновляем restTasks
+                const top3Ids = new Set(top3Tasks.map(t => String(t.id)));
+                restTasks = allOpenTasks.filter(t => !top3Ids.has(String(t.id)));
+            }
+            renderDrift();
             calculateProgress();
-        } catch(e) {
-            container.innerHTML = '<div style="color:#ff4646; text-align:center; padding:20px;">Ошибка загрузки задач</div>';
-            console.error(e);
+        } catch(e) { console.error(e); }
+    }
+
+    async function refreshTop3() {
+        const freshTop3 = await apiCall({ action: 'top3' });
+        if (freshTop3.error) return;
+        // Преобразуем в полные объекты из allOpenTasks (чтобы были все поля)
+        top3Tasks = freshTop3.map(fresh => {
+            const full = allOpenTasks.find(t => String(t.id) === String(fresh.id));
+            return full ? full : fresh;
+        });
+        // Добиваем до 3, если нужно (если меньше 3, оставляем как есть)
+        const top3Ids = new Set(top3Tasks.map(t => String(t.id)));
+        restTasks = allOpenTasks.filter(t => !top3Ids.has(String(t.id)));
+    }
+
+    function renderDrift() {
+        // Рендерим слоты
+        const slotsContainer = document.getElementById('slotsContainer');
+        slotsContainer.innerHTML = '';
+        if (top3Tasks.length === 0) {
+            slotsContainer.innerHTML = '<div style="color:#555; text-align:center; padding:12px;">Нет задач для слотов</div>';
+        } else {
+            top3Tasks.forEach(task => {
+                const card = createTaskCard(task, true);
+                slotsContainer.appendChild(card);
+                attachTaskHandlers(card);
+            });
+        }
+
+        // Рендерим остальные задачи в DRIFT MORE
+        const moreContainer = document.getElementById('moreTasksContainer');
+        moreContainer.innerHTML = '';
+        if (restTasks.length > 0) {
+            restTasks.forEach(task => {
+                const card = createTaskCard(task, false);
+                moreContainer.appendChild(card);
+                attachTaskHandlers(card);
+            });
+        } else {
+            moreContainer.innerHTML = '<div style="color:#555; text-align:center; padding:12px;">Нет дополнительных задач</div>';
         }
     }
 
-    function renderTasks() {
-        const container = document.getElementById('tasksList');
-        container.innerHTML = '';
-
-        if (top3Tasks.length === 0 && restTasks.length === 0) {
-            container.innerHTML = '<div style="color:#555; text-align:center; padding:40px;">Нет открытых задач 🎉</div>';
-            return;
+    // Переключение видимости DRIFT MORE
+    let moreVisible = false;
+    document.getElementById('driftMoreBtn').addEventListener('click', () => {
+        const container = document.getElementById('moreTasksContainer');
+        const btn = document.getElementById('driftMoreBtn');
+        if (moreVisible) {
+            container.classList.remove('show');
+            btn.textContent = 'DRIFT MORE ⬇️';
+            moreVisible = false;
+        } else {
+            container.classList.add('show');
+            btn.textContent = 'DRIFT LESS ⬆️';
+            moreVisible = true;
         }
+    });
 
-        // Рендерим топ-3
-        top3Tasks.forEach(task => {
-            const card = createTaskCard(task, true);
-            container.appendChild(card);
-            attachTaskHandlers(card);
-        });
-
-        // Разделитель GREAT
-        if (top3Tasks.length > 0 && restTasks.length > 0) {
-            const sep = document.createElement('div');
-            sep.className = 'great-separator';
-            sep.innerHTML = `
-                <div class="sep-line"></div>
-                <span class="sep-label">GREAT</span>
-                <div class="sep-line"></div>
-            `;
-            container.appendChild(sep);
-        }
-
-        // Рендерим остальные
-        restTasks.forEach(task => {
-            const card = createTaskCard(task, false);
-            container.appendChild(card);
-            attachTaskHandlers(card);
-        });
-    }
-
-    // ---------- ВЫПОЛНЕНИЕ ----------
+    // ---------- ВЫПОЛНЕНИЕ ЗАДАЧИ ----------
     let currentCompleteTaskId = null;
     function openCompleteModal(task) {
         currentCompleteTaskId = String(task.id);
@@ -804,13 +873,26 @@
             const res = await apiCall(params, 'POST');
             if (res.error) throw new Error(res.error);
             document.getElementById('completeModal').classList.remove('show');
-            currentCompleteTaskId = null;
+            // Обновляем статус задачи в локальных данных
+            const taskInAll = allOpenTasks.find(t => String(t.id) === currentCompleteTaskId);
+            if (taskInAll) taskInAll.status = 'done';
+            const taskInTop = top3Tasks.find(t => String(t.id) === currentCompleteTaskId);
+            if (taskInTop) taskInTop.status = 'done';
+            const taskInRest = restTasks.find(t => String(t.id) === currentCompleteTaskId);
+            if (taskInRest) {
+                const index = restTasks.indexOf(taskInRest);
+                if (index !== -1) restTasks.splice(index, 1);
+            }
+            // Обновляем прогресс микрошагов (удаляем локально)
             delete checkedMicrosteps[currentCompleteTaskId];
-            loadTasks(); loadPulse(); loadCompletedTasks();
+            renderDrift();
+            calculateProgress();
+            loadCompletedTasks(); // обновляем список выполненных
+            currentCompleteTaskId = null;
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
 
-    // ---------- РЕДАКТИРОВАНИЕ (с динамическими микрошагами) ----------
+    // ---------- РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ ----------
     let currentEditId = null;
     function openEditModal(task) {
         currentEditId = String(task.id);
@@ -859,7 +941,9 @@
             if (res.error) throw new Error(res.error);
             document.getElementById('editModal').classList.remove('show');
             currentEditId = null;
-            loadTasks(); loadPulse();
+            // Перезагружаем все данные
+            await loadAllOpenTasks();
+            loadPulse();
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
     document.getElementById('deleteTaskBtn').addEventListener('click', async () => {
@@ -870,7 +954,9 @@
             if (res.error) throw new Error(res.error);
             document.getElementById('editModal').classList.remove('show');
             currentEditId = null;
-            loadTasks(); loadPulse(); loadCompletedTasks();
+            await loadAllOpenTasks();
+            loadPulse();
+            loadCompletedTasks();
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
 
@@ -904,7 +990,8 @@
             });
             document.getElementById('cost').value = 0; document.getElementById('costVal').innerText = '$0';
             document.getElementById('deadline').value = '';
-            loadTasks(); loadPulse();
+            await loadAllOpenTasks();
+            loadPulse();
         } catch(e) { showStatus('addStatus', 'Ошибка: ' + e.message, 'error'); }
     });
 
@@ -1001,7 +1088,7 @@
             document.getElementById('appContainer').style.display = 'flex';
             document.getElementById('loadingScreen').classList.add('hidden');
             await loadCategories();
-            await loadTasks();
+            await loadAllOpenTasks();
             await loadPulse();
             await loadCompletedTasks();
             switchScreen('drift');
