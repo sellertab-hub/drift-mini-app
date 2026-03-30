@@ -384,7 +384,7 @@
     let allTasksCache = [];      // все открытые задачи (для lookup)
     let top3Tasks = [];          // только топ-3 (для прогресса)
     let restTasks = [];          // остальные
-    let checkedMicrosteps = {};  // { taskId: [index1, index2] } – только для задач из top3
+    let checkedMicrosteps = {};  // { taskId: [index1, index2] } – загружается с сервера
 
     function normalizeUrl(url) {
         if (!url) return '';
@@ -511,15 +511,12 @@
         for (let task of top3Tasks) {
             const weight = getTaskWeight(task);
             totalWeight += weight;
-            // если задача выполнена (статус done) – добавляем весь вес
+            // Если задача выполнена (не должна быть в top3, но на всякий случай)
             if (task.status === 'done') {
                 currentWeight += weight;
             } else {
-                // за саму задачу пока не даём вес (только когда нажмут DRIFT TASK)
-                // но по вашей логике "задача это 2 части" – они добавляются только при выполнении задачи
-                // сейчас не добавляем
                 const checked = checkedMicrosteps[task.id] || [];
-                currentWeight += checked.length; // только отмеченные микрошаги
+                currentWeight += checked.length;
             }
         }
         const percent = totalWeight === 0 ? 0 : (currentWeight / totalWeight) * 100;
@@ -606,24 +603,28 @@
         return card;
     }
 
-    // Переключение чекбокса микрошага (только для top3 задач)
-    window.toggleMicrostep = function(taskId, idx) {
-        if (!checkedMicrosteps[taskId]) checkedMicrosteps[taskId] = [];
-        const arr = checkedMicrosteps[taskId];
-        const pos = arr.indexOf(idx);
-        if (pos === -1) arr.push(idx);
-        else arr.splice(pos, 1);
-        // перерисовываем только карточку этой задачи (оптимизация)
-        const card = document.querySelector(`.task-card[data-id="${taskId}"]`);
-        if (card) {
-            const task = top3Tasks.find(t => String(t.id) === String(taskId)) || restTasks.find(t => String(t.id) === String(taskId));
-            if (task) {
-                const newCard = createTaskCard(task, top3Tasks.some(t => String(t.id) === String(taskId)));
-                card.replaceWith(newCard);
-                attachTaskHandlers(newCard);
+    // Переключение чекбокса микрошага с сохранением на сервере
+    window.toggleMicrostep = async function(taskId, idx) {
+        try {
+            const res = await apiCall({ action: 'toggleMicrostep', id: taskId, step_index: idx }, 'POST');
+            if (res.error) throw new Error(res.error);
+            // Обновляем локальное состояние из ответа сервера (res.progress)
+            if (!checkedMicrosteps[taskId]) checkedMicrosteps[taskId] = [];
+            const pos = checkedMicrosteps[taskId].indexOf(idx);
+            if (pos === -1) checkedMicrosteps[taskId].push(idx);
+            else checkedMicrosteps[taskId].splice(pos, 1);
+            // Перерисовываем карточку
+            const card = document.querySelector(`.task-card[data-id="${taskId}"]`);
+            if (card) {
+                const task = allTasksCache.find(t => String(t.id) === String(taskId));
+                if (task) {
+                    const newCard = createTaskCard(task, top3Tasks.some(t => String(t.id) === String(taskId)));
+                    card.replaceWith(newCard);
+                    attachTaskHandlers(newCard);
+                }
             }
-        }
-        calculateProgress();
+            calculateProgress();
+        } catch(e) { alert('Ошибка: ' + e.message); }
     };
 
     function attachTaskHandlers(card) {
@@ -659,17 +660,23 @@
             // Получаем все открытые задачи
             const allData = await apiCall({ action: 'tasks', status: 'open' });
             if (allData.error) throw new Error(allData.error);
-            // Остальные задачи (не в топ-3)
-            const top3Ids = new Set(top3Tasks.map(t => String(t.id)));
-            restTasks = allData.filter(t => !top3Ids.has(String(t.id))).sort((a,b) => b.priority - a.priority);
-            allTasksCache = [...top3Tasks, ...restTasks];
-
-            // Сброс отмеченных микрошагов для задач, которые больше не в топ-3
-            for (let id in checkedMicrosteps) {
-                if (!top3Tasks.some(t => String(t.id) === id)) {
-                    delete checkedMicrosteps[id];
+            allTasksCache = allData;
+            // Загружаем прогресс микрошагов из поля microstepsProgress
+            for (let task of allTasksCache) {
+                if (task.microstepsProgress && Array.isArray(task.microstepsProgress)) {
+                    checkedMicrosteps[task.id] = task.microstepsProgress.slice();
+                } else {
+                    checkedMicrosteps[task.id] = [];
                 }
             }
+            // Обновляем top3Tasks, чтобы в них тоже был прогресс
+            top3Tasks = top3Tasks.map(t => {
+                const full = allTasksCache.find(f => String(f.id) === String(t.id));
+                return full ? full : t;
+            });
+            // Остальные задачи (не в топ-3)
+            const top3Ids = new Set(top3Tasks.map(t => String(t.id)));
+            restTasks = allTasksCache.filter(t => !top3Ids.has(String(t.id))).sort((a,b) => b.priority - a.priority);
 
             renderTasks();
             calculateProgress();
@@ -747,7 +754,8 @@
             if (res.error) throw new Error(res.error);
             document.getElementById('completeModal').classList.remove('show');
             currentCompleteTaskId = null;
-            // Если выполненная задача была в топ-3, она исчезнет при перезагрузке
+            // Очищаем прогресс по этой задаче из локального хранилища
+            delete checkedMicrosteps[currentCompleteTaskId];
             loadTasks(); loadPulse(); loadWeeks();
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
