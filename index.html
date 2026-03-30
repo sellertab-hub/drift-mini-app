@@ -144,16 +144,15 @@
             display: flex; gap: 8px; margin-top: 8px; align-items: center;
         }
 
-        /* DRIFT TASK button — с гоночным флагом */
+        /* DRIFT TASK button — обводка зелёная, фон прозрачный */
         .drift-task-btn {
-            flex: 1; position: relative; overflow: hidden;
-            background: #36FF00; border: none; border-radius: 12px;
-            padding: 9px 12px; font-size: 12px; font-weight: 800;
-            color: #000; cursor: pointer; transition: 0.2s;
+            flex: 1; background: transparent; border: 2px solid #36FF00;
+            border-radius: 12px; padding: 9px 12px; font-size: 12px;
+            font-weight: 800; color: #36FF00; cursor: pointer; transition: 0.2s;
             display: flex; align-items: center; justify-content: center;
             gap: 6px; letter-spacing: 0.5px; margin-top: 0; width: auto;
         }
-        .drift-task-btn:hover { background: #2de600; transform: scale(1.02); }
+        .drift-task-btn:hover { background: rgba(54,255,0,0.1); transform: scale(1.02); }
         .drift-task-btn:active { transform: scale(0.97); }
         .flag-icon { width: 16px; height: 16px; flex-shrink: 0; }
 
@@ -196,8 +195,17 @@
             font-size: 18px; font-weight: bold; margin-bottom: 16px;
             text-align: center; color: #36FF00;
         }
-        .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
-        .modal-buttons button { margin-bottom: 0; }
+        .modal-buttons {
+            display: flex; gap: 8px; margin-top: 16px;
+            justify-content: space-between;
+        }
+        .modal-buttons button {
+            margin-bottom: 0;
+            flex: 1;
+        }
+        .modal-buttons .delete-btn {
+            background: #ff4646; color: #fff;
+        }
         .modal-buttons button:first-child {
             background: #2a2a2a; color: #aaa;
         }
@@ -320,7 +328,7 @@
     </div>
 </div>
 
-<!-- Модалка редактирования задачи -->
+<!-- Модалка редактирования задачи (с кнопкой удаления) -->
 <div class="modal" id="editModal">
     <div class="modal-content">
         <div class="modal-title">✏️ Редактировать задачу</div>
@@ -342,6 +350,7 @@
         <input type="date" id="editDeadline">
         <div class="modal-buttons">
             <button id="cancelEditBtn">Отмена</button>
+            <button id="deleteEditBtn" class="delete-btn">Удалить</button>
             <button id="saveEditBtn">Сохранить</button>
         </div>
     </div>
@@ -352,7 +361,6 @@
     const APP_URL_STORAGE_KEY = 'taskTracker_appUrl';
     let cachedAppUrl = null;
     let categoriesList = [];
-    // Глобальный список задач для lookup по id
     let allTasksCache = [];
 
     function normalizeUrl(url) {
@@ -434,7 +442,7 @@
         };
     }
 
-    // ---------- МИКРОШАГИ (для ADD/EDIT форм) ----------
+    // ---------- МИКРОШАГИ ----------
     let microstepCount = 0;
     function renderMicrosteps(container, values = []) {
         container.innerHTML = '';
@@ -467,11 +475,9 @@
         card.className = 'task-card';
         card.dataset.id = String(task.id);
 
-        // Парсим микрошаги
         let steps = [];
         try { steps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
 
-        // Строим HTML микрошагов
         let stepsHtml = '';
         if (steps.length > 0) {
             stepsHtml = `<ul class="microsteps-list">` +
@@ -487,7 +493,6 @@
                 `</ul>`;
         }
 
-        // Дедлайн
         let deadlineHtml = '';
         if (task.deadline) {
             const d = new Date(task.deadline);
@@ -541,37 +546,30 @@
     }
 
     // Переключение чекбокса микрошага (визуальное, без сохранения)
-    function toggleMicrostep(li) {
+    window.toggleMicrostep = function(li) {
         li.classList.toggle('checked');
-    }
+    };
 
-    // ---------- ЗАГРУЗКА ЗАДАЧ ДЛЯ DRIFT ----------
+    // ---------- ЗАГРУЗКА ЗАДАЧ ----------
     async function loadTasks() {
         const container = document.getElementById('tasksList');
         container.innerHTML = '<div style="color:#555; text-align:center; padding:20px;">Загрузка...</div>';
         try {
-            // Сначала получаем top3 (динамически приоритизированные)
             let top3 = [];
             try {
                 const top3Data = await apiCall({ action: 'top3' });
                 if (!top3Data.error) top3 = top3Data;
             } catch(e) {}
 
-            // Затем все открытые задачи
             const allData = await apiCall({ action: 'tasks', status: 'open' });
             if (allData.error) throw new Error(allData.error);
 
-            // ID задач в top3
             const top3Ids = new Set(top3.map(t => String(t.id)));
-
-            // Остальные задачи (не в top3), отсортированные по приоритету
             const restTasks = allData
                 .filter(t => !top3Ids.has(String(t.id)))
                 .sort((a, b) => b.priority - a.priority);
 
-            // Кешируем все задачи для lookup
             allTasksCache = [...top3, ...restTasks];
-
             renderTasks(top3, restTasks);
         } catch(e) {
             container.innerHTML = '<div style="color:#ff4646; text-align:center; padding:20px;">Ошибка загрузки задач</div>';
@@ -588,12 +586,10 @@
             return;
         }
 
-        // Рендерим top3
         top3.forEach(task => {
             container.appendChild(createTaskCard(task));
         });
 
-        // Разделитель GREAT (только если есть и top3, и остальные)
         if (top3.length > 0 && rest.length > 0) {
             const sep = document.createElement('div');
             sep.className = 'great-separator';
@@ -605,12 +601,10 @@
             container.appendChild(sep);
         }
 
-        // Рендерим остальные
         rest.forEach(task => {
             container.appendChild(createTaskCard(task));
         });
 
-        // Навешиваем обработчики
         container.querySelectorAll('.complete-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = String(btn.dataset.id);
@@ -665,7 +659,7 @@
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
 
-    // ---------- РЕДАКТИРОВАНИЕ ----------
+    // ---------- РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ ----------
     let currentEditId = null;
     function openEditModal(task) {
         currentEditId = String(task.id);
@@ -693,6 +687,18 @@
         document.getElementById('editModal').classList.remove('show');
         currentEditId = null;
     });
+    // Кнопка удаления
+    document.getElementById('deleteEditBtn').addEventListener('click', async () => {
+        if (!currentEditId) return;
+        if (!confirm('Удалить задачу?')) return;
+        try {
+            const res = await apiCall({ action: 'deleteTask', id: currentEditId }, 'POST');
+            if (res.error) throw new Error(res.error);
+            document.getElementById('editModal').classList.remove('show');
+            currentEditId = null;
+            loadTasks(); loadPulse();
+        } catch(e) { alert('Ошибка удаления: ' + e.message); }
+    });
     document.getElementById('saveEditBtn').addEventListener('click', async () => {
         if (!currentEditId) return;
         const microsteps = getMicrosteps(document.getElementById('editMicrostepsContainer'));
@@ -718,7 +724,7 @@
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
 
-    // ---------- ДОБАВЛЕНИЕ ЗАДАЧИ ----------
+    // ---------- ДОБАВЛЕНИЕ ----------
     document.getElementById('saveTaskBtn').addEventListener('click', async () => {
         const category = window.selectedCategory || '';
         const title = document.getElementById('taskTitle').value;
