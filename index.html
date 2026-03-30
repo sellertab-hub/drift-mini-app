@@ -66,6 +66,42 @@
         .progress-fill {
             background: #36FF00; width: 0%; height: 100%; border-radius: 20px; transition: width 0.2s;
         }
+        /* Миниатюры выполненных задач */
+        .completed-strip {
+            background: #0a0a0a;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            padding: 10px 12px;
+        }
+        .completed-strip h4 {
+            font-size: 12px;
+            color: #36FF00;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        .completed-task-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .completed-task-badge {
+            background: #1a2a1a;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 11px;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge-accuracy {
+            background: #36FF00;
+            color: #000;
+            border-radius: 12px;
+            padding: 0 6px;
+            font-weight: 600;
+            font-size: 10px;
+        }
         /* Кастомные селекты */
         .custom-select { position: relative; width: 100%; margin-bottom: 12px; }
         .select-button {
@@ -229,9 +265,6 @@
             margin: 16px 0; border-left: 4px solid #36FF00;
         }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .weeks-counter { text-align: center; font-size: 48px; font-weight: bold; margin: 20px 0; }
-        .progress-bar { background: #333; border-radius: 20px; height: 12px; overflow: hidden; margin: 16px 0; }
-        .progress-fill { background: #36FF00; height: 100%; width: 0%; }
         .connection-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.95);
             display: none; align-items: center; justify-content: center; z-index: 2000;
@@ -266,6 +299,9 @@
     <div class="screens-container" id="screensContainer">
         <!-- DRIFT экран -->
         <div class="screen" id="screenDrift">
+            <!-- Блок выполненных задач -->
+            <div id="completedStrip"></div>
+            <!-- Прогресс дня -->
             <div class="progress-day-container" id="progressDayContainer">
                 <div class="progress-header">
                     <span>Прогресс дня</span>
@@ -311,22 +347,11 @@
             <div class="stat-row"><span>Выполнено задач:</span><span id="completionStat">--</span></div>
             <div class="stat-row"><span>Средний стресс (открытые):</span><span id="stressStat">--</span></div>
         </div>
-
-        <!-- GET экран -->
-        <div class="screen" id="screenGet">
-            <h3>⏳ 4000 недель</h3>
-            <div class="weeks-counter" id="weeksLived">--</div>
-            <div class="progress-bar"><div class="progress-fill" id="weeksProgress"></div></div>
-            <div id="weeksLeft">-- недель осталось</div>
-            <div id="financialForecast" style="margin-top: 20px;"></div>
-            <div id="tasksForecast"></div>
-        </div>
     </div>
     <div class="nav-bar">
         <button class="nav-btn" data-screen="drift">DRIFT</button>
         <button class="nav-btn" data-screen="add">ADD</button>
         <button class="nav-btn" data-screen="pulse">PULSE</button>
-        <button class="nav-btn" data-screen="get">GET</button>
     </div>
 </div>
 
@@ -465,9 +490,9 @@
         };
     }
 
-    // ---------- МИКРОШАГИ (для ADD/EDIT форм) ----------
+    // ---------- МИКРОШАГИ (для ADD/EDIT форм) с динамическим добавлением ----------
     let microstepCount = 0;
-    function renderMicrosteps(container, values = []) {
+    function renderMicrostepsDynamic(container, values = []) {
         container.innerHTML = '';
         microstepCount = 0;
         function addStep(value = '') {
@@ -480,7 +505,9 @@
             input.addEventListener('input', function () {
                 const steps = Array.from(container.children);
                 const idx = steps.indexOf(this);
-                if (this.value.trim() !== '' && idx === steps.length - 1 && steps.length < 5) addStep();
+                if (this.value.trim() !== '' && idx === steps.length - 1 && steps.length < 5) {
+                    addStep();
+                }
             });
             container.appendChild(input);
             microstepCount++;
@@ -492,11 +519,14 @@
         return Array.from(container.querySelectorAll('.microstep')).map(i => i.value).filter(v => v.trim() !== '');
     }
 
+    // Алиас для совместимости
+    const renderMicrosteps = renderMicrostepsDynamic;
+
     // ---------- ВЕС ЗАДАЧИ ДЛЯ ПРОГРЕССА ----------
     function getTaskWeight(task) {
         let steps = [];
         try { steps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
-        return 2 + steps.length; // задача + микрошаги
+        return 2 + steps.length;
     }
 
     // ---------- РАСЧЁТ ПРОГРЕССА (только по top3) ----------
@@ -511,13 +541,8 @@
         for (let task of top3Tasks) {
             const weight = getTaskWeight(task);
             totalWeight += weight;
-            // Если задача выполнена (не должна быть в top3, но на всякий случай)
-            if (task.status === 'done') {
-                currentWeight += weight;
-            } else {
-                const checked = checkedMicrosteps[task.id] || [];
-                currentWeight += checked.length;
-            }
+            const checked = checkedMicrosteps[task.id] || [];
+            currentWeight += checked.length;
         }
         const percent = totalWeight === 0 ? 0 : (currentWeight / totalWeight) * 100;
         document.getElementById('progressFill').style.width = percent + '%';
@@ -648,6 +673,32 @@
         }
     }
 
+    // ---------- ЗАГРУЗКА ВЫПОЛНЕННЫХ ЗАДАЧ ----------
+    async function loadCompletedTasks() {
+        try {
+            const data = await apiCall({ action: 'completed_tasks' });
+            if (data.error) throw new Error(data.error);
+            const container = document.getElementById('completedStrip');
+            if (!container) return;
+            let html = '';
+            if (data.today.length) {
+                html += `<div class="completed-strip"><h4>✅ Выполнено сегодня</h4><div class="completed-task-list">`;
+                data.today.forEach(t => {
+                    html += `<div class="completed-task-badge">${escapeHtml(t.title)} <span class="badge-accuracy">${t.accuracy}%</span></div>`;
+                });
+                html += `</div></div>`;
+            }
+            if (data.yesterday.length) {
+                html += `<div class="completed-strip"><h4>🕐 Выполнено вчера</h4><div class="completed-task-list">`;
+                data.yesterday.forEach(t => {
+                    html += `<div class="completed-task-badge">${escapeHtml(t.title)} <span class="badge-accuracy">${t.accuracy}%</span></div>`;
+                });
+                html += `</div></div>`;
+            }
+            container.innerHTML = html;
+        } catch(e) { console.error(e); }
+    }
+
     // ---------- ЗАГРУЗКА ЗАДАЧ ----------
     async function loadTasks() {
         const container = document.getElementById('tasksList');
@@ -754,13 +805,12 @@
             if (res.error) throw new Error(res.error);
             document.getElementById('completeModal').classList.remove('show');
             currentCompleteTaskId = null;
-            // Очищаем прогресс по этой задаче из локального хранилища
             delete checkedMicrosteps[currentCompleteTaskId];
-            loadTasks(); loadPulse(); loadWeeks();
+            loadTasks(); loadPulse(); loadCompletedTasks();
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
 
-    // ---------- РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ ----------
+    // ---------- РЕДАКТИРОВАНИЕ (с динамическими микрошагами) ----------
     let currentEditId = null;
     function openEditModal(task) {
         currentEditId = String(task.id);
@@ -820,7 +870,7 @@
             if (res.error) throw new Error(res.error);
             document.getElementById('editModal').classList.remove('show');
             currentEditId = null;
-            loadTasks(); loadPulse();
+            loadTasks(); loadPulse(); loadCompletedTasks();
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
 
@@ -893,24 +943,11 @@
         } catch(e) { console.error(e); }
     }
 
-    // ---------- 4000 НЕДЕЛЬ ----------
-    async function loadWeeks() {
-        try {
-            const data = await apiCall({ action: 'weeks' });
-            if (data.error) throw new Error(data.error);
-            document.getElementById('weeksLived').innerHTML = `${data.livedWeeks} / ${data.weekTarget}`;
-            document.getElementById('weeksProgress').style.width = (data.livedWeeks / data.weekTarget * 100) + '%';
-            document.getElementById('weeksLeft').innerHTML = `${data.remainingWeeks} недель осталось`;
-            document.getElementById('financialForecast').innerHTML = `💰 ${data.financialForecast}`;
-            document.getElementById('tasksForecast').innerHTML = `📋 Задач можно выполнить: ~${data.tasksForecast}`;
-        } catch(e) { console.error(e); }
-    }
-
     // ---------- НАВИГАЦИЯ ----------
     const screensContainer = document.getElementById('screensContainer');
     const navBtns = document.querySelectorAll('.nav-btn');
     function switchScreen(screenId) {
-        const order = { drift: 0, add: 1, pulse: 2, get: 3 };
+        const order = { drift: 0, add: 1, pulse: 2 };
         const index = order[screenId];
         screensContainer.scrollTo({ left: screensContainer.clientWidth * index, behavior: 'smooth' });
         navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenId));
@@ -966,7 +1003,7 @@
             await loadCategories();
             await loadTasks();
             await loadPulse();
-            await loadWeeks();
+            await loadCompletedTasks();
             switchScreen('drift');
         } catch(e) {
             document.getElementById('loadingScreen').classList.add('hidden');
