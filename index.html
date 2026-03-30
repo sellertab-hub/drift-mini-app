@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Task Tracker</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -14,7 +14,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 8px;
+            padding: 0;
         }
         .loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -25,8 +25,8 @@
         .loading-screen.hidden { opacity: 0; pointer-events: none; }
         .loading-logo { max-width: 120px; height: auto; }
         .app-container {
-            width: 100%; max-width: 480px; height: 85vh;
-            background: #0c0c0c; border-radius: 28px; border: 1px solid #222;
+            width: 100%; max-width: 480px; height: 100vh;
+            background: #0c0c0c; border-radius: 0; border: none;
             display: flex; flex-direction: column; overflow: hidden; position: relative;
         }
         .nav-bar {
@@ -144,17 +144,17 @@
             display: flex; gap: 8px; margin-top: 8px; align-items: center;
         }
 
-        /* DRIFT TASK button — обводка зелёная, фон прозрачный */
+        /* DRIFT TASK button — обводка, прозрачный фон */
         .drift-task-btn {
-            flex: 1; background: transparent; border: 2px solid #36FF00;
-            border-radius: 12px; padding: 9px 12px; font-size: 12px;
-            font-weight: 800; color: #36FF00; cursor: pointer; transition: 0.2s;
+            flex: 1; background: transparent; border: 1.5px solid #36FF00;
+            border-radius: 12px; padding: 9px 12px; font-size: 12px; font-weight: 800;
+            color: #36FF00; cursor: pointer; transition: 0.2s;
             display: flex; align-items: center; justify-content: center;
             gap: 6px; letter-spacing: 0.5px; margin-top: 0; width: auto;
         }
         .drift-task-btn:hover { background: rgba(54,255,0,0.1); transform: scale(1.02); }
         .drift-task-btn:active { transform: scale(0.97); }
-        .flag-icon { width: 16px; height: 16px; flex-shrink: 0; }
+        .flag-icon { width: 16px; height: 16px; flex-shrink: 0; fill: none; stroke: #36FF00; stroke-width: 1.5; }
 
         /* Edit button — маленький, только иконка */
         .edit-icon-btn {
@@ -180,6 +180,23 @@
             letter-spacing: 2px; text-transform: uppercase;
         }
 
+        /* Прогресс дня */
+        .day-progress {
+            background: #1a1a1a; border-radius: 20px; padding: 10px;
+            margin-bottom: 16px;
+        }
+        .progress-bar {
+            background: #333; border-radius: 20px; height: 8px;
+            overflow: hidden; margin-bottom: 6px;
+        }
+        .progress-fill {
+            background: #36FF00; height: 100%; width: 0%;
+            transition: width 0.3s;
+        }
+        .progress-text {
+            font-size: 12px; color: #aaa; text-align: center;
+        }
+
         /* Модалки */
         .modal {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -195,19 +212,13 @@
             font-size: 18px; font-weight: bold; margin-bottom: 16px;
             text-align: center; color: #36FF00;
         }
-        .modal-buttons {
-            display: flex; gap: 8px; margin-top: 16px;
-            justify-content: space-between;
-        }
-        .modal-buttons button {
-            margin-bottom: 0;
-            flex: 1;
-        }
-        .modal-buttons .delete-btn {
-            background: #ff4646; color: #fff;
-        }
+        .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
+        .modal-buttons button { margin-bottom: 0; }
         .modal-buttons button:first-child {
             background: #2a2a2a; color: #aaa;
+        }
+        .modal-buttons button.delete-btn {
+            background: #ff4646; color: #fff;
         }
         /* Пульс */
         .pulse-value {
@@ -256,6 +267,10 @@
     <div class="screens-container" id="screensContainer">
         <!-- DRIFT экран -->
         <div class="screen" id="screenDrift">
+            <div class="day-progress" id="dayProgressBlock">
+                <div class="progress-bar"><div class="progress-fill" id="dayProgressFill"></div></div>
+                <div class="progress-text" id="dayProgressText">Прогресс дня: 0%</div>
+            </div>
             <div id="tasksList"></div>
         </div>
 
@@ -328,7 +343,7 @@
     </div>
 </div>
 
-<!-- Модалка редактирования задачи (с кнопкой удаления) -->
+<!-- Модалка редактирования задачи -->
 <div class="modal" id="editModal">
     <div class="modal-content">
         <div class="modal-title">✏️ Редактировать задачу</div>
@@ -350,8 +365,8 @@
         <input type="date" id="editDeadline">
         <div class="modal-buttons">
             <button id="cancelEditBtn">Отмена</button>
-            <button id="deleteEditBtn" class="delete-btn">Удалить</button>
             <button id="saveEditBtn">Сохранить</button>
+            <button id="deleteTaskBtn" class="delete-btn">Удалить</button>
         </div>
     </div>
 </div>
@@ -442,7 +457,7 @@
         };
     }
 
-    // ---------- МИКРОШАГИ ----------
+    // ---------- МИКРОШАГИ (для ADD/EDIT форм) ----------
     let microstepCount = 0;
     function renderMicrosteps(container, values = []) {
         container.innerHTML = '';
@@ -482,7 +497,7 @@
         if (steps.length > 0) {
             stepsHtml = `<ul class="microsteps-list">` +
                 steps.map((s, i) => `
-                    <li data-idx="${i}" onclick="toggleMicrostep(this)">
+                    <li data-idx="${i}" data-task-id="${task.id}" onclick="toggleMicrostep(this)">
                         <span class="micro-checkbox">
                             <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                                 <path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -517,20 +532,20 @@
             ${stepsHtml}
             <div class="task-actions">
                 <button class="drift-task-btn complete-btn" data-id="${task.id}">
-                    <svg class="flag-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="3" y="3" width="4" height="4" fill="#000"/>
-                        <rect x="7" y="3" width="4" height="4" fill="#fff"/>
-                        <rect x="11" y="3" width="4" height="4" fill="#000"/>
-                        <rect x="15" y="3" width="4" height="4" fill="#fff"/>
-                        <rect x="3" y="7" width="4" height="4" fill="#fff"/>
-                        <rect x="7" y="7" width="4" height="4" fill="#000"/>
-                        <rect x="11" y="7" width="4" height="4" fill="#fff"/>
-                        <rect x="15" y="7" width="4" height="4" fill="#000"/>
-                        <rect x="3" y="11" width="4" height="4" fill="#000"/>
-                        <rect x="7" y="11" width="4" height="4" fill="#fff"/>
-                        <rect x="11" y="11" width="4" height="4" fill="#000"/>
-                        <rect x="15" y="11" width="4" height="4" fill="#fff"/>
-                        <line x1="3" y1="3" x2="3" y2="22" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+                    <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="4" height="4" fill="none"/>
+                        <rect x="7" y="3" width="4" height="4" fill="none"/>
+                        <rect x="11" y="3" width="4" height="4" fill="none"/>
+                        <rect x="15" y="3" width="4" height="4" fill="none"/>
+                        <rect x="3" y="7" width="4" height="4" fill="none"/>
+                        <rect x="7" y="7" width="4" height="4" fill="none"/>
+                        <rect x="11" y="7" width="4" height="4" fill="none"/>
+                        <rect x="15" y="7" width="4" height="4" fill="none"/>
+                        <rect x="3" y="11" width="4" height="4" fill="none"/>
+                        <rect x="7" y="11" width="4" height="4" fill="none"/>
+                        <rect x="11" y="11" width="4" height="4" fill="none"/>
+                        <rect x="15" y="11" width="4" height="4" fill="none"/>
+                        <line x1="3" y1="3" x2="3" y2="22" stroke="currentColor" stroke-width="1.5"/>
                     </svg>
                     DRIFT TASK
                 </button>
@@ -545,12 +560,79 @@
         return card;
     }
 
-    // Переключение чекбокса микрошага (визуальное, без сохранения)
+    // Переключение чекбокса микрошага с сохранением в localStorage
     window.toggleMicrostep = function(li) {
         li.classList.toggle('checked');
+        const taskId = li.dataset.taskId;
+        const idx = li.dataset.idx;
+        if (taskId && idx !== undefined) {
+            let completed = JSON.parse(localStorage.getItem('completedMicrosteps') || '{}');
+            if (!completed[taskId]) completed[taskId] = [];
+            const stepKey = String(idx);
+            if (li.classList.contains('checked')) {
+                if (!completed[taskId].includes(stepKey)) completed[taskId].push(stepKey);
+            } else {
+                completed[taskId] = completed[taskId].filter(s => s !== stepKey);
+                if (completed[taskId].length === 0) delete completed[taskId];
+            }
+            localStorage.setItem('completedMicrosteps', JSON.stringify(completed));
+            updateDayProgress();
+        }
     };
 
-    // ---------- ЗАГРУЗКА ЗАДАЧ ----------
+    // Восстановление состояния чекбоксов из localStorage
+    function restoreMicrostepsState() {
+        const completed = JSON.parse(localStorage.getItem('completedMicrosteps') || '{}');
+        document.querySelectorAll('.microsteps-list li').forEach(li => {
+            const taskId = li.dataset.taskId;
+            const idx = li.dataset.idx;
+            if (taskId && idx !== undefined && completed[taskId] && completed[taskId].includes(String(idx))) {
+                li.classList.add('checked');
+            }
+        });
+    }
+
+    // ---------- ПРОГРЕСС ДНЯ ----------
+    async function updateDayProgress() {
+        try {
+            // Получаем список выполненных сегодня задач (с сервера)
+            const completedToday = await apiCall({ action: 'completed_today' });
+            const completedTasks = completedToday.filter(t => t.status === 'done');
+
+            // Общий вес: для каждой открытой задачи (в allTasksCache) считаем (микрошаги.length + 2)
+            let totalWeight = 0;
+            let doneWeight = 0;
+
+            // Вес выполненных задач (каждая закрытая задача даёт вес = её микрошаги.length + 2)
+            completedTasks.forEach(t => {
+                let steps = [];
+                try { steps = JSON.parse(t.microsteps || '[]'); } catch(e) {}
+                totalWeight += (steps.length + 2);
+                doneWeight += (steps.length + 2);
+            });
+
+            // Вес открытых задач: учитываем отмеченные микрошаги
+            const completedMicro = JSON.parse(localStorage.getItem('completedMicrosteps') || '{}');
+            allTasksCache.forEach(task => {
+                let steps = [];
+                try { steps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
+                const taskWeight = steps.length + 2;
+                totalWeight += taskWeight;
+                // сколько микрошагов выполнено в этой задаче
+                const completedSteps = completedMicro[task.id] ? completedMicro[task.id].length : 0;
+                doneWeight += completedSteps; // каждый микрошаг = 1
+                // сама задача ещё не закрыта, поэтому её "закрытие" не добавляем
+            });
+
+            const percent = totalWeight > 0 ? (doneWeight / totalWeight * 100) : 0;
+            document.getElementById('dayProgressFill').style.width = percent + '%';
+            document.getElementById('dayProgressText').innerHTML = `Прогресс дня: ${Math.round(percent)}% (${doneWeight}/${totalWeight} частей)`;
+        } catch(e) {
+            console.error('Ошибка обновления прогресса:', e);
+        }
+    }
+
+    // ---------- ЗАГРУЗКА ЗАДАЧ ДЛЯ DRIFT ----------
     async function loadTasks() {
         const container = document.getElementById('tasksList');
         container.innerHTML = '<div style="color:#555; text-align:center; padding:20px;">Загрузка...</div>';
@@ -570,7 +652,10 @@
                 .sort((a, b) => b.priority - a.priority);
 
             allTasksCache = [...top3, ...restTasks];
+
             renderTasks(top3, restTasks);
+            restoreMicrostepsState();
+            await updateDayProgress();
         } catch(e) {
             container.innerHTML = '<div style="color:#ff4646; text-align:center; padding:20px;">Ошибка загрузки задач</div>';
             console.error(e);
@@ -593,11 +678,7 @@
         if (top3.length > 0 && rest.length > 0) {
             const sep = document.createElement('div');
             sep.className = 'great-separator';
-            sep.innerHTML = `
-                <div class="sep-line"></div>
-                <span class="sep-label">GREAT</span>
-                <div class="sep-line"></div>
-            `;
+            sep.innerHTML = `<div class="sep-line"></div><span class="sep-label">GREAT</span><div class="sep-line"></div>`;
             container.appendChild(sep);
         }
 
@@ -605,6 +686,7 @@
             container.appendChild(createTaskCard(task));
         });
 
+        // Навешиваем обработчики
         container.querySelectorAll('.complete-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = String(btn.dataset.id);
@@ -653,13 +735,17 @@
         try {
             const res = await apiCall(params, 'POST');
             if (res.error) throw new Error(res.error);
+            // Удаляем сохранённые микрошаги для этой задачи
+            let completed = JSON.parse(localStorage.getItem('completedMicrosteps') || '{}');
+            delete completed[currentCompleteTaskId];
+            localStorage.setItem('completedMicrosteps', JSON.stringify(completed));
             document.getElementById('completeModal').classList.remove('show');
             currentCompleteTaskId = null;
             loadTasks(); loadPulse(); loadWeeks();
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
 
-    // ---------- РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ ----------
+    // ---------- РЕДАКТИРОВАНИЕ и УДАЛЕНИЕ ----------
     let currentEditId = null;
     function openEditModal(task) {
         currentEditId = String(task.id);
@@ -687,18 +773,6 @@
         document.getElementById('editModal').classList.remove('show');
         currentEditId = null;
     });
-    // Кнопка удаления
-    document.getElementById('deleteEditBtn').addEventListener('click', async () => {
-        if (!currentEditId) return;
-        if (!confirm('Удалить задачу?')) return;
-        try {
-            const res = await apiCall({ action: 'deleteTask', id: currentEditId }, 'POST');
-            if (res.error) throw new Error(res.error);
-            document.getElementById('editModal').classList.remove('show');
-            currentEditId = null;
-            loadTasks(); loadPulse();
-        } catch(e) { alert('Ошибка удаления: ' + e.message); }
-    });
     document.getElementById('saveEditBtn').addEventListener('click', async () => {
         if (!currentEditId) return;
         const microsteps = getMicrosteps(document.getElementById('editMicrostepsContainer'));
@@ -723,8 +797,19 @@
             loadTasks(); loadPulse();
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
+    document.getElementById('deleteTaskBtn').addEventListener('click', async () => {
+        if (!currentEditId) return;
+        if (!confirm('Удалить задачу?')) return;
+        try {
+            const res = await apiCall({ action: 'deleteTask', id: currentEditId }, 'POST');
+            if (res.error) throw new Error(res.error);
+            document.getElementById('editModal').classList.remove('show');
+            currentEditId = null;
+            loadTasks(); loadPulse();
+        } catch(e) { alert('Ошибка: ' + e.message); }
+    });
 
-    // ---------- ДОБАВЛЕНИЕ ----------
+    // ---------- ДОБАВЛЕНИЕ ЗАДАЧИ ----------
     document.getElementById('saveTaskBtn').addEventListener('click', async () => {
         const category = window.selectedCategory || '';
         const title = document.getElementById('taskTitle').value;
