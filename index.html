@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Task Tracker</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #000000;
@@ -19,530 +15,237 @@
             align-items: center;
             justify-content: center;
             padding: 0;
-            height: 100vh;
-            overflow: hidden;
+            margin: 0;
         }
         .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            z-index: 1000;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000000; display: flex; align-items: center;
+            justify-content: center; flex-direction: column; z-index: 1000;
             transition: opacity 0.3s;
         }
-        .loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .loading-logo {
-            max-width: 120px;
-            height: auto;
-        }
+        .loading-screen.hidden { opacity: 0; pointer-events: none; }
+        .loading-logo { max-width: 120px; height: auto; }
         .app-container {
-            width: 100%;
-            max-width: 100%;
-            height: 100vh;
+            width: 100%; height: 100vh;
             background: #0c0c0c;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
+            display: flex; flex-direction: column; overflow: hidden; position: relative;
         }
         .nav-bar {
-            display: flex;
-            background: #0c0c0c;
-            border-top: 1px solid #222;
-            padding: 8px 16px 12px;
-            gap: 8px;
-            flex-shrink: 0;
+            display: flex; background: #0c0c0c; border-top: 1px solid #222;
+            padding: 8px 16px 12px; gap: 8px;
         }
         .nav-btn {
-            flex: 1;
-            text-align: center;
-            padding: 8px 0;
-            font-size: 14px;
-            font-weight: 600;
-            background: transparent;
-            border: none;
-            color: #aaa;
-            border-radius: 40px;
-            transition: all 0.2s;
-            cursor: pointer;
+            flex: 1; text-align: center; padding: 8px 0; font-size: 14px;
+            font-weight: 600; background: transparent; border: none; color: #aaa;
+            border-radius: 40px; transition: all 0.2s; cursor: pointer;
         }
-        .nav-btn.active {
-            background: #36FF00;
-            color: #000;
-        }
+        .nav-btn.active { background: #36FF00; color: #000; }
         .screens-container {
-            flex: 1;
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
-            scrollbar-width: none;
+            flex: 1; display: flex; overflow-x: auto;
+            scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth; scrollbar-width: none;
         }
-        .screens-container::-webkit-scrollbar {
-            display: none;
-        }
+        .screens-container::-webkit-scrollbar { display: none; }
         .screen {
-            flex: 0 0 100%;
-            scroll-snap-align: start;
-            padding: 16px;
-            overflow-y: auto;
-            height: 100%;
+            flex: 0 0 100%; scroll-snap-align: start;
+            padding: 16px; overflow-y: auto; height: 100%;
         }
-        /* Кастомные селекты */
-        .custom-select {
-            position: relative;
-            width: 100%;
-            margin-bottom: 12px;
-        }
-        .select-button {
-            width: 100%;
-            padding: 12px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 16px;
-            font-size: 16px;
-            color: #fff;
-            text-align: left;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: border 0.2s;
-        }
-        .select-button .arrow {
-            width: 16px;
-            height: 16px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aaaaaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: center;
-            transition: transform 0.2s;
-        }
-        .select-button.open .arrow {
-            transform: rotate(180deg);
-        }
-        .select-dropdown {
-            position: absolute;
-            top: calc(100% + 4px);
-            left: 0;
-            right: 0;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 16px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 20;
-            display: none;
-        }
-        .select-dropdown.show {
-            display: block;
-        }
-        .select-option {
-            padding: 12px;
-            cursor: pointer;
-            color: #fff;
-            border-bottom: 1px solid #2a2a2a;
-        }
-        .select-option:last-child {
-            border-bottom: none;
-        }
-        .select-option:hover {
-            background: #333;
-        }
-        .select-option.selected {
-            background: #36FF00;
-            color: #000;
-        }
-        /* Общие элементы */
-        input, textarea {
-            width: 100%;
-            margin-bottom: 12px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 16px;
-            padding: 12px;
-            color: #fff;
-            font-size: 16px;
-            outline: none;
-        }
-        input:focus, textarea:focus {
-            border-color: #36FF00;
-        }
-        .slider-container {
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-        }
-        .slider-container label {
-            flex: 1;
-            font-size: 14px;
-            color: #ccc;
-        }
-        .slider-container input {
-            flex: 3;
-            margin: 0 12px 0 0;
-        }
-        .slider-value {
-            background: #36FF00;
-            color: #000;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            min-width: 45px;
-            text-align: center;
-        }
-        button {
-            background: #36FF00;
-            border: none;
-            border-radius: 60px;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #000;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-            margin-top: 8px;
-        }
-        button:disabled {
-            background: #2a2a2a;
-            color: #666;
-            cursor: not-allowed;
-        }
-
-        /* Progress bar */
+        /* Прогресс дня */
         .progress-day-container {
             margin-bottom: 16px;
             background: #1a1a1a;
+            border-radius: 20px;
             padding: 12px;
-            border-radius: 16px;
-            border: 1px solid #333;
         }
         .progress-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: #aaa;
-            margin-bottom: 8px;
+            display: flex; justify-content: space-between; font-size: 12px; color: #aaa; margin-bottom: 6px;
         }
         .progress-bar-bg {
-            background: #333;
-            border-radius: 20px;
-            height: 8px;
-            overflow: hidden;
+            background: #333; border-radius: 20px; height: 8px; overflow: hidden;
         }
         .progress-fill {
-            background: #36FF00;
-            width: 0%;
-            height: 100%;
-            border-radius: 20px;
-            transition: width 0.2s ease;
+            background: #36FF00; width: 0%; height: 100%; border-radius: 20px; transition: width 0.2s;
         }
+        /* Кастомные селекты */
+        .custom-select { position: relative; width: 100%; margin-bottom: 12px; }
+        .select-button {
+            width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #333;
+            border-radius: 16px; font-size: 16px; color: #fff; text-align: left;
+            cursor: pointer; display: flex; justify-content: space-between;
+            align-items: center; transition: border 0.2s;
+        }
+        .select-button .arrow {
+            width: 16px; height: 16px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aaaaaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: center; transition: transform 0.2s;
+        }
+        .select-button.open .arrow { transform: rotate(180deg); }
+        .select-dropdown {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+            background: #1a1a1a; border: 1px solid #333; border-radius: 16px;
+            max-height: 200px; overflow-y: auto; z-index: 20; display: none;
+        }
+        .select-dropdown.show { display: block; }
+        .select-option {
+            padding: 12px; cursor: pointer; color: #fff;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .select-option:last-child { border-bottom: none; }
+        .select-option:hover { background: #333; }
+        .select-option.selected { background: #36FF00; color: #000; }
+        /* Общие элементы */
+        input, textarea {
+            width: 100%; margin-bottom: 12px; background: #1a1a1a;
+            border: 1px solid #333; border-radius: 16px; padding: 12px;
+            color: #fff; font-size: 16px; outline: none;
+        }
+        input:focus, textarea:focus { border-color: #36FF00; }
+        .slider-container {
+            margin-bottom: 20px; display: flex; align-items: center;
+            justify-content: space-between; flex-wrap: wrap;
+        }
+        .slider-container label { flex: 1; font-size: 14px; color: #ccc; }
+        .slider-container input { flex: 3; margin: 0 12px 0 0; }
+        .slider-value {
+            background: #36FF00; color: #000; padding: 4px 10px;
+            border-radius: 20px; font-size: 14px; font-weight: bold;
+            min-width: 45px; text-align: center;
+        }
+        button {
+            background: #36FF00; border: none; border-radius: 60px;
+            padding: 14px; font-size: 16px; font-weight: 600; color: #000;
+            cursor: pointer; transition: 0.2s; width: 100%; margin-top: 8px;
+        }
+        button:disabled { background: #2a2a2a; color: #666; cursor: not-allowed; }
 
-        /* Task cards */
+        /* ====== TASK CARDS ====== */
         .task-card {
-            background: #1a1a1a;
-            border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 12px;
-            border: 1px solid #2a2a2a;
+            background: #1a1a1a; border-radius: 16px; padding: 12px;
+            margin-bottom: 12px; border: 1px solid #2a2a2a;
         }
         .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 4px;
+            display: flex; justify-content: space-between;
+            align-items: flex-start; margin-bottom: 4px;
         }
-        .task-title {
-            font-weight: 700;
-            font-size: 15px;
-            flex: 1;
-            line-height: 1.3;
-        }
+        .task-title { font-weight: 700; font-size: 15px; flex: 1; line-height: 1.3; }
         .task-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 6px;
-            flex-wrap: wrap;
+            display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
         }
-        .task-category {
-            font-size: 11px;
-            color: #36FF00;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .task-priority {
-            font-size: 11px;
-            color: #FFDD21;
-            font-weight: 600;
-        }
+        .task-category { font-size: 11px; color: #36FF00; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .task-priority { font-size: 11px; color: #FFDD21; font-weight: 600; }
+
+        /* Микрошаги как список с чекбоксами */
         .microsteps-list {
-            list-style: none;
-            margin: 8px 0 10px 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            list-style: none; margin: 8px 0 10px 0; padding: 0;
+            display: flex; flex-direction: column; gap: 4px;
         }
         .microsteps-list li {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: #aaa;
-            cursor: pointer;
-            user-select: none;
-            transition: color 0.2s;
+            display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa;
+            cursor: pointer; user-select: none; transition: color 0.2s;
         }
-        .microsteps-list li.checked {
-            color: #555;
-            text-decoration: line-through;
-        }
+        .microsteps-list li.checked { color: #555; text-decoration: line-through; }
         .micro-checkbox {
-            width: 16px;
-            height: 16px;
-            min-width: 16px;
-            border-radius: 4px;
-            border: 1.5px solid #555;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            background: transparent;
+            width: 16px; height: 16px; min-width: 16px; border-radius: 4px;
+            border: 1.5px solid #555; display: flex; align-items: center;
+            justify-content: center; transition: all 0.2s; background: transparent;
             flex-shrink: 0;
         }
         .microsteps-list li.checked .micro-checkbox {
-            background: #36FF00;
-            border-color: #36FF00;
+            background: #36FF00; border-color: #36FF00;
         }
-        .micro-checkbox svg {
-            display: none;
-        }
-        .microsteps-list li.checked .micro-checkbox svg {
-            display: block;
+        .micro-checkbox svg { display: none; }
+        .microsteps-list li.checked .micro-checkbox svg { display: block; }
+
+        /* Кнопки задачи */
+        .task-actions {
+            display: flex; gap: 8px; margin-top: 8px; align-items: center;
         }
 
-        .task-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-            align-items: center;
-        }
+        /* DRIFT TASK button — зелёная обводка, без заливки */
         .drift-task-btn {
-            flex: 1;
-            background: transparent;
-            border: 2px solid #36FF00;
-            border-radius: 12px;
-            padding: 9px 12px;
-            font-size: 12px;
-            font-weight: 800;
-            color: #36FF00;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            letter-spacing: 0.5px;
-            margin-top: 0;
-            width: auto;
+            flex: 1; position: relative; overflow: hidden;
+            background: transparent; border: 2px solid #36FF00; border-radius: 12px;
+            padding: 9px 12px; font-size: 12px; font-weight: 800;
+            color: #36FF00; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; letter-spacing: 0.5px; margin-top: 0; width: auto;
         }
-        .drift-task-btn:hover {
-            background: rgba(54,255,0,0.1);
-            transform: scale(1.02);
-        }
-        .flag-icon {
-            width: 16px;
-            height: 16px;
-            flex-shrink: 0;
-        }
+        .drift-task-btn:hover { background: rgba(54,255,0,0.1); transform: scale(1.02); }
+        .drift-task-btn:active { transform: scale(0.97); }
+        .flag-icon { width: 16px; height: 16px; flex-shrink: 0; filter: invert(0.6) sepia(1) saturate(5) hue-rotate(80deg); }
+
+        /* Edit button — маленький, только иконка */
         .edit-icon-btn {
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
-            padding: 0;
-            background: #252535;
-            border: 1px solid #3a3a5a;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 0;
-            flex-shrink: 0;
+            width: 36px; height: 36px; min-width: 36px; padding: 0;
+            background: #252535; border: 1px solid #3a3a5a; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; margin-top: 0; flex-shrink: 0;
             color: #7a8fff;
         }
-        .edit-icon-btn:hover {
-            background: #2e2e50;
-            border-color: #5a6aff;
-        }
-        .edit-icon-btn svg {
-            width: 15px;
-            height: 15px;
-        }
+        .edit-icon-btn:hover { background: #2e2e50; border-color: #5a6aff; }
+        .edit-icon-btn svg { width: 15px; height: 15px; }
 
+        /* ====== GREAT SEPARATOR ====== */
         .great-separator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            display: flex; align-items: center; gap: 10px;
             margin: 4px 0 16px 0;
         }
         .great-separator .sep-line {
-            flex: 1;
-            height: 1px;
-            background: #333;
+            flex: 1; height: 1px; background: #333;
         }
         .great-separator .sep-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: #555;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+            font-size: 10px; font-weight: 700; color: #555;
+            letter-spacing: 2px; text-transform: uppercase;
         }
 
-        /* Modals */
+        /* Модалки */
         .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.85);
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
             z-index: 1000;
         }
-        .modal.show {
-            display: flex;
-        }
+        .modal.show { display: flex; }
         .modal-content {
-            background: #0c0c0c;
-            border: 1.5px solid #36FF00;
-            border-radius: 28px;
-            padding: 20px;
-            width: 90%;
-            max-width: 400px;
-            max-height: 85vh;
-            overflow-y: auto;
+            background: #0c0c0c; border: 1.5px solid #36FF00; border-radius: 28px;
+            padding: 20px; width: 90%; max-width: 400px; max-height: 85vh; overflow-y: auto;
         }
         .modal-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 16px;
-            text-align: center;
-            color: #36FF00;
+            font-size: 18px; font-weight: bold; margin-bottom: 16px;
+            text-align: center; color: #36FF00;
         }
-        .modal-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 16px;
-        }
-        .modal-buttons button {
-            margin-bottom: 0;
-        }
+        .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
+        .modal-buttons button { margin-bottom: 0; }
         .modal-buttons button:first-child {
-            background: #2a2a2a;
-            color: #aaa;
+            background: #2a2a2a; color: #aaa;
         }
-        .modal-buttons button.delete-btn {
-            background: #ff4646;
-            color: #fff;
-        }
-
-        /* Pulse */
+        .delete-btn { background: #ff4646; color: #fff; margin-top: 8px; }
+        /* Пульс */
         .pulse-value {
-            font-size: 64px;
-            font-weight: bold;
-            text-align: center;
-            margin: 20px 0;
-            color: #36FF00;
+            font-size: 64px; font-weight: bold; text-align: center;
+            margin: 20px 0; color: #36FF00;
         }
         .recommendation-card {
-            background: #1a1a1a;
-            border-radius: 16px;
-            padding: 16px;
-            margin: 16px 0;
-            border-left: 4px solid #36FF00;
+            background: #1a1a1a; border-radius: 16px; padding: 16px;
+            margin: 16px 0; border-left: 4px solid #36FF00;
         }
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-        .weeks-counter {
-            text-align: center;
-            font-size: 48px;
-            font-weight: bold;
-            margin: 20px 0;
-        }
-        .progress-bar {
-            background: #333;
-            border-radius: 20px;
-            height: 12px;
-            overflow: hidden;
-            margin: 16px 0;
-        }
-        .progress-fill {
-            background: #36FF00;
-            height: 100%;
-            width: 0%;
-        }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .weeks-counter { text-align: center; font-size: 48px; font-weight: bold; margin: 20px 0; }
+        .progress-bar { background: #333; border-radius: 20px; height: 12px; overflow: hidden; margin: 16px 0; }
+        .progress-fill { background: #36FF00; height: 100%; width: 0%; }
         .connection-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.95);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            display: none; align-items: center; justify-content: center; z-index: 2000;
         }
-        .connection-overlay.show {
-            display: flex;
-        }
+        .connection-overlay.show { display: flex; }
         .connection-card {
-            background: #0c0c0c;
-            border: 1px solid #36FF00;
-            border-radius: 28px;
-            padding: 20px;
-            width: 90%;
-            max-width: 400px;
+            background: #0c0c0c; border: 1px solid #36FF00;
+            border-radius: 28px; padding: 20px; width: 90%; max-width: 400px;
         }
-        .hidden {
-            display: none;
-        }
-        .status {
-            margin-top: 8px;
-            text-align: center;
-            padding: 8px;
-            border-radius: 16px;
-        }
-        .status.success {
-            background: rgba(54,255,0,0.2);
-            color: #36FF00;
-        }
-        .status.error {
-            background: rgba(255,70,70,0.2);
-            color: #ff4646;
-        }
-        input[type="date"] {
-            color-scheme: dark;
-        }
+        .hidden { display: none; }
+        .status { margin-top: 8px; text-align: center; padding: 8px; border-radius: 16px; }
+        .status.success { background: rgba(54,255,0,0.2); color: #36FF00; }
+        .status.error { background: rgba(255,70,70,0.2); color: #ff4646; }
+        input[type="date"] { color-scheme: dark; }
     </style>
 </head>
 <body>
@@ -563,13 +266,13 @@
     <div class="screens-container" id="screensContainer">
         <!-- DRIFT экран -->
         <div class="screen" id="screenDrift">
-            <div id="progressContainer" class="progress-day-container">
+            <div class="progress-day-container" id="progressDayContainer">
                 <div class="progress-header">
                     <span>Прогресс дня</span>
                     <span id="progressText">0 / 0</span>
                 </div>
                 <div class="progress-bar-bg">
-                    <div id="progressFill" class="progress-fill" style="width: 0%;"></div>
+                    <div class="progress-fill" id="progressFill"></div>
                 </div>
             </div>
             <div id="tasksList"></div>
@@ -667,8 +370,8 @@
         <div class="modal-buttons">
             <button id="cancelEditBtn">Отмена</button>
             <button id="saveEditBtn">Сохранить</button>
-            <button id="deleteTaskBtn" class="delete-btn">Удалить</button>
         </div>
+        <button id="deleteTaskBtn" class="delete-btn">Удалить задачу</button>
     </div>
 </div>
 
@@ -677,14 +380,16 @@
     const APP_URL_STORAGE_KEY = 'taskTracker_appUrl';
     let cachedAppUrl = null;
     let categoriesList = [];
-    let allTasksCache = []; // все открытые задачи
-    let checkedMicrosteps = {}; // { taskId: [index1, index2] }
+    // Глобальные данные
+    let allTasksCache = [];      // все открытые задачи (для lookup)
+    let top3Tasks = [];          // только топ-3 (для прогресса)
+    let restTasks = [];          // остальные
+    let checkedMicrosteps = {};  // { taskId: [index1, index2] } – только для задач из top3
 
     function normalizeUrl(url) {
         if (!url) return '';
         let u = url.trim();
-        u = u.split('#')[0];
-        u = u.split('?')[0];
+        u = u.split('#')[0]; u = u.split('?')[0];
         u = u.replace(/\/+$/, '');
         return u;
     }
@@ -787,44 +492,43 @@
         return Array.from(container.querySelectorAll('.microstep')).map(i => i.value).filter(v => v.trim() !== '');
     }
 
-    // ---------- РАСЧЁТ ПРОГРЕССА ----------
-    function calculateMaxWeight(tasks) {
-        let total = 0;
-        tasks.forEach(task => {
-            let steps = [];
-            try { steps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
-            total += 2 + steps.length;
-        });
-        return total;
+    // ---------- ВЕС ЗАДАЧИ ДЛЯ ПРОГРЕССА ----------
+    function getTaskWeight(task) {
+        let steps = [];
+        try { steps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
+        return 2 + steps.length; // задача + микрошаги
     }
 
-    function calculateCurrentWeight(tasks, checked) {
-        let total = 0;
-        tasks.forEach(task => {
-            let steps = [];
-            try { steps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
-            // Задача ещё не выполнена? Для прогресса: задача даёт вес, только если выполнена (через DRIFT TASK)
-            // Но в прогресс дня включаем только открытые задачи. Если задача выполнена — она не должна быть в allTasksCache.
-            // Поэтому здесь считаем, что все задачи в allTasksCache — открытые. Для каждой:
-            // - 2 за задачу (ещё не даём, только когда выполнена)
-            // - 1 за каждый отмеченный микрошаг
-            // Выполненная задача уже не в списке открытых, поэтому не добавляем 2 за неё.
-            const checkedIdx = checked[task.id] || [];
-            total += checkedIdx.length;
-        });
-        return total;
-    }
-
-    function updateProgressBar() {
-        const maxWeight = calculateMaxWeight(allTasksCache);
-        const currentWeight = calculateCurrentWeight(allTasksCache, checkedMicrosteps);
-        const percent = maxWeight === 0 ? 0 : (currentWeight / maxWeight) * 100;
+    // ---------- РАСЧЁТ ПРОГРЕССА (только по top3) ----------
+    function calculateProgress() {
+        if (!top3Tasks.length) {
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressText').innerText = '0 / 0';
+            return;
+        }
+        let totalWeight = 0;
+        let currentWeight = 0;
+        for (let task of top3Tasks) {
+            const weight = getTaskWeight(task);
+            totalWeight += weight;
+            // если задача выполнена (статус done) – добавляем весь вес
+            if (task.status === 'done') {
+                currentWeight += weight;
+            } else {
+                // за саму задачу пока не даём вес (только когда нажмут DRIFT TASK)
+                // но по вашей логике "задача это 2 части" – они добавляются только при выполнении задачи
+                // сейчас не добавляем
+                const checked = checkedMicrosteps[task.id] || [];
+                currentWeight += checked.length; // только отмеченные микрошаги
+            }
+        }
+        const percent = totalWeight === 0 ? 0 : (currentWeight / totalWeight) * 100;
         document.getElementById('progressFill').style.width = percent + '%';
-        document.getElementById('progressText').innerText = `${currentWeight} / ${maxWeight}`;
+        document.getElementById('progressText').innerText = `${currentWeight} / ${totalWeight}`;
     }
 
     // ---------- РЕНДЕР КАРТОЧКИ ЗАДАЧИ ----------
-    function createTaskCard(task) {
+    function createTaskCard(task, isTop3 = false) {
         const card = document.createElement('div');
         card.className = 'task-card';
         card.dataset.id = String(task.id);
@@ -834,19 +538,18 @@
 
         let stepsHtml = '';
         if (steps.length > 0) {
-            const checkedIndices = checkedMicrosteps[task.id] || [];
+            const checkedIndices = (checkedMicrosteps[task.id] || []);
             stepsHtml = `<ul class="microsteps-list">` +
-                steps.map((s, i) => {
-                    const isChecked = checkedIndices.includes(i);
-                    return `
-                        <li data-step-idx="${i}" class="${isChecked ? 'checked' : ''}" onclick="toggleMicrostep('${task.id}', ${i}, this)">
-                            <span class="micro-checkbox">
-                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                                    <path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </span>
-                            <span>${escapeHtml(s)}</span>
-                        </li>`;
+                steps.map((s, idx) => {
+                    const isChecked = checkedIndices.includes(idx);
+                    return `<li data-idx="${idx}" class="${isChecked ? 'checked' : ''}" onclick="toggleMicrostep('${task.id}', ${idx})">
+                        <span class="micro-checkbox">
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                                <path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <span>${escapeHtml(s)}</span>
+                    </li>`;
                 }).join('') +
                 `</ul>`;
         }
@@ -876,19 +579,19 @@
             <div class="task-actions">
                 <button class="drift-task-btn complete-btn" data-id="${task.id}">
                     <svg class="flag-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="3" y="3" width="4" height="4" fill="#000"/>
+                        <rect x="3" y="3" width="4" height="4" fill="#36FF00"/>
                         <rect x="7" y="3" width="4" height="4" fill="#fff"/>
-                        <rect x="11" y="3" width="4" height="4" fill="#000"/>
+                        <rect x="11" y="3" width="4" height="4" fill="#36FF00"/>
                         <rect x="15" y="3" width="4" height="4" fill="#fff"/>
                         <rect x="3" y="7" width="4" height="4" fill="#fff"/>
-                        <rect x="7" y="7" width="4" height="4" fill="#000"/>
+                        <rect x="7" y="7" width="4" height="4" fill="#36FF00"/>
                         <rect x="11" y="7" width="4" height="4" fill="#fff"/>
-                        <rect x="15" y="7" width="4" height="4" fill="#000"/>
-                        <rect x="3" y="11" width="4" height="4" fill="#000"/>
+                        <rect x="15" y="7" width="4" height="4" fill="#36FF00"/>
+                        <rect x="3" y="11" width="4" height="4" fill="#36FF00"/>
                         <rect x="7" y="11" width="4" height="4" fill="#fff"/>
-                        <rect x="11" y="11" width="4" height="4" fill="#000"/>
+                        <rect x="11" y="11" width="4" height="4" fill="#36FF00"/>
                         <rect x="15" y="11" width="4" height="4" fill="#fff"/>
-                        <line x1="3" y1="3" x2="3" y2="22" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="3" y1="3" x2="3" y2="22" stroke="#36FF00" stroke-width="2" stroke-linecap="round"/>
                     </svg>
                     DRIFT TASK
                 </button>
@@ -903,84 +606,112 @@
         return card;
     }
 
-    window.toggleMicrostep = function(taskId, stepIdx, liElement) {
+    // Переключение чекбокса микрошага (только для top3 задач)
+    window.toggleMicrostep = function(taskId, idx) {
         if (!checkedMicrosteps[taskId]) checkedMicrosteps[taskId] = [];
-        const idx = checkedMicrosteps[taskId].indexOf(stepIdx);
-        if (idx === -1) {
-            checkedMicrosteps[taskId].push(stepIdx);
-            liElement.classList.add('checked');
-        } else {
-            checkedMicrosteps[taskId].splice(idx, 1);
-            liElement.classList.remove('checked');
+        const arr = checkedMicrosteps[taskId];
+        const pos = arr.indexOf(idx);
+        if (pos === -1) arr.push(idx);
+        else arr.splice(pos, 1);
+        // перерисовываем только карточку этой задачи (оптимизация)
+        const card = document.querySelector(`.task-card[data-id="${taskId}"]`);
+        if (card) {
+            const task = top3Tasks.find(t => String(t.id) === String(taskId)) || restTasks.find(t => String(t.id) === String(taskId));
+            if (task) {
+                const newCard = createTaskCard(task, top3Tasks.some(t => String(t.id) === String(taskId)));
+                card.replaceWith(newCard);
+                attachTaskHandlers(newCard);
+            }
         }
-        updateProgressBar();
+        calculateProgress();
     };
 
-    // ---------- ЗАГРУЗКА ЗАДАЧ ДЛЯ DRIFT ----------
+    function attachTaskHandlers(card) {
+        const completeBtn = card.querySelector('.complete-btn');
+        if (completeBtn) {
+            completeBtn.addEventListener('click', () => {
+                const id = String(completeBtn.dataset.id);
+                const task = allTasksCache.find(t => String(t.id) === id);
+                if (task) openCompleteModal(task);
+                else alert('Задача не найдена');
+            });
+        }
+        const editBtn = card.querySelector('.edit-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                const id = String(editBtn.dataset.id);
+                const task = allTasksCache.find(t => String(t.id) === id);
+                if (task) openEditModal(task);
+                else alert('Задача не найдена');
+            });
+        }
+    }
+
+    // ---------- ЗАГРУЗКА ЗАДАЧ ----------
     async function loadTasks() {
         const container = document.getElementById('tasksList');
         container.innerHTML = '<div style="color:#555; text-align:center; padding:20px;">Загрузка...</div>';
         try {
-            let top3 = [];
-            try {
-                const top3Data = await apiCall({ action: 'top3' });
-                if (!top3Data.error) top3 = top3Data;
-            } catch(e) {}
-
+            // Получаем топ-3
+            const top3Data = await apiCall({ action: 'top3' });
+            if (top3Data.error) throw new Error(top3Data.error);
+            top3Tasks = top3Data;
+            // Получаем все открытые задачи
             const allData = await apiCall({ action: 'tasks', status: 'open' });
             if (allData.error) throw new Error(allData.error);
+            // Остальные задачи (не в топ-3)
+            const top3Ids = new Set(top3Tasks.map(t => String(t.id)));
+            restTasks = allData.filter(t => !top3Ids.has(String(t.id))).sort((a,b) => b.priority - a.priority);
+            allTasksCache = [...top3Tasks, ...restTasks];
 
-            const top3Ids = new Set(top3.map(t => String(t.id)));
-            const restTasks = allData.filter(t => !top3Ids.has(String(t.id))).sort((a, b) => b.priority - a.priority);
+            // Сброс отмеченных микрошагов для задач, которые больше не в топ-3
+            for (let id in checkedMicrosteps) {
+                if (!top3Tasks.some(t => String(t.id) === id)) {
+                    delete checkedMicrosteps[id];
+                }
+            }
 
-            allTasksCache = [...top3, ...restTasks];
-            renderTasks(top3, restTasks);
-            updateProgressBar();
+            renderTasks();
+            calculateProgress();
         } catch(e) {
             container.innerHTML = '<div style="color:#ff4646; text-align:center; padding:20px;">Ошибка загрузки задач</div>';
             console.error(e);
         }
     }
 
-    function renderTasks(top3, rest) {
+    function renderTasks() {
         const container = document.getElementById('tasksList');
         container.innerHTML = '';
 
-        if (top3.length === 0 && rest.length === 0) {
+        if (top3Tasks.length === 0 && restTasks.length === 0) {
             container.innerHTML = '<div style="color:#555; text-align:center; padding:40px;">Нет открытых задач 🎉</div>';
             return;
         }
 
-        top3.forEach(task => {
-            container.appendChild(createTaskCard(task));
+        // Рендерим топ-3
+        top3Tasks.forEach(task => {
+            const card = createTaskCard(task, true);
+            container.appendChild(card);
+            attachTaskHandlers(card);
         });
 
-        if (top3.length > 0 && rest.length > 0) {
+        // Разделитель GREAT
+        if (top3Tasks.length > 0 && restTasks.length > 0) {
             const sep = document.createElement('div');
             sep.className = 'great-separator';
-            sep.innerHTML = `<div class="sep-line"></div><span class="sep-label">GREAT</span><div class="sep-line"></div>`;
+            sep.innerHTML = `
+                <div class="sep-line"></div>
+                <span class="sep-label">GREAT</span>
+                <div class="sep-line"></div>
+            `;
             container.appendChild(sep);
         }
 
-        rest.forEach(task => {
-            container.appendChild(createTaskCard(task));
-        });
-
-        container.querySelectorAll('.complete-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = String(btn.dataset.id);
-                const task = allTasksCache.find(t => String(t.id) === id);
-                if (task) openCompleteModal(task);
-                else alert('Задача не найдена');
-            });
-        });
-        container.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = String(btn.dataset.id);
-                const task = allTasksCache.find(t => String(t.id) === id);
-                if (task) openEditModal(task);
-                else alert('Задача не найдена');
-            });
+        // Рендерим остальные
+        restTasks.forEach(task => {
+            const card = createTaskCard(task, false);
+            container.appendChild(card);
+            attachTaskHandlers(card);
         });
     }
 
@@ -989,16 +720,11 @@
     function openCompleteModal(task) {
         currentCompleteTaskId = String(task.id);
         document.getElementById('completeTaskTitle').innerText = task.title;
-        document.getElementById('actualComplexity').value = 5;
-        document.getElementById('actualCreativity').value = 5;
-        document.getElementById('actualFocus').value = 5;
-        document.getElementById('actualCost').value = 0;
-        document.getElementById('actualStress').value = 5;
-        document.getElementById('actualComplexityVal').innerText = '5';
-        document.getElementById('actualCreativityVal').innerText = '5';
-        document.getElementById('actualFocusVal').innerText = '5';
-        document.getElementById('actualCostVal').innerText = '$0';
-        document.getElementById('actualStressVal').innerText = '5';
+        document.getElementById('actualComplexity').value = 5; document.getElementById('actualComplexityVal').innerText = '5';
+        document.getElementById('actualCreativity').value = 5; document.getElementById('actualCreativityVal').innerText = '5';
+        document.getElementById('actualFocus').value = 5;     document.getElementById('actualFocusVal').innerText = '5';
+        document.getElementById('actualCost').value = 0;      document.getElementById('actualCostVal').innerText = '$0';
+        document.getElementById('actualStress').value = 5;    document.getElementById('actualStressVal').innerText = '5';
         document.getElementById('completeModal').classList.add('show');
     }
     document.getElementById('cancelCompleteBtn').addEventListener('click', () => {
@@ -1021,16 +747,12 @@
             if (res.error) throw new Error(res.error);
             document.getElementById('completeModal').classList.remove('show');
             currentCompleteTaskId = null;
-            // Удаляем задачу из локального кеша и обновляем прогресс
-            allTasksCache = allTasksCache.filter(t => String(t.id) !== String(params.id));
-            delete checkedMicrosteps[params.id];
-            loadTasks(); // перезагрузит список и прогресс
-            loadPulse();
-            loadWeeks();
+            // Если выполненная задача была в топ-3, она исчезнет при перезагрузке
+            loadTasks(); loadPulse(); loadWeeks();
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
 
-    // ---------- РЕДАКТИРОВАНИЕ + УДАЛЕНИЕ ----------
+    // ---------- РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ ----------
     let currentEditId = null;
     function openEditModal(task) {
         currentEditId = String(task.id);
@@ -1079,8 +801,7 @@
             if (res.error) throw new Error(res.error);
             document.getElementById('editModal').classList.remove('show');
             currentEditId = null;
-            loadTasks();
-            loadPulse();
+            loadTasks(); loadPulse();
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
     document.getElementById('deleteTaskBtn').addEventListener('click', async () => {
@@ -1091,9 +812,8 @@
             if (res.error) throw new Error(res.error);
             document.getElementById('editModal').classList.remove('show');
             currentEditId = null;
-            loadTasks();
-            loadPulse();
-        } catch(e) { alert('Ошибка удаления: ' + e.message); }
+            loadTasks(); loadPulse();
+        } catch(e) { alert('Ошибка: ' + e.message); }
     });
 
     // ---------- ДОБАВЛЕНИЕ ЗАДАЧИ ----------
