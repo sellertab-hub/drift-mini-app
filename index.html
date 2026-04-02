@@ -50,7 +50,6 @@
             flex: 0 0 100%; scroll-snap-align: start;
             padding: 16px; overflow-y: auto; height: 100%;
         }
-        /* Прогресс дня */
         .progress-day-container {
             margin-bottom: 16px;
             background: #1a1a1a;
@@ -66,7 +65,6 @@
         .progress-fill {
             background: #36FF00; width: 0%; height: 100%; border-radius: 20px; transition: width 0.2s;
         }
-        /* Миниатюры выполненных задач */
         .completed-strip {
             background: #0a0a0a;
             border-radius: 16px;
@@ -93,11 +91,6 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .completed-task-badge:hover {
-            background: #2a3a2a;
         }
         .badge-accuracy {
             background: #36FF00;
@@ -107,7 +100,6 @@
             font-weight: 600;
             font-size: 10px;
         }
-        /* Три слота */
         .daily-slots {
             margin-bottom: 16px;
         }
@@ -127,7 +119,8 @@
             text-decoration: line-through;
         }
         .slot-header {
-            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;
+            display: flex; justify-content: space-between;
+            align-items: flex-start; margin-bottom: 4px;
         }
         .slot-title { font-weight: 700; font-size: 15px; flex: 1; }
         .slot-meta {
@@ -157,7 +150,6 @@
         }
         .micro-checkbox svg { display: none; }
         .slot-microsteps li.checked .micro-checkbox svg { display: block; }
-        /* DRIFT MORE кнопка */
         .drift-more-btn {
             background: transparent;
             border: 1px solid #36FF00;
@@ -167,14 +159,12 @@
             margin-top: 0;
             margin-bottom: 12px;
         }
-        /* Остальные задачи (скрыты по умолчанию) */
         .rest-tasks-container {
             display: none;
         }
         .rest-tasks-container.show {
             display: block;
         }
-        /* Общие стили для карточек (для остальных задач) */
         .task-card {
             background: #1a1a1a; border-radius: 16px; padding: 12px;
             margin-bottom: 12px; border: 1px solid #2a2a2a;
@@ -225,7 +215,6 @@
             font-size: 10px; font-weight: 700; color: #555;
             letter-spacing: 2px; text-transform: uppercase;
         }
-        /* Кастомные селекты (для ADD и модалки) */
         .custom-select {
             position: relative;
             width: 100%;
@@ -256,7 +245,6 @@
         .select-option:last-child { border-bottom: none; }
         .select-option:hover { background: #333; }
         .select-option.selected { background: #36FF00; color: #000; }
-        /* Общие элементы */
         input, textarea {
             width: 100%; margin-bottom: 12px; background: #1a1a1a;
             border: 1px solid #333; border-radius: 16px; padding: 12px;
@@ -280,7 +268,6 @@
             cursor: pointer; transition: 0.2s; width: 100%; margin-top: 8px;
         }
         button:disabled { background: #2a2a2a; color: #666; cursor: not-allowed; }
-        /* Модалки */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
         .modal.show { display: flex; }
         .modal-content {
@@ -291,15 +278,6 @@
         .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
         .modal-buttons button { margin-bottom: 0; }
         .delete-btn { background: #ff4646; color: #fff; margin-top: 8px; }
-        .detail-item {
-            margin-bottom: 8px;
-            font-size: 13px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .detail-item span:first-child { color: #aaa; }
-        .detail-item span:last-child { font-weight: 500; }
-        /* Пульс */
         .pulse-value { font-size: 64px; font-weight: bold; text-align: center; margin: 20px 0; color: #36FF00; }
         .recommendation-card { background: #1a1a1a; border-radius: 16px; padding: 16px; margin: 16px 0; border-left: 4px solid #36FF00; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
@@ -352,8 +330,9 @@
             <div id="restTasksContainer" class="rest-tasks-container"></div>
         </div>
 
-        <!-- ADD экран (без заголовка) -->
+        <!-- ADD экран -->
         <div class="screen" id="screenAdd">
+            <h3>➕ Новая задача</h3>
             <div class="custom-select" id="categoryContainer">
                 <div class="select-button" id="categoryButton">
                     <span id="categorySelectedText">Выберите категорию</span>
@@ -368,7 +347,6 @@
             <div class="slider-container"><label>Фокусировка (0-10)</label><input type="range" id="focus" min="0" max="10" step="1" value="5"><span id="focusVal" class="slider-value">5</span></div>
             <div class="slider-container"><label>Стоимость ($)</label><input type="range" id="cost" min="0" max="2000" step="50" value="0"><span id="costVal" class="slider-value">$0</span></div>
             <div class="slider-container"><label>Стресс (0-10)</label><input type="range" id="stress" min="0" max="10" step="1" value="5"><span id="stressVal" class="slider-value">5</span></div>
-            <div class="slider-container"><label>Время на задачу (мин)</label><input type="range" id="time" min="0" max="240" step="10" value="30"><span id="timeVal" class="slider-value">30</span></div>
             <input type="date" id="deadline">
             <button id="saveTaskBtn">Сохранить задачу</button>
             <div id="addStatus" class="status"></div>
@@ -393,7 +371,18 @@
     </div>
 </div>
 
-<!-- Модалка выполнения задачи (добавлен комментарий) -->
+<!-- Модалка предупреждения о триале -->
+<div class="modal" id="trialWarningModal">
+    <div class="modal-content">
+        <div class="modal-title">⚠️ Внимание</div>
+        <p id="trialWarningText"></p>
+        <div class="modal-buttons">
+            <button id="trialOkBtn">Ок</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модалки выполнения и редактирования -->
 <div class="modal" id="completeModal">
     <div class="modal-content">
         <div class="modal-title">🏁 Выполнение задачи</div>
@@ -403,8 +392,6 @@
         <div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal">5</span></div>
         <div class="slider-container"><label>Факт. стоимость ($)</label><input type="range" id="actualCost" min="0" max="2000" step="50" value="0"><span id="actualCostVal">$0</span></div>
         <div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal">5</span></div>
-        <div class="slider-container"><label>Факт. время (мин)</label><input type="range" id="actualTime" min="0" max="240" step="10" value="30"><span id="actualTimeVal">30</span></div>
-        <textarea id="actualComment" placeholder="Комментарий после выполнения (необязательно)" rows="2"></textarea>
         <div class="modal-buttons">
             <button id="cancelCompleteBtn">Отмена</button>
             <button id="confirmCompleteBtn">Завершить</button>
@@ -412,20 +399,6 @@
     </div>
 </div>
 
-<!-- Модалка просмотра выполненной задачи -->
-<div class="modal" id="viewModal">
-    <div class="modal-content">
-        <div class="modal-title">📋 Детали задачи</div>
-        <div id="viewTitle" style="font-weight: bold; margin-bottom: 12px;"></div>
-        <div id="viewDetails"></div>
-        <div id="viewComment" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #333;"></div>
-        <div class="modal-buttons">
-            <button id="closeViewBtn">Закрыть</button>
-        </div>
-    </div>
-</div>
-
-<!-- Модалка редактирования задачи -->
 <div class="modal" id="editModal">
     <div class="modal-content">
         <div class="modal-title">✏️ Редактировать задачу</div>
@@ -444,7 +417,6 @@
         <div class="slider-container"><label>Фокусировка</label><input type="range" id="editFocus" min="0" max="10" step="1"><span id="editFocusVal"></span></div>
         <div class="slider-container"><label>Стоимость ($)</label><input type="range" id="editCost" min="0" max="2000" step="50"><span id="editCostVal"></span></div>
         <div class="slider-container"><label>Стресс</label><input type="range" id="editStress" min="0" max="10" step="1"><span id="editStressVal"></span></div>
-        <div class="slider-container"><label>Время (мин)</label><input type="range" id="editTime" min="0" max="240" step="10"><span id="editTimeVal"></span></div>
         <input type="date" id="editDeadline">
         <div class="modal-buttons">
             <button id="cancelEditBtn">Отмена</button>
@@ -459,6 +431,11 @@
     const APP_URL_STORAGE_KEY = 'taskTracker_appUrl';
     let cachedAppUrl = null;
     let categoriesList = [];
+    let allTasksCache = [];
+    let checkedMicrosteps = {};
+    let dailySlots = [];
+    let restTasks = [];
+    let trialWarningShown = false;
 
     function normalizeUrl(url) {
         if (!url) return '';
@@ -485,7 +462,6 @@
         return true;
     }
 
-    // ---------- API ----------
     async function apiCall(params, method = 'GET') {
         const url = getAppUrl();
         if (!url) throw new Error('URL не настроен');
@@ -539,7 +515,7 @@
         };
     }
 
-    // ---------- МИКРОШАГИ (динамические) ----------
+    // ---------- МИКРОШАГИ ----------
     function renderMicrostepsDynamic(container, values = []) {
         container.innerHTML = '';
         let stepCount = 0;
@@ -565,7 +541,7 @@
         return Array.from(container.querySelectorAll('.microstep')).map(i => i.value).filter(v => v.trim() !== '');
     }
 
-    // ---------- ЛОКАЛЬНОЕ ХРАНЕНИЕ ДНЯ ----------
+    // ---------- ДНЕВНЫЕ СЛОТЫ ----------
     const DAILY_SLOTS_KEY = 'taskTracker_dailySlots';
     const DAILY_DATE_KEY = 'taskTracker_dailyDate';
     function getTodayString() { return new Date().toISOString().slice(0,10); }
@@ -582,13 +558,7 @@
         localStorage.setItem(DAILY_DATE_KEY, getTodayString());
     }
 
-    // ---------- ГЛОБАЛЬНЫЕ ДАННЫЕ ----------
-    let allTasksCache = [];
-    let checkedMicrosteps = {};
-    let dailySlots = [];
-    let restTasks = [];
-
-    // ---------- ПРОГРЕСС ДНЯ ----------
+    // ---------- ПРОГРЕСС ----------
     function calculateDailyProgress() {
         let points = 0;
         for (let task of allTasksCache) {
@@ -695,7 +665,6 @@
         } catch(e) { alert('Ошибка: ' + e.message); }
     };
 
-    // ---------- ОТРИСОВКА ОСТАЛЬНЫХ ЗАДАЧ ----------
     function renderRestTasks() {
         const container = document.getElementById('restTasksContainer');
         if (!restTasks.length) {
@@ -768,19 +737,16 @@
         } catch(e) { alert('Ошибка: ' + e.message); }
     };
 
-    // ---------- ВЫПОЛНЕНИЕ ЗАДАЧИ (с комментарием) ----------
+    // ---------- ВЫПОЛНЕНИЕ ----------
     let currentCompleteTaskId = null;
     function openCompleteModal(task) {
         currentCompleteTaskId = task.id;
         document.getElementById('completeTaskTitle').innerText = task.title;
-        // сброс на значения по умолчанию
         document.getElementById('actualComplexity').value = 5; document.getElementById('actualComplexityVal').innerText = '5';
         document.getElementById('actualCreativity').value = 5; document.getElementById('actualCreativityVal').innerText = '5';
         document.getElementById('actualFocus').value = 5; document.getElementById('actualFocusVal').innerText = '5';
         document.getElementById('actualCost').value = 0; document.getElementById('actualCostVal').innerText = '$0';
         document.getElementById('actualStress').value = 5; document.getElementById('actualStressVal').innerText = '5';
-        document.getElementById('actualTime').value = 30; document.getElementById('actualTimeVal').innerText = '30';
-        document.getElementById('actualComment').value = '';
         document.getElementById('completeModal').classList.add('show');
     }
     document.getElementById('cancelCompleteBtn').addEventListener('click', () => {
@@ -796,9 +762,7 @@
             actual_creativity: document.getElementById('actualCreativity').value,
             actual_focus: document.getElementById('actualFocus').value,
             actual_cost: document.getElementById('actualCost').value,
-            actual_stress: document.getElementById('actualStress').value,
-            actual_time: document.getElementById('actualTime').value,
-            actual_comment: document.getElementById('actualComment').value
+            actual_stress: document.getElementById('actualStress').value
         };
         try {
             const res = await apiCall(params, 'POST');
@@ -809,32 +773,6 @@
             saveDailySlots(dailySlots);
             await loadAllData();
         } catch(e) { alert('Ошибка: ' + e.message); }
-    });
-
-    // ---------- ПРОСМОТР ВЫПОЛНЕННОЙ ЗАДАЧИ ----------
-    function openViewModal(task) {
-        document.getElementById('viewTitle').innerText = task.title;
-        const details = document.getElementById('viewDetails');
-        details.innerHTML = `
-            <div class="detail-item"><span>Категория:</span><span>${escapeHtml(task.category)}</span></div>
-            <div class="detail-item"><span>Сложность:</span><span>${task.complexity || 0} (${task.actual_complexity ?? '—'})</span></div>
-            <div class="detail-item"><span>Творчество:</span><span>${task.creativity || 0} (${task.actual_creativity ?? '—'})</span></div>
-            <div class="detail-item"><span>Фокусировка:</span><span>${task.focus || 0} (${task.actual_focus ?? '—'})</span></div>
-            <div class="detail-item"><span>Стоимость ($):</span><span>${task.cost || 0} (${task.actual_cost ?? '—'})</span></div>
-            <div class="detail-item"><span>Стресс:</span><span>${task.stress || 0} (${task.actual_stress ?? '—'})</span></div>
-            <div class="detail-item"><span>Время (мин):</span><span>${task.time || 0} (${task.actual_time ?? '—'})</span></div>
-            <div class="detail-item"><span>Выполнено:</span><span>${task.completed ? new Date(task.completed).toLocaleString() : '—'}</span></div>
-        `;
-        const commentDiv = document.getElementById('viewComment');
-        if (task.actual_comment) {
-            commentDiv.innerHTML = `<strong>Комментарий:</strong><br>${escapeHtml(task.actual_comment)}`;
-        } else {
-            commentDiv.innerHTML = '';
-        }
-        document.getElementById('viewModal').classList.add('show');
-    }
-    document.getElementById('closeViewBtn').addEventListener('click', () => {
-        document.getElementById('viewModal').classList.remove('show');
     });
 
     // ---------- РЕДАКТИРОВАНИЕ ----------
@@ -853,14 +791,12 @@
         document.getElementById('editFocus').value = task.focus || 5;
         document.getElementById('editCost').value = task.cost || 0;
         document.getElementById('editStress').value = task.stress || 5;
-        document.getElementById('editTime').value = task.time || 30;
         document.getElementById('editDeadline').value = task.deadline ? String(task.deadline).split('T')[0] : '';
         document.getElementById('editComplexityVal').innerText = task.complexity || 5;
         document.getElementById('editCreativityVal').innerText = task.creativity || 5;
         document.getElementById('editFocusVal').innerText = task.focus || 5;
         document.getElementById('editCostVal').innerText = `$${task.cost || 0}`;
         document.getElementById('editStressVal').innerText = task.stress || 5;
-        document.getElementById('editTimeVal').innerText = task.time || 30;
         document.getElementById('editModal').classList.add('show');
     }
     document.getElementById('cancelEditBtn').addEventListener('click', () => {
@@ -881,7 +817,6 @@
             focus: document.getElementById('editFocus').value,
             cost: document.getElementById('editCost').value,
             stress: document.getElementById('editStress').value,
-            time: document.getElementById('editTime').value,
             deadline: document.getElementById('editDeadline').value
         };
         try {
@@ -960,30 +895,18 @@
                 if (completedData.today.length) {
                     html += `<div class="completed-strip"><h4>✅ Выполнено сегодня</h4><div class="completed-task-list">`;
                     completedData.today.forEach(t => {
-                        html += `<div class="completed-task-badge" data-id="${t.id}">${escapeHtml(t.title)} <span class="badge-accuracy">${t.accuracy}%</span></div>`;
+                        html += `<div class="completed-task-badge">${escapeHtml(t.title)} <span class="badge-accuracy">${t.accuracy}%</span></div>`;
                     });
                     html += `</div></div>`;
                 }
                 if (completedData.yesterday.length) {
                     html += `<div class="completed-strip"><h4>🕐 Выполнено вчера</h4><div class="completed-task-list">`;
                     completedData.yesterday.forEach(t => {
-                        html += `<div class="completed-task-badge" data-id="${t.id}">${escapeHtml(t.title)} <span class="badge-accuracy">${t.accuracy}%</span></div>`;
+                        html += `<div class="completed-task-badge">${escapeHtml(t.title)} <span class="badge-accuracy">${t.accuracy}%</span></div>`;
                     });
                     html += `</div></div>`;
                 }
                 stripContainer.innerHTML = html;
-                // привязываем обработчики клика для просмотра деталей
-                document.querySelectorAll('.completed-task-badge').forEach(badge => {
-                    badge.addEventListener('click', async () => {
-                        const id = badge.dataset.id;
-                        // нужно получить полную информацию о задаче (включая фактические оценки)
-                        const allCompleted = await apiCall({ action: 'tasks', status: 'done' });
-                        if (!allCompleted.error) {
-                            const task = allCompleted.find(t => String(t.id) === id);
-                            if (task) openViewModal(task);
-                        }
-                    });
-                });
             }
         } catch(e) {
             console.error(e);
@@ -1005,7 +928,6 @@
             focus: document.getElementById('focus').value,
             cost: document.getElementById('cost').value,
             stress: document.getElementById('stress').value,
-            time: document.getElementById('time').value,
             deadline: document.getElementById('deadline').value
         };
         try {
@@ -1016,9 +938,9 @@
             document.getElementById('categorySelectedText').textContent = 'Выберите категорию';
             window.selectedCategory = '';
             renderMicrostepsDynamic(document.getElementById('microstepsContainer'), []);
-            ['complexity','creativity','focus','stress','time'].forEach(id => {
-                document.getElementById(id).value = id === 'time' ? 30 : 5;
-                document.getElementById(id+'Val').innerText = id === 'time' ? '30' : (id === 'cost' ? '$0' : '5');
+            ['complexity','creativity','focus','stress'].forEach(id => {
+                document.getElementById(id).value = 5;
+                document.getElementById(id+'Val').innerText = '5';
             });
             document.getElementById('cost').value = 0; document.getElementById('costVal').innerText = '$0';
             document.getElementById('deadline').value = '';
@@ -1075,7 +997,6 @@
         const activeIndex = Math.round(screensContainer.scrollLeft / screensContainer.clientWidth);
         navBtns.forEach((btn, i) => btn.classList.toggle('active', i === activeIndex));
     });
-
     document.getElementById('driftMoreBtn').addEventListener('click', () => {
         const container = document.getElementById('restTasksContainer');
         container.classList.toggle('show');
@@ -1094,20 +1015,33 @@
         const slider = document.getElementById(sliderId);
         const span = document.getElementById(spanId);
         if (!slider || !span) return;
-        slider.addEventListener('input', () => {
-            span.innerText = isMoney ? `$${slider.value}` : slider.value;
-        });
+        slider.addEventListener('input', () => { span.innerText = isMoney ? `$${slider.value}` : slider.value; });
     }
-    ['complexity','creativity','focus','stress','time'].forEach(id => bindSlider(id, id+'Val'));
+    ['complexity','creativity','focus','stress'].forEach(id => bindSlider(id, id+'Val'));
     bindSlider('cost','costVal', true);
-    ['actualComplexity','actualCreativity','actualFocus','actualStress','actualTime'].forEach(id => bindSlider(id, id+'Val'));
+    ['actualComplexity','actualCreativity','actualFocus','actualStress'].forEach(id => bindSlider(id, id+'Val'));
     bindSlider('actualCost','actualCostVal', true);
-    ['editComplexity','editCreativity','editFocus','editStress','editTime'].forEach(id => bindSlider(id, id+'Val'));
+    ['editComplexity','editCreativity','editFocus','editStress'].forEach(id => bindSlider(id, id+'Val'));
     bindSlider('editCost','editCostVal', true);
-
     renderMicrostepsDynamic(document.getElementById('microstepsContainer'), []);
     renderMicrostepsDynamic(document.getElementById('editMicrostepsContainer'), []);
 
+    // ---------- ТРИАЛ ----------
+    function showTrialWarning(daysLeft) {
+        const modal = document.getElementById('trialWarningModal');
+        const text = document.getElementById('trialWarningText');
+        text.innerText = `Пробный период скоро закончится. Осталось ${daysLeft} дн. Обратитесь к разработчику, чтобы приобрести приложение навсегда.`;
+        modal.classList.add('show');
+        document.getElementById('trialOkBtn').onclick = () => modal.classList.remove('show');
+    }
+    function showTrialExpired() {
+        const loading = document.getElementById('loadingScreen');
+        loading.innerHTML = '<div style="text-align:center; padding:20px;"><h2>Пробный период закончился</h2><p>Обратитесь к разработчику, чтобы приобрести приложение навсегда.</p></div>';
+        loading.classList.remove('hidden');
+        document.getElementById('appContainer').style.display = 'none';
+    }
+
+    // ---------- ИНИЦИАЛИЗАЦИЯ ----------
     async function initApp() {
         const url = getAppUrl();
         if (!url) {
@@ -1117,6 +1051,16 @@
         }
         try {
             await testConnection(url);
+            const trialData = await apiCall({ action: 'trial_info' });
+            if (trialData.error) throw new Error(trialData.error);
+            if (trialData.isExpired) {
+                showTrialExpired();
+                return;
+            }
+            if (trialData.daysLeft <= 3 && trialData.daysLeft > 0 && !trialWarningShown) {
+                showTrialWarning(trialData.daysLeft);
+                trialWarningShown = true;
+            }
             document.getElementById('connectionOverlay').classList.remove('show');
             document.getElementById('appContainer').style.display = 'flex';
             document.getElementById('loadingScreen').classList.add('hidden');
