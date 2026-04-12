@@ -5,851 +5,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Task Tracker</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #000000;
-            color: #ffffff;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            margin: 0;
-        }
-        .loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000000; display: flex; align-items: center;
-            justify-content: center; flex-direction: column; z-index: 1000;
-            transition: opacity 0.3s;
-        }
-        .loading-screen.hidden { opacity: 0; pointer-events: none; }
-        .loading-logo { max-width: 120px; height: auto; }
-        .app-container {
-            width: 100%; height: 100vh;
-            background: #0c0c0c;
-            display: flex; flex-direction: column; overflow: hidden; position: relative;
-        }
-        .nav-bar {
-            display: flex; background: #0c0c0c; border-top: 1px solid #222;
-            padding: 8px 16px 12px; gap: 8px;
-        }
-        .nav-btn {
-            flex: 1; text-align: center; padding: 8px 0; font-size: 14px;
-            font-weight: 600; background: transparent; border: none; color: #aaa;
-            border-radius: 40px; transition: all 0.2s; cursor: pointer;
-        }
-        .nav-btn.active { background: #36FF00; color: #000; }
-        .screens-container {
-            flex: 1; display: flex; overflow-x: auto;
-            scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth; scrollbar-width: none;
-        }
-        .screens-container::-webkit-scrollbar { display: none; }
-        .screen {
-            flex: 0 0 100%; scroll-snap-align: start;
-            padding: 16px; overflow-y: auto; height: 100%;
-        }
-        /* Переключатель Fast/Long */
-        .type-switch {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-            background: #1a1a1a;
-            border-radius: 40px;
-            padding: 4px;
-        }
-        .type-btn {
-            flex: 1;
-            text-align: center;
-            padding: 10px 0;
-            font-size: 16px;
-            font-weight: 600;
-            background: transparent;
-            border: none;
-            color: #aaa;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .type-btn.active {
-            background: #36FF00;
-            color: #000;
-        }
-        /* Карточки задач */
-        .task-card {
-            background: #1a1a1a;
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border: 1px solid #2a2a2a;
-        }
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 8px;
-        }
-        .task-title {
-            font-weight: 700;
-            font-size: 16px;
-            flex: 1;
-        }
-        .task-category {
-            font-size: 12px;
-            color: #36FF00;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-        .task-priority {
-            font-size: 12px;
-            color: #FFDD21;
-            font-weight: 600;
-        }
-        .microsteps-list {
-            list-style: none;
-            margin: 12px 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .microsteps-list li {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: #aaa;
-            cursor: pointer;
-        }
-        .microsteps-list li.checked {
-            color: #555;
-            text-decoration: line-through;
-        }
-        .micro-checkbox {
-            width: 18px;
-            height: 18px;
-            min-width: 18px;
-            border-radius: 4px;
-            border: 1.5px solid #555;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-        }
-        .microsteps-list li.checked .micro-checkbox {
-            background: #36FF00;
-            border-color: #36FF00;
-        }
-        .micro-checkbox svg { display: none; }
-        .microsteps-list li.checked .micro-checkbox svg { display: block; }
-        .task-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 12px;
-        }
-        .drift-task-btn {
-            flex: 1;
-            background: transparent;
-            border: 2px solid #36FF00;
-            border-radius: 12px;
-            padding: 10px;
-            font-size: 14px;
-            font-weight: 800;
-            color: #36FF00;
-            cursor: pointer;
-            text-align: center;
-        }
-        .edit-icon-btn {
-            width: 42px;
-            background: #252535;
-            border: 1px solid #3a3a5a;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: #7a8fff;
-        }
-        .edit-icon-btn svg { width: 18px; height: 18px; }
-        /* Форма добавления */
-        .custom-select {
-            position: relative;
-            width: 100%;
-            margin-bottom: 12px;
-        }
-        .select-button {
-            width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #333;
-            border-radius: 16px; font-size: 16px; color: #fff; text-align: left;
-            cursor: pointer; display: flex; justify-content: space-between;
-            align-items: center;
-        }
-        .select-button .arrow {
-            width: 16px; height: 16px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aaaaaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: center; transition: transform 0.2s;
-        }
-        .select-button.open .arrow { transform: rotate(180deg); }
-        .select-dropdown {
-            position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-            background: #1a1a1a; border: 1px solid #333; border-radius: 16px;
-            max-height: 200px; overflow-y: auto; z-index: 20; display: none;
-        }
-        .select-dropdown.show { display: block; }
-        .select-option {
-            padding: 12px; cursor: pointer; color: #fff;
-            border-bottom: 1px solid #2a2a2a;
-        }
-        .select-option:last-child { border-bottom: none; }
-        .select-option:hover { background: #333; }
-        .select-option.selected { background: #36FF00; color: #000; }
-        input, textarea {
-            width: 100%; margin-bottom: 12px; background: #1a1a1a;
-            border: 1px solid #333; border-radius: 16px; padding: 12px;
-            color: #fff; font-size: 16px; outline: none;
-        }
-        .slider-container {
-            margin-bottom: 20px; display: flex; align-items: center;
-            justify-content: space-between;
-        }
-        .slider-container label { font-size: 14px; color: #ccc; flex: 1; }
-        .slider-container input { flex: 3; margin: 0 12px 0 0; }
-        .slider-value {
-            background: #36FF00; color: #000; padding: 4px 10px;
-            border-radius: 20px; font-size: 14px; font-weight: bold;
-            min-width: 45px; text-align: center;
-        }
-        button {
-            background: #36FF00; border: none; border-radius: 60px;
-            padding: 14px; font-size: 16px; font-weight: 600; color: #000;
-            cursor: pointer; width: 100%; margin-top: 8px;
-        }
-        .type-buttons {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        .type-buttons button {
-            flex: 1;
-            background: #1a1a1a;
-            color: #fff;
-            border: 1px solid #36FF00;
-        }
-        .type-buttons button.active {
-            background: #36FF00;
-            color: #000;
-        }
-        .modal {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-            align-items: center; justify-content: center; z-index: 1000;
-        }
-        .modal.show { display: flex; }
-        .modal-content {
-            background: #0c0c0c; border: 1.5px solid #36FF00; border-radius: 28px;
-            padding: 20px; width: 90%; max-width: 400px;
-        }
-        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 16px; text-align: center; color: #36FF00; }
-        .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
-        .delete-btn { background: #ff4646; color: #fff; margin-top: 8px; }
-        .connection-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95);
-            display: none; align-items: center; justify-content: center; z-index: 2000;
-        }
-        .connection-overlay.show { display: flex; }
-        .connection-card {
-            background: #0c0c0c; border: 1px solid #36FF00;
-            border-radius: 28px; padding: 20px; width: 90%; max-width: 400px;
-        }
-        .status { margin-top: 8px; text-align: center; padding: 8px; border-radius: 16px; }
-        .status.success { background: rgba(54,255,0,0.2); color: #36FF00; }
-        .status.error { background: rgba(255,70,70,0.2); color: #ff4646; }
-        .hidden { display: none; }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#000;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0;margin:0;}
+        .loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:1000;transition:opacity .3s;}
+        .loading-screen.hidden{opacity:0;pointer-events:none;}
+        .loading-logo{max-width:120px;height:auto;}
+        .app-container{width:100%;height:100vh;background:#0c0c0c;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+        .nav-bar{display:flex;background:#0c0c0c;border-top:1px solid #222;padding:8px 16px 12px;gap:8px;}
+        .nav-btn{flex:1;text-align:center;padding:8px 0;font-size:14px;font-weight:600;background:transparent;border:1.5px solid #36FF00;color:#36FF00;border-radius:40px;transition:.2s;cursor:pointer;}
+        .nav-btn.active{background:#36FF00;color:#000;border-color:#36FF00;}
+        .screens-container{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;scrollbar-width:none;}
+        .screens-container::-webkit-scrollbar{display:none;}
+        .screen{flex:0 0 100%;scroll-snap-align:start;padding:16px;overflow-y:auto;height:100%;}
+        .type-switch{display:flex;justify-content:center;gap:12px;margin-bottom:20px;background:#1a1a1a;border-radius:40px;padding:4px;}
+        .type-btn{flex:1;max-width:120px;text-align:center;padding:10px 0;font-size:16px;font-weight:600;background:transparent;border:1.5px solid #36FF00;color:#36FF00;border-radius:40px;cursor:pointer;transition:.2s;}
+        .type-btn.active{background:#36FF00;color:#000;border-color:#36FF00;}
+        .task-card{background:#1a1a1a;border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid #2a2a2a;}
+        .task-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+        .task-title{font-weight:700;font-size:16px;flex:1;}
+        .task-category{font-size:12px;color:#36FF00;font-weight:600;text-transform:uppercase;margin-bottom:4px;}
+        .task-priority{font-size:12px;color:#FFDD21;font-weight:600;}
+        .microsteps-list{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:6px;}
+        .microsteps-list li{display:flex;align-items:center;gap:8px;font-size:13px;color:#aaa;cursor:pointer;}
+        .microsteps-list li.checked{color:#555;text-decoration:line-through;}
+        .micro-checkbox{width:18px;height:18px;min-width:18px;border-radius:4px;border:1.5px solid #555;display:flex;align-items:center;justify-content:center;background:transparent;}
+        .microsteps-list li.checked .micro-checkbox{background:#36FF00;border-color:#36FF00;}
+        .micro-checkbox svg{display:none;}
+        .microsteps-list li.checked .micro-checkbox svg{display:block;}
+        .task-actions{display:flex;gap:12px;margin-top:12px;}
+        .drift-task-btn{flex:1;background:transparent;border:2px solid #36FF00;border-radius:12px;padding:10px;font-size:14px;font-weight:800;color:#36FF00;cursor:pointer;text-align:center;}
+        .edit-icon-btn{width:42px;background:#252535;border:1px solid #3a3a5a;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7a8fff;}
+        .edit-icon-btn svg{width:18px;height:18px;}
+        .custom-select{position:relative;width:100%;margin-bottom:12px;}
+        .select-button{width:100%;padding:12px;background:#1a1a1a;border:1px solid #333;border-radius:16px;font-size:16px;color:#fff;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+        .select-button .arrow{width:16px;height:16px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aaaaaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;transition:transform .2s;}
+        .select-button.open .arrow{transform:rotate(180deg);}
+        .select-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#1a1a1a;border:1px solid #333;border-radius:16px;max-height:200px;overflow-y:auto;z-index:20;display:none;}
+        .select-dropdown.show{display:block;}
+        .select-option{padding:12px;cursor:pointer;color:#fff;border-bottom:1px solid #2a2a2a;}
+        .select-option:last-child{border-bottom:none;}
+        .select-option:hover{background:#333;}
+        .select-option.selected{background:#36FF00;color:#000;}
+        input,textarea{width:100%;margin-bottom:12px;background:#1a1a1a;border:1px solid #333;border-radius:16px;padding:12px;color:#fff;font-size:16px;outline:none;}
+        .slider-container{margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+        .slider-container label{font-size:14px;color:#ccc;flex:1;}
+        .slider-container input{flex:3;margin:0 12px 0 0;}
+        .slider-value{background:#36FF00;color:#000;padding:4px 10px;border-radius:20px;font-size:14px;font-weight:bold;min-width:45px;text-align:center;}
+        button{background:#36FF00;border:none;border-radius:60px;padding:14px;font-size:16px;font-weight:600;color:#000;cursor:pointer;width:100%;margin-top:8px;}
+        .type-buttons{display:flex;gap:12px;margin-bottom:16px;}
+        .type-buttons button{flex:1;background:transparent;color:#36FF00;border:1.5px solid #36FF00;}
+        .type-buttons button.active{background:#36FF00;color:#000;border-color:#36FF00;}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:1000;}
+        .modal.show{display:flex;}
+        .modal-content{background:#0c0c0c;border:1.5px solid #36FF00;border-radius:28px;padding:20px;width:90%;max-width:400px;}
+        .modal-title{font-size:18px;font-weight:bold;margin-bottom:16px;text-align:center;color:#36FF00;}
+        .modal-buttons{display:flex;gap:8px;margin-top:16px;}
+        .delete-btn{background:#ff4646;color:#fff;margin-top:8px;}
+        .connection-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:2000;}
+        .connection-overlay.show{display:flex;}
+        .connection-card{background:#0c0c0c;border:1px solid #36FF00;border-radius:28px;padding:20px;width:90%;max-width:400px;}
+        .status{margin-top:8px;text-align:center;padding:8px;border-radius:16px;}
+        .status.success{background:rgba(54,255,0,0.2);color:#36FF00;}
+        .status.error{background:rgba(255,70,70,0.2);color:#ff4646;}
+        .hidden{display:none;}
     </style>
 </head>
 <body>
-<div class="loading-screen" id="loadingScreen">
-    <img src="logo.png" alt="Logo" class="loading-logo">
-    <div>Загрузка...</div>
-</div>
-<div class="connection-overlay" id="connectionOverlay">
-    <div class="connection-card">
-        <h3>Подключение к Apps Script</h3>
-        <input type="text" id="appUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
-        <button id="saveConnectionBtn">Сохранить</button>
-        <div id="connectionStatus"></div>
-    </div>
-</div>
-
-<div class="app-container" id="appContainer" style="display: none;">
-    <div class="screens-container" id="screensContainer">
-        <!-- DRIFT экран -->
-        <div class="screen" id="screenDrift">
-            <div class="type-switch">
-                <button class="type-btn" data-type="fast">FAST</button>
-                <button class="type-btn" data-type="long">LONG</button>
-            </div>
-            <div id="tasksList"></div>
-        </div>
-
-        <!-- ADD экран -->
-        <div class="screen" id="screenAdd">
-            <div class="type-buttons" id="addTypeButtons">
-                <button data-type="fast" class="active">FAST</button>
-                <button data-type="long">LONG</button>
-            </div>
-            <div class="custom-select" id="categoryContainer">
-                <div class="select-button" id="categoryButton">
-                    <span id="categorySelectedText">Выберите категорию</span>
-                    <span class="arrow"></span>
-                </div>
-                <div class="select-dropdown" id="categoryDropdown"></div>
-            </div>
-            <input type="text" id="taskTitle" placeholder="Название задачи">
-            <div id="microstepsContainer"></div>
-            <div class="slider-container"><label>Сложность (0-10)</label><input type="range" id="complexity" min="0" max="10" step="1" value="5"><span id="complexityVal" class="slider-value">5</span></div>
-            <div class="slider-container"><label>Творчество (0-10)</label><input type="range" id="creativity" min="0" max="10" step="1" value="5"><span id="creativityVal" class="slider-value">5</span></div>
-            <div class="slider-container"><label>Фокусировка (0-10)</label><input type="range" id="focus" min="0" max="10" step="1" value="5"><span id="focusVal" class="slider-value">5</span></div>
-            <div class="slider-container"><label>Стоимость ($)</label><input type="range" id="cost" min="0" max="2000" step="50" value="0"><span id="costVal" class="slider-value">$0</span></div>
-            <div class="slider-container"><label>Стресс (0-10)</label><input type="range" id="stress" min="0" max="10" step="1" value="5"><span id="stressVal" class="slider-value">5</span></div>
-            <button id="saveTaskBtn">Сохранить задачу</button>
-            <div id="addStatus" class="status"></div>
-        </div>
-    </div>
-    <div class="nav-bar">
-        <button class="nav-btn" data-screen="drift">DRIFT</button>
-        <button class="nav-btn" data-screen="add">ADD</button>
-    </div>
-</div>
-
-<!-- Модалка предупреждения о триале -->
-<div class="modal" id="trialWarningModal">
-    <div class="modal-content">
-        <div class="modal-title">⚠️ Внимание</div>
-        <p id="trialWarningText"></p>
-        <div class="modal-buttons">
-            <button id="trialOkBtn">Ок</button>
-        </div>
-    </div>
-</div>
-
-<!-- Модалка выполнения задачи -->
-<div class="modal" id="completeModal">
-    <div class="modal-content">
-        <div class="modal-title">🏁 Выполнение задачи</div>
-        <div id="completeTaskTitle" style="margin-bottom: 14px; text-align:center;"></div>
-        <div class="slider-container"><label>Факт. сложность</label><input type="range" id="actualComplexity" min="0" max="10" step="1" value="5"><span id="actualComplexityVal">5</span></div>
-        <div class="slider-container"><label>Факт. творчество</label><input type="range" id="actualCreativity" min="0" max="10" step="1" value="5"><span id="actualCreativityVal">5</span></div>
-        <div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal">5</span></div>
-        <div class="slider-container"><label>Факт. стоимость ($)</label><input type="range" id="actualCost" min="0" max="2000" step="50" value="0"><span id="actualCostVal">$0</span></div>
-        <div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal">5</span></div>
-        <div class="modal-buttons">
-            <button id="cancelCompleteBtn">Отмена</button>
-            <button id="confirmCompleteBtn">Завершить</button>
-        </div>
-    </div>
-</div>
-
-<!-- Модалка редактирования -->
-<div class="modal" id="editModal">
-    <div class="modal-content">
-        <div class="modal-title">✏️ Редактировать</div>
-        <input type="hidden" id="editTaskId">
-        <input type="text" id="editTitle" placeholder="Название">
-        <div class="custom-select" id="editCategoryContainer">
-            <div class="select-button" id="editCategoryButton">
-                <span id="editCategorySelectedText">Выберите категорию</span>
-                <span class="arrow"></span>
-            </div>
-            <div class="select-dropdown" id="editCategoryDropdown"></div>
-        </div>
-        <div id="editMicrostepsContainer"></div>
-        <div class="slider-container"><label>Сложность</label><input type="range" id="editComplexity" min="0" max="10" step="1"><span id="editComplexityVal"></span></div>
-        <div class="slider-container"><label>Творчество</label><input type="range" id="editCreativity" min="0" max="10" step="1"><span id="editCreativityVal"></span></div>
-        <div class="slider-container"><label>Фокусировка</label><input type="range" id="editFocus" min="0" max="10" step="1"><span id="editFocusVal"></span></div>
-        <div class="slider-container"><label>Стоимость ($)</label><input type="range" id="editCost" min="0" max="2000" step="50"><span id="editCostVal"></span></div>
-        <div class="slider-container"><label>Стресс</label><input type="range" id="editStress" min="0" max="10" step="1"><span id="editStressVal"></span></div>
-        <div class="modal-buttons">
-            <button id="cancelEditBtn">Отмена</button>
-            <button id="saveEditBtn">Сохранить</button>
-        </div>
-        <button id="deleteTaskBtn" class="delete-btn">Удалить</button>
-    </div>
-</div>
-
+<div class="loading-screen" id="loadingScreen"><img src="logo.png" alt="Logo" class="loading-logo"><div>Загрузка...</div></div>
+<div class="connection-overlay" id="connectionOverlay"><div class="connection-card"><h3>Подключение к Apps Script</h3><input type="text" id="appUrlInput" placeholder="https://script.google.com/macros/s/.../exec"><button id="saveConnectionBtn">Сохранить</button><div id="connectionStatus"></div></div></div>
+<div class="app-container" id="appContainer" style="display:none;"><div class="screens-container" id="screensContainer"><div class="screen" id="screenDrift"><div class="type-switch"><button class="type-btn" data-type="long">LONG</button><button class="type-btn" data-type="fast">FAST</button></div><div id="tasksList"></div></div><div class="screen" id="screenAdd"><div class="type-buttons" id="addTypeButtons"><button data-type="long" class="active">LONG</button><button data-type="fast">FAST</button></div><div class="custom-select" id="categoryContainer"><div class="select-button" id="categoryButton"><span id="categorySelectedText">Выберите категорию</span><span class="arrow"></span></div><div class="select-dropdown" id="categoryDropdown"></div></div><input type="text" id="taskTitle" placeholder="Название задачи"><div id="microstepsContainer"></div><div class="slider-container"><label>Сложность (0-10)</label><input type="range" id="complexity" min="0" max="10" step="1" value="5"><span id="complexityVal" class="slider-value">5</span></div><div class="slider-container"><label>Творчество (0-10)</label><input type="range" id="creativity" min="0" max="10" step="1" value="5"><span id="creativityVal" class="slider-value">5</span></div><div class="slider-container"><label>Фокусировка (0-10)</label><input type="range" id="focus" min="0" max="10" step="1" value="5"><span id="focusVal" class="slider-value">5</span></div><div class="slider-container"><label>Стоимость ($)</label><input type="range" id="cost" min="0" max="2000" step="50" value="0"><span id="costVal" class="slider-value">$0</span></div><div class="slider-container"><label>Стресс (0-10)</label><input type="range" id="stress" min="0" max="10" step="1" value="5"><span id="stressVal" class="slider-value">5</span></div><button id="saveTaskBtn">Сохранить задачу</button><div id="addStatus" class="status"></div></div></div><div class="nav-bar"><button class="nav-btn" data-screen="drift">DRIFT</button><button class="nav-btn" data-screen="add">ADD</button></div></div>
+<div class="modal" id="trialWarningModal"><div class="modal-content"><div class="modal-title">⚠️ Внимание</div><p id="trialWarningText"></p><div class="modal-buttons"><button id="trialOkBtn">Ок</button></div></div></div>
+<div class="modal" id="completeModal"><div class="modal-content"><div class="modal-title">🏁 Выполнение задачи</div><div id="completeTaskTitle" style="margin-bottom:14px;text-align:center;"></div><div class="slider-container"><label>Факт. сложность</label><input type="range" id="actualComplexity" min="0" max="10" step="1" value="5"><span id="actualComplexityVal">5</span></div><div class="slider-container"><label>Факт. творчество</label><input type="range" id="actualCreativity" min="0" max="10" step="1" value="5"><span id="actualCreativityVal">5</span></div><div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal">5</span></div><div class="slider-container"><label>Факт. стоимость ($)</label><input type="range" id="actualCost" min="0" max="2000" step="50" value="0"><span id="actualCostVal">$0</span></div><div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal">5</span></div><div class="modal-buttons"><button id="cancelCompleteBtn">Отмена</button><button id="confirmCompleteBtn">Завершить</button></div></div></div>
+<div class="modal" id="editModal"><div class="modal-content"><div class="modal-title">✏️ Редактировать</div><input type="hidden" id="editTaskId"><input type="text" id="editTitle" placeholder="Название"><div class="custom-select" id="editCategoryContainer"><div class="select-button" id="editCategoryButton"><span id="editCategorySelectedText">Выберите категорию</span><span class="arrow"></span></div><div class="select-dropdown" id="editCategoryDropdown"></div></div><div id="editMicrostepsContainer"></div><div class="slider-container"><label>Сложность</label><input type="range" id="editComplexity" min="0" max="10" step="1"><span id="editComplexityVal"></span></div><div class="slider-container"><label>Творчество</label><input type="range" id="editCreativity" min="0" max="10" step="1"><span id="editCreativityVal"></span></div><div class="slider-container"><label>Фокусировка</label><input type="range" id="editFocus" min="0" max="10" step="1"><span id="editFocusVal"></span></div><div class="slider-container"><label>Стоимость ($)</label><input type="range" id="editCost" min="0" max="2000" step="50"><span id="editCostVal"></span></div><div class="slider-container"><label>Стресс</label><input type="range" id="editStress" min="0" max="10" step="1"><span id="editStressVal"></span></div><div class="modal-buttons"><button id="cancelEditBtn">Отмена</button><button id="saveEditBtn">Сохранить</button></div><button id="deleteTaskBtn" class="delete-btn">Удалить</button></div></div>
 <script>
-    // ---------- ПОДКЛЮЧЕНИЕ ----------
-    const APP_URL_STORAGE_KEY = 'taskTracker_appUrl';
-    let cachedAppUrl = null;
-    let categoriesList = [];
-    let currentType = 'fast';
-    let currentTasks = [];
-    let trialWarningShown = false;
-
-    function normalizeUrl(url) {
-        if (!url) return '';
-        let u = url.trim();
-        u = u.split('#')[0]; u = u.split('?')[0];
-        u = u.replace(/\/+$/, '');
-        return u;
-    }
-    function getAppUrl() {
-        if (cachedAppUrl) return cachedAppUrl;
-        const saved = localStorage.getItem(APP_URL_STORAGE_KEY);
-        cachedAppUrl = normalizeUrl(saved);
-        return cachedAppUrl;
-    }
-    function saveAppUrl(url) {
-        const normalized = normalizeUrl(url);
-        localStorage.setItem(APP_URL_STORAGE_KEY, normalized);
-        cachedAppUrl = normalized;
-    }
-    async function testConnection(url) {
-        const res = await fetch(`${url}?action=categories`);
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        return true;
-    }
-    async function apiCall(params, method = 'GET') {
-        const url = getAppUrl();
-        if (!url) throw new Error('URL не настроен');
-        if (method === 'GET') {
-            const query = '?' + new URLSearchParams(params).toString();
-            const res = await fetch(url + query);
-            return await res.json();
-        } else {
-            const formData = new URLSearchParams(params);
-            const res = await fetch(url, { method: 'POST', body: formData });
-            return await res.json();
-        }
-    }
-
-    // ---------- КАСТОМНЫЕ СЕЛЕКТЫ ----------
-    let activeDropdown = null;
-    function closeAllDropdowns() {
-        if (activeDropdown) {
-            activeDropdown.dropdown.classList.remove('show');
-            activeDropdown.button.classList.remove('open');
-            activeDropdown = null;
-        }
-    }
-    document.addEventListener('click', closeAllDropdowns);
-    function initCustomSelect(buttonId, dropdownId, items, onSelect, selectedValue = null) {
-        const button = document.getElementById(buttonId);
-        const dropdown = document.getElementById(dropdownId);
-        if (!button || !dropdown) return;
-        button.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeAllDropdowns();
-            dropdown.classList.add('show');
-            button.classList.add('open');
-            activeDropdown = { dropdown, button };
-        });
-        function renderOptions() {
-            dropdown.innerHTML = '';
-            items.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'select-option';
-                div.textContent = item;
-                if (selectedValue === item) div.classList.add('selected');
-                div.addEventListener('click', (e) => { e.stopPropagation(); onSelect(item); closeAllDropdowns(); });
-                dropdown.appendChild(div);
-            });
-        }
-        renderOptions();
-        return { update: (newItems, newSelected) => { items = newItems; selectedValue = newSelected; renderOptions(); } };
-    }
-
-    // ---------- МИКРОШАГИ ----------
-    function renderMicrostepsDynamic(container, values = []) {
-        container.innerHTML = '';
-        let stepCount = 0;
-        function addStep(value = '') {
-            if (stepCount >= 5) return;
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.placeholder = `Микрошаг ${stepCount + 1}`;
-            input.value = value;
-            input.classList.add('microstep');
-            input.addEventListener('input', function () {
-                const steps = Array.from(container.children);
-                const idx = steps.indexOf(this);
-                if (this.value.trim() !== '' && idx === steps.length - 1 && steps.length < 5) addStep();
-            });
-            container.appendChild(input);
-            stepCount++;
-        }
-        values.forEach(v => addStep(v));
-        if (values.length === 0) addStep();
-    }
-    function getMicrosteps(container) {
-        return Array.from(container.querySelectorAll('.microstep')).map(i => i.value).filter(v => v.trim() !== '');
-    }
-
-    // ---------- ЗАГРУЗКА ЗАДАЧ ПО ТИПУ ----------
-    async function loadTasksByType(type) {
-        const container = document.getElementById('tasksList');
-        container.innerHTML = '<div style="text-align:center; padding:20px;">Загрузка...</div>';
-        try {
-            const data = await apiCall({ action: 'tasksByType', task_type: type });
-            if (data.error) throw new Error(data.error);
-            currentTasks = data;
-            renderTasks();
-        } catch(e) {
-            container.innerHTML = '<div style="color:#ff4646; text-align:center; padding:20px;">Ошибка загрузки</div>';
-            console.error(e);
-        }
-    }
-
-    function renderTasks() {
-        const container = document.getElementById('tasksList');
-        if (!currentTasks.length) {
-            container.innerHTML = '<div style="color:#555; text-align:center; padding:40px;">Нет задач</div>';
-            return;
-        }
-        container.innerHTML = '';
-        currentTasks.forEach(task => {
-            const card = createTaskCard(task);
-            container.appendChild(card);
-            attachTaskHandlers(card);
-        });
-    }
-
-    function createTaskCard(task) {
-        const card = document.createElement('div');
-        card.className = 'task-card';
-        card.dataset.id = task.id;
-        let steps = [];
-        try { steps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
-        let stepsHtml = '';
-        if (steps.length) {
-            const checked = (task.microstepsProgress || []);
-            stepsHtml = `<ul class="microsteps-list">` +
-                steps.map((s, idx) => {
-                    const isChecked = checked.includes(idx);
-                    return `<li data-idx="${idx}" class="${isChecked ? 'checked' : ''}" onclick="toggleMicrostep('${task.id}', ${idx})">
-                        <span class="micro-checkbox">
-                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.8"/></svg>
-                        </span>
-                        <span>${escapeHtml(s)}</span>
-                    </li>`;
-                }).join('') + `</ul>`;
-        }
-        card.innerHTML = `
-            <div class="task-header">
-                <span class="task-title">${escapeHtml(task.title)}</span>
-                <span class="task-priority">⭐ ${Number(task.priority || 0).toFixed(1)}</span>
-            </div>
-            <div class="task-category">${escapeHtml(task.category)}</div>
-            ${stepsHtml}
-            <div class="task-actions">
-                <button class="drift-task-btn complete-btn" data-id="${task.id}">DRIFT TASK</button>
-                <button class="edit-icon-btn edit-btn" data-id="${task.id}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-            </div>
-        `;
-        return card;
-    }
-
-    function attachTaskHandlers(card) {
-        const completeBtn = card.querySelector('.complete-btn');
-        if (completeBtn) {
-            completeBtn.addEventListener('click', () => {
-                const id = completeBtn.dataset.id;
-                const task = currentTasks.find(t => t.id === id);
-                if (task) openCompleteModal(task);
-            });
-        }
-        const editBtn = card.querySelector('.edit-btn');
-        if (editBtn) {
-            editBtn.addEventListener('click', () => {
-                const id = editBtn.dataset.id;
-                const task = currentTasks.find(t => t.id === id);
-                if (task) openEditModal(task);
-            });
-        }
-    }
-
-    window.toggleMicrostep = async function(taskId, idx) {
-        try {
-            const res = await apiCall({ action: 'toggleMicrostep', id: taskId, step_index: idx }, 'POST');
-            if (res.error) throw new Error(res.error);
-            const task = currentTasks.find(t => t.id === taskId);
-            if (task) {
-                if (!task.microstepsProgress) task.microstepsProgress = [];
-                const pos = task.microstepsProgress.indexOf(idx);
-                if (pos === -1) task.microstepsProgress.push(idx);
-                else task.microstepsProgress.splice(pos, 1);
-                renderTasks();
-            }
-        } catch(e) { alert('Ошибка: ' + e.message); }
-    };
-
-    // ---------- ВЫПОЛНЕНИЕ ----------
-    let currentCompleteTaskId = null;
-    function openCompleteModal(task) {
-        currentCompleteTaskId = task.id;
-        document.getElementById('completeTaskTitle').innerText = task.title;
-        document.getElementById('actualComplexity').value = 5; document.getElementById('actualComplexityVal').innerText = '5';
-        document.getElementById('actualCreativity').value = 5; document.getElementById('actualCreativityVal').innerText = '5';
-        document.getElementById('actualFocus').value = 5; document.getElementById('actualFocusVal').innerText = '5';
-        document.getElementById('actualCost').value = 0; document.getElementById('actualCostVal').innerText = '$0';
-        document.getElementById('actualStress').value = 5; document.getElementById('actualStressVal').innerText = '5';
-        document.getElementById('completeModal').classList.add('show');
-    }
-    document.getElementById('cancelCompleteBtn').addEventListener('click', () => {
-        document.getElementById('completeModal').classList.remove('show');
-        currentCompleteTaskId = null;
-    });
-    document.getElementById('confirmCompleteBtn').addEventListener('click', async () => {
-        if (!currentCompleteTaskId) return;
-        const params = {
-            action: 'completeTask',
-            id: currentCompleteTaskId,
-            actual_complexity: document.getElementById('actualComplexity').value,
-            actual_creativity: document.getElementById('actualCreativity').value,
-            actual_focus: document.getElementById('actualFocus').value,
-            actual_cost: document.getElementById('actualCost').value,
-            actual_stress: document.getElementById('actualStress').value
-        };
-        try {
-            const res = await apiCall(params, 'POST');
-            if (res.error) throw new Error(res.error);
-            document.getElementById('completeModal').classList.remove('show');
-            currentCompleteTaskId = null;
-            await loadTasksByType(currentType);
-        } catch(e) { alert('Ошибка: ' + e.message); }
-    });
-
-    // ---------- РЕДАКТИРОВАНИЕ ----------
-    let currentEditId = null;
-    function openEditModal(task) {
-        currentEditId = task.id;
-        document.getElementById('editTaskId').value = task.id;
-        document.getElementById('editTitle').value = task.title;
-        document.getElementById('editCategorySelectedText').textContent = task.category;
-        window.editSelectedCategory = task.category;
-        let microsteps = [];
-        try { microsteps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
-        renderMicrostepsDynamic(document.getElementById('editMicrostepsContainer'), microsteps);
-        document.getElementById('editComplexity').value = task.complexity || 5;
-        document.getElementById('editCreativity').value = task.creativity || 5;
-        document.getElementById('editFocus').value = task.focus || 5;
-        document.getElementById('editCost').value = task.cost || 0;
-        document.getElementById('editStress').value = task.stress || 5;
-        document.getElementById('editComplexityVal').innerText = task.complexity || 5;
-        document.getElementById('editCreativityVal').innerText = task.creativity || 5;
-        document.getElementById('editFocusVal').innerText = task.focus || 5;
-        document.getElementById('editCostVal').innerText = `$${task.cost || 0}`;
-        document.getElementById('editStressVal').innerText = task.stress || 5;
-        document.getElementById('editModal').classList.add('show');
-    }
-    document.getElementById('cancelEditBtn').addEventListener('click', () => {
-        document.getElementById('editModal').classList.remove('show');
-        currentEditId = null;
-    });
-    document.getElementById('saveEditBtn').addEventListener('click', async () => {
-        if (!currentEditId) return;
-        const microsteps = getMicrosteps(document.getElementById('editMicrostepsContainer'));
-        const params = {
-            action: 'updateTask',
-            id: currentEditId,
-            title: document.getElementById('editTitle').value,
-            category: window.editSelectedCategory || '',
-            microsteps: JSON.stringify(microsteps),
-            complexity: document.getElementById('editComplexity').value,
-            creativity: document.getElementById('editCreativity').value,
-            focus: document.getElementById('editFocus').value,
-            cost: document.getElementById('editCost').value,
-            stress: document.getElementById('editStress').value
-        };
-        try {
-            const res = await apiCall(params, 'POST');
-            if (res.error) throw new Error(res.error);
-            document.getElementById('editModal').classList.remove('show');
-            currentEditId = null;
-            await loadTasksByType(currentType);
-        } catch(e) { alert('Ошибка: ' + e.message); }
-    });
-    document.getElementById('deleteTaskBtn').addEventListener('click', async () => {
-        if (!currentEditId) return;
-        if (!confirm('Удалить задачу?')) return;
-        try {
-            const res = await apiCall({ action: 'deleteTask', id: currentEditId }, 'POST');
-            if (res.error) throw new Error(res.error);
-            document.getElementById('editModal').classList.remove('show');
-            currentEditId = null;
-            await loadTasksByType(currentType);
-        } catch(e) { alert('Ошибка: ' + e.message); }
-    });
-
-    // ---------- ДОБАВЛЕНИЕ ----------
-    let selectedAddType = 'fast';
-    document.querySelectorAll('#addTypeButtons button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('#addTypeButtons button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            selectedAddType = btn.dataset.type;
-        });
-    });
-    document.getElementById('saveTaskBtn').addEventListener('click', async () => {
-        const category = window.selectedCategory || '';
-        const title = document.getElementById('taskTitle').value;
-        if (!category || !title) { showStatus('addStatus', 'Заполните категорию и название', 'error'); return; }
-        const microsteps = getMicrosteps(document.getElementById('microstepsContainer'));
-        const params = {
-            action: 'addTask',
-            category, title,
-            microsteps: JSON.stringify(microsteps),
-            complexity: document.getElementById('complexity').value,
-            creativity: document.getElementById('creativity').value,
-            focus: document.getElementById('focus').value,
-            cost: document.getElementById('cost').value,
-            stress: document.getElementById('stress').value,
-            task_type: selectedAddType
-        };
-        try {
-            const res = await apiCall(params, 'POST');
-            if (res.error) throw new Error(res.error);
-            showStatus('addStatus', '✅ Задача добавлена', 'success');
-            document.getElementById('taskTitle').value = '';
-            document.getElementById('categorySelectedText').textContent = 'Выберите категорию';
-            window.selectedCategory = '';
-            renderMicrostepsDynamic(document.getElementById('microstepsContainer'), []);
-            ['complexity','creativity','focus','stress'].forEach(id => {
-                document.getElementById(id).value = 5;
-                document.getElementById(id+'Val').innerText = '5';
-            });
-            document.getElementById('cost').value = 0; document.getElementById('costVal').innerText = '$0';
-            await loadTasksByType(currentType);
-        } catch(e) { showStatus('addStatus', 'Ошибка: ' + e.message, 'error'); }
-    });
-
-    // ---------- КАТЕГОРИИ ----------
-    async function loadCategories() {
-        try {
-            const data = await apiCall({ action: 'categories' });
-            if (data.error) throw new Error(data.error);
-            categoriesList = data;
-            initCustomSelect('categoryButton', 'categoryDropdown', categoriesList, (value) => {
-                document.getElementById('categorySelectedText').textContent = value;
-                window.selectedCategory = value;
-            });
-            initCustomSelect('editCategoryButton', 'editCategoryDropdown', categoriesList, (value) => {
-                document.getElementById('editCategorySelectedText').textContent = value;
-                window.editSelectedCategory = value;
-            });
-        } catch(e) { console.error(e); }
-    }
-
-    // ---------- НАВИГАЦИЯ ----------
-    const screensContainer = document.getElementById('screensContainer');
-    const navBtns = document.querySelectorAll('.nav-btn');
-    function switchScreen(screenId) {
-        const order = { drift: 0, add: 1 };
-        const index = order[screenId];
-        screensContainer.scrollTo({ left: screensContainer.clientWidth * index, behavior: 'smooth' });
-        navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenId));
-    }
-    navBtns.forEach(btn => btn.addEventListener('click', () => switchScreen(btn.dataset.screen)));
-    screensContainer.addEventListener('scroll', () => {
-        const activeIndex = Math.round(screensContainer.scrollLeft / screensContainer.clientWidth);
-        navBtns.forEach((btn, i) => btn.classList.toggle('active', i === activeIndex));
-    });
-
-    const typeBtns = document.querySelectorAll('.type-btn');
-    typeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            typeBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentType = btn.dataset.type;
-            loadTasksByType(currentType);
-        });
-    });
-
-    function showStatus(elementId, message, type) {
-        const el = document.getElementById(elementId);
-        el.textContent = message;
-        el.className = `status ${type}`;
-        setTimeout(() => { if (el) el.className = 'status'; }, 3000);
-    }
-    function escapeHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function bindSlider(sliderId, spanId, isMoney = false) {
-        const slider = document.getElementById(sliderId);
-        const span = document.getElementById(spanId);
-        slider.addEventListener('input', () => { span.innerText = isMoney ? `$${slider.value}` : slider.value; });
-    }
-    ['complexity','creativity','focus','stress'].forEach(id => bindSlider(id, id+'Val'));
-    bindSlider('cost','costVal', true);
-    ['actualComplexity','actualCreativity','actualFocus','actualStress'].forEach(id => bindSlider(id, id+'Val'));
-    bindSlider('actualCost','actualCostVal', true);
-    ['editComplexity','editCreativity','editFocus','editStress'].forEach(id => bindSlider(id, id+'Val'));
-    bindSlider('editCost','editCostVal', true);
-    renderMicrostepsDynamic(document.getElementById('microstepsContainer'), []);
-    renderMicrostepsDynamic(document.getElementById('editMicrostepsContainer'), []);
-
-    // ---------- ТРИАЛ ----------
-    function showTrialWarning(daysLeft) {
-        const modal = document.getElementById('trialWarningModal');
-        const text = document.getElementById('trialWarningText');
-        text.innerText = `Пробный период скоро закончится. Осталось ${daysLeft} дн. Обратитесь к разработчику, чтобы приобрести приложение навсегда.`;
-        modal.classList.add('show');
-        document.getElementById('trialOkBtn').onclick = () => modal.classList.remove('show');
-    }
-    function showTrialExpired() {
-        const loading = document.getElementById('loadingScreen');
-        loading.innerHTML = '<div style="text-align:center; padding:20px;"><h2>Пробный период закончился</h2><p>Обратитесь к разработчику, чтобы приобрести приложение навсегда.</p></div>';
-        loading.classList.remove('hidden');
-        document.getElementById('appContainer').style.display = 'none';
-    }
-
-    // ---------- ИНИЦИАЛИЗАЦИЯ ----------
-    async function initApp() {
-        const url = getAppUrl();
-        if (!url) {
-            document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('connectionOverlay').classList.add('show');
-            return;
-        }
-        try {
-            await testConnection(url);
-            const trialData = await apiCall({ action: 'trial_info' });
-            if (trialData.error) throw new Error(trialData.error);
-            if (trialData.isExpired) {
-                showTrialExpired();
-                return;
-            }
-            if (trialData.daysLeft <= 3 && trialData.daysLeft > 0 && !trialWarningShown) {
-                showTrialWarning(trialData.daysLeft);
-                trialWarningShown = true;
-            }
-            document.getElementById('connectionOverlay').classList.remove('show');
-            document.getElementById('appContainer').style.display = 'flex';
-            document.getElementById('loadingScreen').classList.add('hidden');
-            await loadCategories();
-            await loadTasksByType('fast');
-            switchScreen('drift');
-        } catch(e) {
-            document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('connectionOverlay').classList.add('show');
-            document.getElementById('connectionStatus').innerText = 'Ошибка: ' + e.message;
-        }
-    }
-
-    document.getElementById('saveConnectionBtn').addEventListener('click', async () => {
-        const url = document.getElementById('appUrlInput').value;
-        try {
-            await testConnection(url);
-            saveAppUrl(url);
-            document.getElementById('connectionOverlay').classList.remove('show');
-            initApp();
-        } catch(e) {
-            document.getElementById('connectionStatus').innerText = 'Неверный URL: ' + e.message;
-        }
-    });
-
-    initApp();
+const APP_URL_STORAGE_KEY='taskTracker_appUrl';let cachedAppUrl=null,categoriesList=[],currentType='long',currentTasks=[],trialWarningShown=false;
+function normalizeUrl(u){if(!u)return '';let uu=u.trim();uu=uu.split('#')[0];uu=uu.split('?')[0];return uu.replace(/\/+$/,'');}
+function getAppUrl(){if(cachedAppUrl)return cachedAppUrl;const saved=localStorage.getItem(APP_URL_STORAGE_KEY);cachedAppUrl=normalizeUrl(saved);return cachedAppUrl;}
+function saveAppUrl(u){const norm=normalizeUrl(u);localStorage.setItem(APP_URL_STORAGE_KEY,norm);cachedAppUrl=norm;}
+async function testConnection(u){const res=await fetch(`${u}?action=categories`);const d=await res.json();if(d.error)throw new Error(d.error);return true;}
+async function apiCall(p,m='GET'){const url=getAppUrl();if(!url)throw new Error('URL не настроен');if(m==='GET'){const q='?'+new URLSearchParams(p).toString();const r=await fetch(url+q);return await r.json();}else{const fd=new URLSearchParams(p);const r=await fetch(url,{method:'POST',body:fd});return await r.json();}}
+let activeDropdown=null;
+function closeAllDropdowns(){if(activeDropdown){activeDropdown.dropdown.classList.remove('show');activeDropdown.button.classList.remove('open');activeDropdown=null;}}
+document.addEventListener('click',closeAllDropdowns);
+function initCustomSelect(bId,dId,items,onSelect,selected=null){const b=document.getElementById(bId),d=document.getElementById(dId);if(!b||!d)return;b.addEventListener('click',(e)=>{e.stopPropagation();closeAllDropdowns();d.classList.add('show');b.classList.add('open');activeDropdown={dropdown:d,button:b};});function render(){d.innerHTML='';items.forEach(it=>{const div=document.createElement('div');div.className='select-option';div.textContent=it;if(selected===it)div.classList.add('selected');div.addEventListener('click',(e)=>{e.stopPropagation();onSelect(it);closeAllDropdowns();});d.appendChild(div);});}render();return{update:(ni,ns)=>{items=ni;selected=ns;render();}};}
+function renderMicrostepsDynamic(cont,vals=[]){cont.innerHTML='';let stepCount=0;function addStep(v=''){if(stepCount>=5)return;const inp=document.createElement('input');inp.type='text';inp.placeholder=`Микрошаг ${stepCount+1}`;inp.value=v;inp.classList.add('microstep');inp.addEventListener('input',function(){const steps=Array.from(cont.children);const idx=steps.indexOf(this);if(this.value.trim()!==''&&idx===steps.length-1&&steps.length<5)addStep();});cont.appendChild(inp);stepCount++;}vals.forEach(v=>addStep(v));if(vals.length===0)addStep();}
+function getMicrosteps(cont){return Array.from(cont.querySelectorAll('.microstep')).map(i=>i.value).filter(v=>v.trim()!=='');}
+async function loadTasksByType(type){const cont=document.getElementById('tasksList');cont.innerHTML='<div style="text-align:center;padding:20px;">Загрузка...</div>';try{const data=await apiCall({action:'tasksByType',task_type:type});if(data.error)throw new Error(data.error);currentTasks=data;renderTasks();}catch(e){cont.innerHTML='<div style="color:#ff4646;text-align:center;padding:20px;">Ошибка загрузки</div>';console.error(e);}}
+function renderTasks(){const cont=document.getElementById('tasksList');if(!currentTasks.length){cont.innerHTML='<div style="color:#555;text-align:center;padding:40px;">Нет задач</div>';return;}cont.innerHTML='';currentTasks.forEach(task=>{const card=createTaskCard(task);cont.appendChild(card);attachTaskHandlers(card);});}
+function createTaskCard(task){const card=document.createElement('div');card.className='task-card';card.dataset.id=task.id;let steps=[];try{steps=JSON.parse(task.microsteps||'[]');}catch(e){}let stepsHtml='';if(steps.length){const checked=task.microstepsProgress||[];stepsHtml=`<ul class="microsteps-list">`+steps.map((s,idx)=>{const isChecked=checked.includes(idx);return `<li data-idx="${idx}" class="${isChecked?'checked':''}" onclick="toggleMicrostep('${task.id}',${idx})"><span class="micro-checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.8"/></svg></span><span>${escapeHtml(s)}</span></li>`;}).join('')+`</ul>`;}card.innerHTML=`<div class="task-header"><span class="task-title">${escapeHtml(task.title)}</span><span class="task-priority">⭐ ${Number(task.priority||0).toFixed(1)}</span></div><div class="task-category">${escapeHtml(task.category)}</div>${stepsHtml}<div class="task-actions"><button class="drift-task-btn complete-btn" data-id="${task.id}">DRIFT TASK</button><button class="edit-icon-btn edit-btn" data-id="${task.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div>`;return card;}
+function attachTaskHandlers(card){const complete=card.querySelector('.complete-btn');if(complete)complete.addEventListener('click',()=>{const id=complete.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openCompleteModal(task);});const edit=card.querySelector('.edit-btn');if(edit)edit.addEventListener('click',()=>{const id=edit.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openEditModal(task);});}
+window.toggleMicrostep=async function(taskId,idx){try{const res=await apiCall({action:'toggleMicrostep',id:taskId,step_index:idx},'POST');if(res.error)throw new Error(res.error);const task=currentTasks.find(t=>t.id===taskId);if(task){if(!task.microstepsProgress)task.microstepsProgress=[];const pos=task.microstepsProgress.indexOf(idx);if(pos===-1)task.microstepsProgress.push(idx);else task.microstepsProgress.splice(pos,1);renderTasks();}}catch(e){alert('Ошибка: '+e.message);}};
+let currentCompleteTaskId=null;
+function openCompleteModal(task){currentCompleteTaskId=task.id;document.getElementById('completeTaskTitle').innerText=task.title;document.getElementById('actualComplexity').value=5;document.getElementById('actualComplexityVal').innerText='5';document.getElementById('actualCreativity').value=5;document.getElementById('actualCreativityVal').innerText='5';document.getElementById('actualFocus').value=5;document.getElementById('actualFocusVal').innerText='5';document.getElementById('actualCost').value=0;document.getElementById('actualCostVal').innerText='$0';document.getElementById('actualStress').value=5;document.getElementById('actualStressVal').innerText='5';document.getElementById('completeModal').classList.add('show');}
+document.getElementById('cancelCompleteBtn').addEventListener('click',()=>{document.getElementById('completeModal').classList.remove('show');currentCompleteTaskId=null;});
+document.getElementById('confirmCompleteBtn').addEventListener('click',async()=>{if(!currentCompleteTaskId)return;const params={action:'completeTask',id:currentCompleteTaskId,actual_complexity:document.getElementById('actualComplexity').value,actual_creativity:document.getElementById('actualCreativity').value,actual_focus:document.getElementById('actualFocus').value,actual_cost:document.getElementById('actualCost').value,actual_stress:document.getElementById('actualStress').value};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);document.getElementById('completeModal').classList.remove('show');currentCompleteTaskId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
+let currentEditId=null;
+function openEditModal(task){currentEditId=task.id;document.getElementById('editTaskId').value=task.id;document.getElementById('editTitle').value=task.title;document.getElementById('editCategorySelectedText').textContent=task.category;window.editSelectedCategory=task.category;let microsteps=[];try{microsteps=JSON.parse(task.microsteps||'[]');}catch(e){}renderMicrostepsDynamic(document.getElementById('editMicrostepsContainer'),microsteps);document.getElementById('editComplexity').value=task.complexity||5;document.getElementById('editCreativity').value=task.creativity||5;document.getElementById('editFocus').value=task.focus||5;document.getElementById('editCost').value=task.cost||0;document.getElementById('editStress').value=task.stress||5;document.getElementById('editDeadline').value=task.deadline?String(task.deadline).split('T')[0]:'';document.getElementById('editComplexityVal').innerText=task.complexity||5;document.getElementById('editCreativityVal').innerText=task.creativity||5;document.getElementById('editFocusVal').innerText=task.focus||5;document.getElementById('editCostVal').innerText=`$${task.cost||0}`;document.getElementById('editStressVal').innerText=task.stress||5;document.getElementById('editModal').classList.add('show');}
+document.getElementById('cancelEditBtn').addEventListener('click',()=>{document.getElementById('editModal').classList.remove('show');currentEditId=null;});
+document.getElementById('saveEditBtn').addEventListener('click',async()=>{if(!currentEditId)return;const microsteps=getMicrosteps(document.getElementById('editMicrostepsContainer'));const params={action:'updateTask',id:currentEditId,title:document.getElementById('editTitle').value,category:window.editSelectedCategory||'',microsteps:JSON.stringify(microsteps),complexity:document.getElementById('editComplexity').value,creativity:document.getElementById('editCreativity').value,focus:document.getElementById('editFocus').value,cost:document.getElementById('editCost').value,stress:document.getElementById('editStress').value};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);document.getElementById('editModal').classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
+document.getElementById('deleteTaskBtn').addEventListener('click',async()=>{if(!currentEditId)return;if(!confirm('Удалить задачу?'))return;try{const res=await apiCall({action:'deleteTask',id:currentEditId},'POST');if(res.error)throw new Error(res.error);document.getElementById('editModal').classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
+let selectedAddType='long';document.querySelectorAll('#addTypeButtons button').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('#addTypeButtons button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedAddType=btn.dataset.type;});});
+document.getElementById('saveTaskBtn').addEventListener('click',async()=>{const category=window.selectedCategory||'';const title=document.getElementById('taskTitle').value;if(!category||!title){showStatus('addStatus','Заполните категорию и название','error');return;}const microsteps=getMicrosteps(document.getElementById('microstepsContainer'));const params={action:'addTask',category,title,microsteps:JSON.stringify(microsteps),complexity:document.getElementById('complexity').value,creativity:document.getElementById('creativity').value,focus:document.getElementById('focus').value,cost:document.getElementById('cost').value,stress:document.getElementById('stress').value,task_type:selectedAddType};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);showStatus('addStatus','✅ Задача добавлена','success');document.getElementById('taskTitle').value='';document.getElementById('categorySelectedText').textContent='Выберите категорию';window.selectedCategory='';renderMicrostepsDynamic(document.getElementById('microstepsContainer'),[]);['complexity','creativity','focus','stress'].forEach(id=>{document.getElementById(id).value=5;document.getElementById(id+'Val').innerText='5';});document.getElementById('cost').value=0;document.getElementById('costVal').innerText='$0';await loadTasksByType(currentType);}catch(e){showStatus('addStatus','Ошибка: '+e.message,'error');}});
+async function loadCategories(){try{const data=await apiCall({action:'categories'});if(data.error)throw new Error(data.error);categoriesList=data;initCustomSelect('categoryButton','categoryDropdown',categoriesList,(value)=>{document.getElementById('categorySelectedText').textContent=value;window.selectedCategory=value;});initCustomSelect('editCategoryButton','editCategoryDropdown',categoriesList,(value)=>{document.getElementById('editCategorySelectedText').textContent=value;window.editSelectedCategory=value;});}catch(e){console.error(e);}}
+const screensContainer=document.getElementById('screensContainer');const navBtns=document.querySelectorAll('.nav-btn');function switchScreen(sid){const order={drift:0,add:1};const idx=order[sid];screensContainer.scrollTo({left:screensContainer.clientWidth*idx,behavior:'smooth'});navBtns.forEach(btn=>btn.classList.toggle('active',btn.dataset.screen===sid));}navBtns.forEach(btn=>btn.addEventListener('click',()=>switchScreen(btn.dataset.screen)));screensContainer.addEventListener('scroll',()=>{const activeIndex=Math.round(screensContainer.scrollLeft/screensContainer.clientWidth);navBtns.forEach((btn,i)=>btn.classList.toggle('active',i===activeIndex));});
+const typeBtns=document.querySelectorAll('.type-btn');typeBtns.forEach(btn=>{btn.addEventListener('click',()=>{typeBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentType=btn.dataset.type;loadTasksByType(currentType);});});
+function showStatus(eid,msg,tp){const el=document.getElementById(eid);el.textContent=msg;el.className=`status ${tp}`;setTimeout(()=>{if(el)el.className='status';},3000);}
+function escapeHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function bindSlider(sid,spid,isMoney=false){const s=document.getElementById(sid),sp=document.getElementById(spid);s.addEventListener('input',()=>{sp.innerText=isMoney?`$${s.value}`:s.value;});}
+['complexity','creativity','focus','stress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('cost','costVal',true);['actualComplexity','actualCreativity','actualFocus','actualStress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('actualCost','actualCostVal',true);['editComplexity','editCreativity','editFocus','editStress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('editCost','editCostVal',true);
+renderMicrostepsDynamic(document.getElementById('microstepsContainer'),[]);renderMicrostepsDynamic(document.getElementById('editMicrostepsContainer'),[]);
+function showTrialWarning(daysLeft){const modal=document.getElementById('trialWarningModal');const text=document.getElementById('trialWarningText');text.innerText=`Пробный период скоро закончится. Осталось ${daysLeft} дн. Обратитесь к разработчику, чтобы приобрести приложение навсегда.`;modal.classList.add('show');document.getElementById('trialOkBtn').onclick=()=>modal.classList.remove('show');}
+function showTrialExpired(){const loading=document.getElementById('loadingScreen');loading.innerHTML='<div style="text-align:center;padding:20px;"><h2>Пробный период закончился</h2><p>Обратитесь к разработчику, чтобы приобрести приложение навсегда.</p></div>';loading.classList.remove('hidden');document.getElementById('appContainer').style.display='none';}
+async function initApp(){const url=getAppUrl();if(!url){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('connectionOverlay').classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}document.getElementById('connectionOverlay').classList.remove('show');document.getElementById('appContainer').style.display='flex';document.getElementById('loadingScreen').classList.add('hidden');await loadCategories();await loadTasksByType('long');switchScreen('drift');}catch(e){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('connectionOverlay').classList.add('show');document.getElementById('connectionStatus').innerText='Ошибка: '+e.message;}}
+document.getElementById('saveConnectionBtn').addEventListener('click',async()=>{const url=document.getElementById('appUrlInput').value;try{await testConnection(url);saveAppUrl(url);document.getElementById('connectionOverlay').classList.remove('show');initApp();}catch(e){document.getElementById('connectionStatus').innerText='Неверный URL: '+e.message;}});
+initApp();
 </script>
 </body>
 </html>
