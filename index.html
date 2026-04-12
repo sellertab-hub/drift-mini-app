@@ -50,171 +50,130 @@
             flex: 0 0 100%; scroll-snap-align: start;
             padding: 16px; overflow-y: auto; height: 100%;
         }
-        .progress-day-container {
-            margin-bottom: 16px;
-            background: #1a1a1a;
-            border-radius: 20px;
-            padding: 12px;
-        }
-        .progress-header {
-            display: flex; justify-content: space-between; font-size: 12px; color: #aaa; margin-bottom: 6px;
-        }
-        .progress-bar-bg {
-            background: #333; border-radius: 20px; height: 8px; overflow: hidden;
-        }
-        .progress-fill {
-            background: #36FF00; width: 0%; height: 100%; border-radius: 20px; transition: width 0.2s;
-        }
-        .completed-strip {
-            background: #0a0a0a;
-            border-radius: 16px;
-            margin-bottom: 16px;
-            padding: 10px 12px;
-        }
-        .completed-strip h4 {
-            font-size: 12px;
-            color: #36FF00;
-            margin-bottom: 6px;
-            letter-spacing: 0.5px;
-        }
-        .completed-task-list {
+        /* Переключатель Fast/Long */
+        .type-switch {
             display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
+            gap: 12px;
+            margin-bottom: 20px;
+            background: #1a1a1a;
+            border-radius: 40px;
+            padding: 4px;
         }
-        .completed-task-badge {
-            background: #1a2a1a;
-            border-radius: 20px;
-            padding: 4px 10px;
-            font-size: 11px;
-            color: #fff;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        .type-btn {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 16px;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .badge-accuracy {
+        .type-btn.active {
             background: #36FF00;
             color: #000;
-            border-radius: 12px;
-            padding: 0 6px;
-            font-weight: 600;
-            font-size: 10px;
         }
-        .daily-slots {
-            margin-bottom: 16px;
-        }
-        .slot-card {
+        /* Карточки задач */
+        .task-card {
             background: #1a1a1a;
             border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 8px;
-            border: 1px solid #2a2a2a;
-            transition: opacity 0.2s;
-        }
-        .slot-card.completed {
-            opacity: 0.5;
-            background: #111;
-        }
-        .slot-card.completed .slot-title {
-            text-decoration: line-through;
-        }
-        .slot-header {
-            display: flex; justify-content: space-between;
-            align-items: flex-start; margin-bottom: 4px;
-        }
-        .slot-title { font-weight: 700; font-size: 15px; flex: 1; }
-        .slot-meta {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
-        }
-        .slot-category { font-size: 11px; color: #36FF00; font-weight: 600; text-transform: uppercase; }
-        .slot-priority { font-size: 11px; color: #FFDD21; font-weight: 600; }
-        .slot-actions {
-            display: flex; gap: 8px; margin-top: 8px; align-items: center;
-        }
-        .slot-microsteps {
-            list-style: none; margin: 8px 0 10px 0; padding: 0;
-            display: flex; flex-direction: column; gap: 4px;
-        }
-        .slot-microsteps li {
-            display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa;
-            cursor: pointer; user-select: none;
-        }
-        .slot-microsteps li.checked { color: #555; text-decoration: line-through; }
-        .micro-checkbox {
-            width: 16px; height: 16px; min-width: 16px; border-radius: 4px;
-            border: 1.5px solid #555; display: flex; align-items: center;
-            justify-content: center; transition: all 0.2s; background: transparent;
-        }
-        .slot-microsteps li.checked .micro-checkbox {
-            background: #36FF00; border-color: #36FF00;
-        }
-        .micro-checkbox svg { display: none; }
-        .slot-microsteps li.checked .micro-checkbox svg { display: block; }
-        .drift-more-btn {
-            background: transparent;
-            border: 1px solid #36FF00;
-            color: #36FF00;
-            padding: 8px;
-            font-size: 12px;
-            margin-top: 0;
+            padding: 16px;
             margin-bottom: 12px;
-        }
-        .rest-tasks-container {
-            display: none;
-        }
-        .rest-tasks-container.show {
-            display: block;
-        }
-        .task-card {
-            background: #1a1a1a; border-radius: 16px; padding: 12px;
-            margin-bottom: 12px; border: 1px solid #2a2a2a;
+            border: 1px solid #2a2a2a;
         }
         .task-header {
-            display: flex; justify-content: space-between;
-            align-items: flex-start; margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
         }
-        .task-title { font-weight: 700; font-size: 15px; flex: 1; line-height: 1.3; }
-        .task-meta {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+        .task-title {
+            font-weight: 700;
+            font-size: 16px;
+            flex: 1;
         }
-        .task-category { font-size: 11px; color: #36FF00; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .task-priority { font-size: 11px; color: #FFDD21; font-weight: 600; }
+        .task-category {
+            font-size: 12px;
+            color: #36FF00;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .task-priority {
+            font-size: 12px;
+            color: #FFDD21;
+            font-weight: 600;
+        }
         .microsteps-list {
-            list-style: none; margin: 8px 0 10px 0; padding: 0;
-            display: flex; flex-direction: column; gap: 4px;
+            list-style: none;
+            margin: 12px 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
         .microsteps-list li {
-            display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa;
-            cursor: pointer; user-select: none; transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #aaa;
+            cursor: pointer;
         }
-        .microsteps-list li.checked { color: #555; text-decoration: line-through; }
+        .microsteps-list li.checked {
+            color: #555;
+            text-decoration: line-through;
+        }
+        .micro-checkbox {
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            border-radius: 4px;
+            border: 1.5px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+        }
+        .microsteps-list li.checked .micro-checkbox {
+            background: #36FF00;
+            border-color: #36FF00;
+        }
+        .micro-checkbox svg { display: none; }
+        .microsteps-list li.checked .micro-checkbox svg { display: block; }
         .task-actions {
-            display: flex; gap: 8px; margin-top: 8px; align-items: center;
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
         }
         .drift-task-btn {
-            flex: 1; background: transparent; border: 2px solid #36FF00; border-radius: 12px;
-            padding: 9px 12px; font-size: 12px; font-weight: 800;
-            color: #36FF00; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            gap: 6px; letter-spacing: 0.5px; margin-top: 0; width: auto;
+            flex: 1;
+            background: transparent;
+            border: 2px solid #36FF00;
+            border-radius: 12px;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 800;
+            color: #36FF00;
+            cursor: pointer;
+            text-align: center;
         }
         .edit-icon-btn {
-            width: 36px; height: 36px; min-width: 36px; padding: 0;
-            background: #252535; border: 1px solid #3a3a5a; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; margin-top: 0; flex-shrink: 0;
+            width: 42px;
+            background: #252535;
+            border: 1px solid #3a3a5a;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
             color: #7a8fff;
         }
-        .great-separator {
-            display: flex; align-items: center; gap: 10px;
-            margin: 4px 0 16px 0;
-        }
-        .great-separator .sep-line {
-            flex: 1; height: 1px; background: #333;
-        }
-        .great-separator .sep-label {
-            font-size: 10px; font-weight: 700; color: #555;
-            letter-spacing: 2px; text-transform: uppercase;
-        }
+        .edit-icon-btn svg { width: 18px; height: 18px; }
+        /* Форма добавления */
         .custom-select {
             position: relative;
             width: 100%;
@@ -224,7 +183,7 @@
             width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #333;
             border-radius: 16px; font-size: 16px; color: #fff; text-align: left;
             cursor: pointer; display: flex; justify-content: space-between;
-            align-items: center; transition: border 0.2s;
+            align-items: center;
         }
         .select-button .arrow {
             width: 16px; height: 16px;
@@ -250,12 +209,11 @@
             border: 1px solid #333; border-radius: 16px; padding: 12px;
             color: #fff; font-size: 16px; outline: none;
         }
-        input:focus, textarea:focus { border-color: #36FF00; }
         .slider-container {
             margin-bottom: 20px; display: flex; align-items: center;
-            justify-content: space-between; flex-wrap: wrap;
+            justify-content: space-between;
         }
-        .slider-container label { flex: 1; font-size: 14px; color: #ccc; }
+        .slider-container label { font-size: 14px; color: #ccc; flex: 1; }
         .slider-container input { flex: 3; margin: 0 12px 0 0; }
         .slider-value {
             background: #36FF00; color: #000; padding: 4px 10px;
@@ -265,22 +223,35 @@
         button {
             background: #36FF00; border: none; border-radius: 60px;
             padding: 14px; font-size: 16px; font-weight: 600; color: #000;
-            cursor: pointer; transition: 0.2s; width: 100%; margin-top: 8px;
+            cursor: pointer; width: 100%; margin-top: 8px;
         }
-        button:disabled { background: #2a2a2a; color: #666; cursor: not-allowed; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
+        .type-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .type-buttons button {
+            flex: 1;
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #36FF00;
+        }
+        .type-buttons button.active {
+            background: #36FF00;
+            color: #000;
+        }
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            align-items: center; justify-content: center; z-index: 1000;
+        }
         .modal.show { display: flex; }
         .modal-content {
             background: #0c0c0c; border: 1.5px solid #36FF00; border-radius: 28px;
-            padding: 20px; width: 90%; max-width: 400px; max-height: 85vh; overflow-y: auto;
+            padding: 20px; width: 90%; max-width: 400px;
         }
         .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 16px; text-align: center; color: #36FF00; }
         .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
-        .modal-buttons button { margin-bottom: 0; }
         .delete-btn { background: #ff4646; color: #fff; margin-top: 8px; }
-        .pulse-value { font-size: 64px; font-weight: bold; text-align: center; margin: 20px 0; color: #36FF00; }
-        .recommendation-card { background: #1a1a1a; border-radius: 16px; padding: 16px; margin: 16px 0; border-left: 4px solid #36FF00; }
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .connection-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.95);
             display: none; align-items: center; justify-content: center; z-index: 2000;
@@ -290,17 +261,16 @@
             background: #0c0c0c; border: 1px solid #36FF00;
             border-radius: 28px; padding: 20px; width: 90%; max-width: 400px;
         }
-        .hidden { display: none; }
         .status { margin-top: 8px; text-align: center; padding: 8px; border-radius: 16px; }
         .status.success { background: rgba(54,255,0,0.2); color: #36FF00; }
         .status.error { background: rgba(255,70,70,0.2); color: #ff4646; }
-        input[type="date"] { color-scheme: dark; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 <div class="loading-screen" id="loadingScreen">
     <img src="logo.png" alt="Logo" class="loading-logo">
-    <div style="margin-top: 16px;">Загрузка...</div>
+    <div>Загрузка...</div>
 </div>
 <div class="connection-overlay" id="connectionOverlay">
     <div class="connection-card">
@@ -315,24 +285,19 @@
     <div class="screens-container" id="screensContainer">
         <!-- DRIFT экран -->
         <div class="screen" id="screenDrift">
-            <div id="completedStrip"></div>
-            <div class="progress-day-container">
-                <div class="progress-header">
-                    <span>Прогресс дня</span>
-                    <span id="progressText">0 очков</span>
-                </div>
-                <div class="progress-bar-bg">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
+            <div class="type-switch">
+                <button class="type-btn" data-type="fast">FAST</button>
+                <button class="type-btn" data-type="long">LONG</button>
             </div>
-            <div id="dailySlotsContainer"></div>
-            <button id="driftMoreBtn" class="drift-more-btn">▼ DRIFT MORE ▼</button>
-            <div id="restTasksContainer" class="rest-tasks-container"></div>
+            <div id="tasksList"></div>
         </div>
 
         <!-- ADD экран -->
         <div class="screen" id="screenAdd">
-            <h3>➕ Новая задача</h3>
+            <div class="type-buttons" id="addTypeButtons">
+                <button data-type="fast" class="active">FAST</button>
+                <button data-type="long">LONG</button>
+            </div>
             <div class="custom-select" id="categoryContainer">
                 <div class="select-button" id="categoryButton">
                     <span id="categorySelectedText">Выберите категорию</span>
@@ -347,27 +312,13 @@
             <div class="slider-container"><label>Фокусировка (0-10)</label><input type="range" id="focus" min="0" max="10" step="1" value="5"><span id="focusVal" class="slider-value">5</span></div>
             <div class="slider-container"><label>Стоимость ($)</label><input type="range" id="cost" min="0" max="2000" step="50" value="0"><span id="costVal" class="slider-value">$0</span></div>
             <div class="slider-container"><label>Стресс (0-10)</label><input type="range" id="stress" min="0" max="10" step="1" value="5"><span id="stressVal" class="slider-value">5</span></div>
-            <input type="date" id="deadline">
             <button id="saveTaskBtn">Сохранить задачу</button>
             <div id="addStatus" class="status"></div>
-        </div>
-
-        <!-- PULSE экран -->
-        <div class="screen" id="screenPulse">
-            <h3>Ваш пульс</h3>
-            <div class="pulse-value" id="pulseValue">--</div>
-            <div class="recommendation-card" id="recommendationCard">
-                <div id="recommendationText">Загрузка...</div>
-            </div>
-            <div class="stat-row"><span>Точность прогнозов:</span><span id="accuracyStat">--</span></div>
-            <div class="stat-row"><span>Выполнено задач:</span><span id="completionStat">--</span></div>
-            <div class="stat-row"><span>Средний стресс (открытые):</span><span id="stressStat">--</span></div>
         </div>
     </div>
     <div class="nav-bar">
         <button class="nav-btn" data-screen="drift">DRIFT</button>
         <button class="nav-btn" data-screen="add">ADD</button>
-        <button class="nav-btn" data-screen="pulse">PULSE</button>
     </div>
 </div>
 
@@ -382,7 +333,7 @@
     </div>
 </div>
 
-<!-- Модалки выполнения и редактирования -->
+<!-- Модалка выполнения задачи -->
 <div class="modal" id="completeModal">
     <div class="modal-content">
         <div class="modal-title">🏁 Выполнение задачи</div>
@@ -399,9 +350,10 @@
     </div>
 </div>
 
+<!-- Модалка редактирования -->
 <div class="modal" id="editModal">
     <div class="modal-content">
-        <div class="modal-title">✏️ Редактировать задачу</div>
+        <div class="modal-title">✏️ Редактировать</div>
         <input type="hidden" id="editTaskId">
         <input type="text" id="editTitle" placeholder="Название">
         <div class="custom-select" id="editCategoryContainer">
@@ -417,12 +369,11 @@
         <div class="slider-container"><label>Фокусировка</label><input type="range" id="editFocus" min="0" max="10" step="1"><span id="editFocusVal"></span></div>
         <div class="slider-container"><label>Стоимость ($)</label><input type="range" id="editCost" min="0" max="2000" step="50"><span id="editCostVal"></span></div>
         <div class="slider-container"><label>Стресс</label><input type="range" id="editStress" min="0" max="10" step="1"><span id="editStressVal"></span></div>
-        <input type="date" id="editDeadline">
         <div class="modal-buttons">
             <button id="cancelEditBtn">Отмена</button>
             <button id="saveEditBtn">Сохранить</button>
         </div>
-        <button id="deleteTaskBtn" class="delete-btn">Удалить задачу</button>
+        <button id="deleteTaskBtn" class="delete-btn">Удалить</button>
     </div>
 </div>
 
@@ -431,10 +382,8 @@
     const APP_URL_STORAGE_KEY = 'taskTracker_appUrl';
     let cachedAppUrl = null;
     let categoriesList = [];
-    let allTasksCache = [];
-    let checkedMicrosteps = {};
-    let dailySlots = [];
-    let restTasks = [];
+    let currentType = 'fast';
+    let currentTasks = [];
     let trialWarningShown = false;
 
     function normalizeUrl(url) {
@@ -461,7 +410,6 @@
         if (data.error) throw new Error(data.error);
         return true;
     }
-
     async function apiCall(params, method = 'GET') {
         const url = getAppUrl();
         if (!url) throw new Error('URL не настроен');
@@ -486,7 +434,6 @@
         }
     }
     document.addEventListener('click', closeAllDropdowns);
-
     function initCustomSelect(buttonId, dropdownId, items, onSelect, selectedValue = null) {
         const button = document.getElementById(buttonId);
         const dropdown = document.getElementById(dropdownId);
@@ -510,9 +457,7 @@
             });
         }
         renderOptions();
-        return {
-            update: (newItems, newSelected) => { items = newItems; selectedValue = newSelected; renderOptions(); }
-        };
+        return { update: (newItems, newSelected) => { items = newItems; selectedValue = newSelected; renderOptions(); } };
     }
 
     // ---------- МИКРОШАГИ ----------
@@ -541,199 +486,103 @@
         return Array.from(container.querySelectorAll('.microstep')).map(i => i.value).filter(v => v.trim() !== '');
     }
 
-    // ---------- ДНЕВНЫЕ СЛОТЫ ----------
-    const DAILY_SLOTS_KEY = 'taskTracker_dailySlots';
-    const DAILY_DATE_KEY = 'taskTracker_dailyDate';
-    function getTodayString() { return new Date().toISOString().slice(0,10); }
-    function getDailySlots() {
-        const stored = localStorage.getItem(DAILY_SLOTS_KEY);
-        const storedDate = localStorage.getItem(DAILY_DATE_KEY);
-        if (stored && storedDate === getTodayString()) {
-            try { return JSON.parse(stored); } catch(e) {}
+    // ---------- ЗАГРУЗКА ЗАДАЧ ПО ТИПУ ----------
+    async function loadTasksByType(type) {
+        const container = document.getElementById('tasksList');
+        container.innerHTML = '<div style="text-align:center; padding:20px;">Загрузка...</div>';
+        try {
+            const data = await apiCall({ action: 'tasksByType', task_type: type });
+            if (data.error) throw new Error(data.error);
+            currentTasks = data;
+            renderTasks();
+        } catch(e) {
+            container.innerHTML = '<div style="color:#ff4646; text-align:center; padding:20px;">Ошибка загрузки</div>';
+            console.error(e);
         }
-        return null;
-    }
-    function saveDailySlots(slots) {
-        localStorage.setItem(DAILY_SLOTS_KEY, JSON.stringify(slots));
-        localStorage.setItem(DAILY_DATE_KEY, getTodayString());
     }
 
-    // ---------- ПРОГРЕСС ----------
-    function calculateDailyProgress() {
-        let points = 0;
-        for (let task of allTasksCache) {
-            const progress = checkedMicrosteps[task.id] || [];
-            points += progress.length;
-        }
-        const todayStr = getTodayString();
-        for (let task of allTasksCache) {
-            if (task.status === 'done') {
-                const completedDate = task.completed ? new Date(task.completed) : null;
-                if (completedDate && completedDate.toISOString().slice(0,10) === todayStr) {
-                    points += 2;
-                }
-            }
-        }
-        return points;
-    }
-    function updateProgressUI() {
-        const points = calculateDailyProgress();
-        const percent = Math.min(100, points);
-        document.getElementById('progressFill').style.width = percent + '%';
-        document.getElementById('progressText').innerText = points + ' очков';
-    }
-
-    // ---------- ОТРИСОВКА СЛОТОВ ----------
-    function renderDailySlots() {
-        const container = document.getElementById('dailySlotsContainer');
-        if (!dailySlots.length) {
-            container.innerHTML = '<div style="color:#555; text-align:center; padding:20px;">Нет задач на сегодня</div>';
+    function renderTasks() {
+        const container = document.getElementById('tasksList');
+        if (!currentTasks.length) {
+            container.innerHTML = '<div style="color:#555; text-align:center; padding:40px;">Нет задач</div>';
             return;
         }
         container.innerHTML = '';
-        dailySlots.forEach(slot => {
-            const isCompleted = slot.completed === true;
-            const card = document.createElement('div');
-            card.className = `slot-card ${isCompleted ? 'completed' : ''}`;
-            card.dataset.id = slot.id;
-
-            let steps = [];
-            try { steps = JSON.parse(slot.microsteps || '[]'); } catch(e) {}
-            let stepsHtml = '';
-            if (steps.length) {
-                const checked = (checkedMicrosteps[slot.id] || []);
-                stepsHtml = `<ul class="slot-microsteps">` +
-                    steps.map((s, idx) => {
-                        const isChecked = checked.includes(idx);
-                        return `<li data-idx="${idx}" class="${isChecked ? 'checked' : ''}" onclick="toggleMicrostepSlot('${slot.id}', ${idx})">
-                            <span class="micro-checkbox">
-                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.8"/></svg>
-                            </span>
-                            <span>${escapeHtml(s)}</span>
-                        </li>`;
-                    }).join('') + `</ul>`;
-            }
-
-            card.innerHTML = `
-                <div class="slot-header">
-                    <span class="slot-title">${escapeHtml(slot.title)}</span>
-                </div>
-                <div class="slot-meta">
-                    <span class="slot-category">${escapeHtml(slot.category)}</span>
-                    <span class="slot-priority">⭐ ${Number(slot.priority || 0).toFixed(1)}</span>
-                </div>
-                ${stepsHtml}
-                <div class="slot-actions">
-                    <button class="drift-task-btn complete-slot-btn" data-id="${slot.id}" ${isCompleted ? 'disabled' : ''}>
-                        <svg class="flag-icon" viewBox="0 0 24 24" fill="none" width="14" height="14"><!-- иконка --></svg>
-                        DRIFT TASK
-                    </button>
-                    <button class="edit-icon-btn edit-slot-btn" data-id="${slot.id}" title="Редактировать">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
-                </div>
-            `;
+        currentTasks.forEach(task => {
+            const card = createTaskCard(task);
             container.appendChild(card);
-        });
-        document.querySelectorAll('.complete-slot-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const id = btn.dataset.id;
-                const task = allTasksCache.find(t => String(t.id) === id);
-                if (task) openCompleteModal(task);
-            });
-        });
-        document.querySelectorAll('.edit-slot-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.dataset.id;
-                const task = allTasksCache.find(t => String(t.id) === id);
-                if (task) openEditModal(task);
-            });
+            attachTaskHandlers(card);
         });
     }
 
-    window.toggleMicrostepSlot = async function(taskId, idx) {
-        try {
-            const res = await apiCall({ action: 'toggleMicrostep', id: taskId, step_index: idx }, 'POST');
-            if (res.error) throw new Error(res.error);
-            if (!checkedMicrosteps[taskId]) checkedMicrosteps[taskId] = [];
-            const pos = checkedMicrosteps[taskId].indexOf(idx);
-            if (pos === -1) checkedMicrosteps[taskId].push(idx);
-            else checkedMicrosteps[taskId].splice(pos, 1);
-            renderDailySlots();
-            renderRestTasks();
-            updateProgressUI();
-        } catch(e) { alert('Ошибка: ' + e.message); }
-    };
-
-    function renderRestTasks() {
-        const container = document.getElementById('restTasksContainer');
-        if (!restTasks.length) {
-            container.innerHTML = '<div style="color:#555; text-align:center; padding:20px;">Нет дополнительных задач</div>';
-            return;
+    function createTaskCard(task) {
+        const card = document.createElement('div');
+        card.className = 'task-card';
+        card.dataset.id = task.id;
+        let steps = [];
+        try { steps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
+        let stepsHtml = '';
+        if (steps.length) {
+            const checked = (task.microstepsProgress || []);
+            stepsHtml = `<ul class="microsteps-list">` +
+                steps.map((s, idx) => {
+                    const isChecked = checked.includes(idx);
+                    return `<li data-idx="${idx}" class="${isChecked ? 'checked' : ''}" onclick="toggleMicrostep('${task.id}', ${idx})">
+                        <span class="micro-checkbox">
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.8"/></svg>
+                        </span>
+                        <span>${escapeHtml(s)}</span>
+                    </li>`;
+                }).join('') + `</ul>`;
         }
-        container.innerHTML = '';
-        restTasks.forEach(task => {
-            const card = document.createElement('div');
-            card.className = 'task-card';
-            card.dataset.id = task.id;
-            let steps = [];
-            try { steps = JSON.parse(task.microsteps || '[]'); } catch(e) {}
-            let stepsHtml = '';
-            if (steps.length) {
-                const checked = (checkedMicrosteps[task.id] || []);
-                stepsHtml = `<ul class="microsteps-list">` +
-                    steps.map((s, idx) => {
-                        const isChecked = checked.includes(idx);
-                        return `<li data-idx="${idx}" class="${isChecked ? 'checked' : ''}" onclick="toggleMicrostepRest('${task.id}', ${idx})">
-                            <span class="micro-checkbox">
-                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000"/></svg>
-                            </span>
-                            <span>${escapeHtml(s)}</span>
-                        </li>`;
-                    }).join('') + `</ul>`;
-            }
-            card.innerHTML = `
-                <div class="task-header"><span class="task-title">${escapeHtml(task.title)}</span></div>
-                <div class="task-meta">
-                    <span class="task-category">${escapeHtml(task.category)}</span>
-                    <span class="task-priority">⭐ ${Number(task.priority || 0).toFixed(1)}</span>
-                </div>
-                ${stepsHtml}
-                <div class="task-actions">
-                    <button class="drift-task-btn complete-rest-btn" data-id="${task.id}">DRIFT TASK</button>
-                    <button class="edit-icon-btn edit-rest-btn" data-id="${task.id}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-        document.querySelectorAll('.complete-rest-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.dataset.id;
-                const task = allTasksCache.find(t => String(t.id) === id);
+        card.innerHTML = `
+            <div class="task-header">
+                <span class="task-title">${escapeHtml(task.title)}</span>
+                <span class="task-priority">⭐ ${Number(task.priority || 0).toFixed(1)}</span>
+            </div>
+            <div class="task-category">${escapeHtml(task.category)}</div>
+            ${stepsHtml}
+            <div class="task-actions">
+                <button class="drift-task-btn complete-btn" data-id="${task.id}">DRIFT TASK</button>
+                <button class="edit-icon-btn edit-btn" data-id="${task.id}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+            </div>
+        `;
+        return card;
+    }
+
+    function attachTaskHandlers(card) {
+        const completeBtn = card.querySelector('.complete-btn');
+        if (completeBtn) {
+            completeBtn.addEventListener('click', () => {
+                const id = completeBtn.dataset.id;
+                const task = currentTasks.find(t => t.id === id);
                 if (task) openCompleteModal(task);
             });
-        });
-        document.querySelectorAll('.edit-rest-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.dataset.id;
-                const task = allTasksCache.find(t => String(t.id) === id);
+        }
+        const editBtn = card.querySelector('.edit-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                const id = editBtn.dataset.id;
+                const task = currentTasks.find(t => t.id === id);
                 if (task) openEditModal(task);
             });
-        });
+        }
     }
-    window.toggleMicrostepRest = async function(taskId, idx) {
+
+    window.toggleMicrostep = async function(taskId, idx) {
         try {
             const res = await apiCall({ action: 'toggleMicrostep', id: taskId, step_index: idx }, 'POST');
             if (res.error) throw new Error(res.error);
-            if (!checkedMicrosteps[taskId]) checkedMicrosteps[taskId] = [];
-            const pos = checkedMicrosteps[taskId].indexOf(idx);
-            if (pos === -1) checkedMicrosteps[taskId].push(idx);
-            else checkedMicrosteps[taskId].splice(pos, 1);
-            renderDailySlots();
-            renderRestTasks();
-            updateProgressUI();
+            const task = currentTasks.find(t => t.id === taskId);
+            if (task) {
+                if (!task.microstepsProgress) task.microstepsProgress = [];
+                const pos = task.microstepsProgress.indexOf(idx);
+                if (pos === -1) task.microstepsProgress.push(idx);
+                else task.microstepsProgress.splice(pos, 1);
+                renderTasks();
+            }
         } catch(e) { alert('Ошибка: ' + e.message); }
     };
 
@@ -768,10 +617,8 @@
             const res = await apiCall(params, 'POST');
             if (res.error) throw new Error(res.error);
             document.getElementById('completeModal').classList.remove('show');
-            const slot = dailySlots.find(s => String(s.id) === String(currentCompleteTaskId));
-            if (slot) slot.completed = true;
-            saveDailySlots(dailySlots);
-            await loadAllData();
+            currentCompleteTaskId = null;
+            await loadTasksByType(currentType);
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
 
@@ -791,7 +638,6 @@
         document.getElementById('editFocus').value = task.focus || 5;
         document.getElementById('editCost').value = task.cost || 0;
         document.getElementById('editStress').value = task.stress || 5;
-        document.getElementById('editDeadline').value = task.deadline ? String(task.deadline).split('T')[0] : '';
         document.getElementById('editComplexityVal').innerText = task.complexity || 5;
         document.getElementById('editCreativityVal').innerText = task.creativity || 5;
         document.getElementById('editFocusVal').innerText = task.focus || 5;
@@ -816,15 +662,14 @@
             creativity: document.getElementById('editCreativity').value,
             focus: document.getElementById('editFocus').value,
             cost: document.getElementById('editCost').value,
-            stress: document.getElementById('editStress').value,
-            deadline: document.getElementById('editDeadline').value
+            stress: document.getElementById('editStress').value
         };
         try {
             const res = await apiCall(params, 'POST');
             if (res.error) throw new Error(res.error);
             document.getElementById('editModal').classList.remove('show');
             currentEditId = null;
-            await loadAllData();
+            await loadTasksByType(currentType);
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
     document.getElementById('deleteTaskBtn').addEventListener('click', async () => {
@@ -835,100 +680,34 @@
             if (res.error) throw new Error(res.error);
             document.getElementById('editModal').classList.remove('show');
             currentEditId = null;
-            await loadAllData();
+            await loadTasksByType(currentType);
         } catch(e) { alert('Ошибка: ' + e.message); }
     });
 
-    // ---------- ЗАГРУЗКА ВСЕХ ДАННЫХ ----------
-    async function loadAllData() {
-        try {
-            const allData = await apiCall({ action: 'tasks', status: 'open' });
-            if (allData.error) throw new Error(allData.error);
-            allTasksCache = allData;
-            for (let task of allTasksCache) {
-                if (task.microstepsProgress && Array.isArray(task.microstepsProgress)) {
-                    checkedMicrosteps[task.id] = task.microstepsProgress.slice();
-                } else {
-                    checkedMicrosteps[task.id] = [];
-                }
-            }
-            let slots = getDailySlots();
-            if (!slots) {
-                const top3Data = await apiCall({ action: 'top3' });
-                if (top3Data.error) throw new Error(top3Data.error);
-                slots = top3Data.map(task => ({ ...task, completed: false }));
-                saveDailySlots(slots);
-            } else {
-                for (let slot of slots) {
-                    const fresh = allTasksCache.find(t => String(t.id) === String(slot.id));
-                    if (fresh) {
-                        slot.title = fresh.title;
-                        slot.category = fresh.category;
-                        slot.microsteps = fresh.microsteps;
-                        slot.priority = fresh.priority;
-                    } else {
-                        slots = slots.filter(s => s.id !== slot.id);
-                    }
-                }
-                if (slots.length < 3) {
-                    const top3Data = await apiCall({ action: 'top3' });
-                    if (!top3Data.error) {
-                        const existingIds = new Set(slots.map(s => String(s.id)));
-                        const newSlots = top3Data.filter(t => !existingIds.has(String(t.id))).slice(0, 3 - slots.length);
-                        newSlots.forEach(t => slots.push({ ...t, completed: false }));
-                    }
-                }
-                saveDailySlots(slots);
-            }
-            dailySlots = slots;
-            const slotIds = new Set(dailySlots.map(s => String(s.id)));
-            restTasks = allTasksCache.filter(t => !slotIds.has(String(t.id))).sort((a,b) => b.priority - a.priority);
-
-            renderDailySlots();
-            renderRestTasks();
-            updateProgressUI();
-
-            const completedData = await apiCall({ action: 'completed_tasks' });
-            if (!completedData.error) {
-                const stripContainer = document.getElementById('completedStrip');
-                let html = '';
-                if (completedData.today.length) {
-                    html += `<div class="completed-strip"><h4>✅ Выполнено сегодня</h4><div class="completed-task-list">`;
-                    completedData.today.forEach(t => {
-                        html += `<div class="completed-task-badge">${escapeHtml(t.title)} <span class="badge-accuracy">${t.accuracy}%</span></div>`;
-                    });
-                    html += `</div></div>`;
-                }
-                if (completedData.yesterday.length) {
-                    html += `<div class="completed-strip"><h4>🕐 Выполнено вчера</h4><div class="completed-task-list">`;
-                    completedData.yesterday.forEach(t => {
-                        html += `<div class="completed-task-badge">${escapeHtml(t.title)} <span class="badge-accuracy">${t.accuracy}%</span></div>`;
-                    });
-                    html += `</div></div>`;
-                }
-                stripContainer.innerHTML = html;
-            }
-        } catch(e) {
-            console.error(e);
-            document.getElementById('dailySlotsContainer').innerHTML = '<div style="color:#ff4646;">Ошибка загрузки</div>';
-        }
-    }
-
-    // ---------- ДОБАВЛЕНИЕ ЗАДАЧИ ----------
+    // ---------- ДОБАВЛЕНИЕ ----------
+    let selectedAddType = 'fast';
+    document.querySelectorAll('#addTypeButtons button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#addTypeButtons button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedAddType = btn.dataset.type;
+        });
+    });
     document.getElementById('saveTaskBtn').addEventListener('click', async () => {
         const category = window.selectedCategory || '';
         const title = document.getElementById('taskTitle').value;
         if (!category || !title) { showStatus('addStatus', 'Заполните категорию и название', 'error'); return; }
         const microsteps = getMicrosteps(document.getElementById('microstepsContainer'));
         const params = {
-            action: 'addTask', category, title,
+            action: 'addTask',
+            category, title,
             microsteps: JSON.stringify(microsteps),
             complexity: document.getElementById('complexity').value,
             creativity: document.getElementById('creativity').value,
             focus: document.getElementById('focus').value,
             cost: document.getElementById('cost').value,
             stress: document.getElementById('stress').value,
-            deadline: document.getElementById('deadline').value
+            task_type: selectedAddType
         };
         try {
             const res = await apiCall(params, 'POST');
@@ -943,13 +722,11 @@
                 document.getElementById(id+'Val').innerText = '5';
             });
             document.getElementById('cost').value = 0; document.getElementById('costVal').innerText = '$0';
-            document.getElementById('deadline').value = '';
-            await loadAllData();
-            loadPulse();
+            await loadTasksByType(currentType);
         } catch(e) { showStatus('addStatus', 'Ошибка: ' + e.message, 'error'); }
     });
 
-    // ---------- ЗАГРУЗКА КАТЕГОРИЙ ----------
+    // ---------- КАТЕГОРИИ ----------
     async function loadCategories() {
         try {
             const data = await apiCall({ action: 'categories' });
@@ -966,28 +743,11 @@
         } catch(e) { console.error(e); }
     }
 
-    // ---------- PULSE ----------
-    async function loadPulse() {
-        try {
-            const data = await apiCall({ action: 'stats' });
-            if (data.error) throw new Error(data.error);
-            document.getElementById('pulseValue').innerText = data.pulse;
-            document.getElementById('accuracyStat').innerText = data.accuracy + '%';
-            document.getElementById('completionStat').innerText = data.completionRate + '%';
-            document.getElementById('stressStat').innerText = Number(data.avgOpenStress).toFixed(1);
-            if (data.recommendation) {
-                document.getElementById('recommendationText').innerHTML = `🎯 Рекомендация: выполните <strong>${escapeHtml(data.recommendation.title)}</strong><br>➕ Повысит пульс на +${data.recommendation.boost}`;
-            } else {
-                document.getElementById('recommendationText').innerHTML = 'Отличная работа! Продолжайте в том же духе. 🚀';
-            }
-        } catch(e) { console.error(e); }
-    }
-
     // ---------- НАВИГАЦИЯ ----------
     const screensContainer = document.getElementById('screensContainer');
     const navBtns = document.querySelectorAll('.nav-btn');
     function switchScreen(screenId) {
-        const order = { drift: 0, add: 1, pulse: 2 };
+        const order = { drift: 0, add: 1 };
         const index = order[screenId];
         screensContainer.scrollTo({ left: screensContainer.clientWidth * index, behavior: 'smooth' });
         navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenId));
@@ -997,11 +757,15 @@
         const activeIndex = Math.round(screensContainer.scrollLeft / screensContainer.clientWidth);
         navBtns.forEach((btn, i) => btn.classList.toggle('active', i === activeIndex));
     });
-    document.getElementById('driftMoreBtn').addEventListener('click', () => {
-        const container = document.getElementById('restTasksContainer');
-        container.classList.toggle('show');
-        const btn = document.getElementById('driftMoreBtn');
-        btn.innerText = container.classList.contains('show') ? '▲ DRIFT LESS ▲' : '▼ DRIFT MORE ▼';
+
+    const typeBtns = document.querySelectorAll('.type-btn');
+    typeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            typeBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentType = btn.dataset.type;
+            loadTasksByType(currentType);
+        });
     });
 
     function showStatus(elementId, message, type) {
@@ -1014,7 +778,6 @@
     function bindSlider(sliderId, spanId, isMoney = false) {
         const slider = document.getElementById(sliderId);
         const span = document.getElementById(spanId);
-        if (!slider || !span) return;
         slider.addEventListener('input', () => { span.innerText = isMoney ? `$${slider.value}` : slider.value; });
     }
     ['complexity','creativity','focus','stress'].forEach(id => bindSlider(id, id+'Val'));
@@ -1065,8 +828,7 @@
             document.getElementById('appContainer').style.display = 'flex';
             document.getElementById('loadingScreen').classList.add('hidden');
             await loadCategories();
-            await loadAllData();
-            await loadPulse();
+            await loadTasksByType('fast');
             switchScreen('drift');
         } catch(e) {
             document.getElementById('loadingScreen').classList.add('hidden');
