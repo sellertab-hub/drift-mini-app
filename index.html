@@ -6,20 +6,20 @@
     <title>Task Tracker</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Courier New',Courier,monospace;background:#000;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0;margin:0;}
+        body{font-family:'PT Sans Narrow',sans-serif;background:#000;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0;margin:0;}
         .loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:1000;transition:opacity .3s;}
         .loading-screen.hidden{opacity:0;pointer-events:none;}
         .loading-logo{max-width:100px;height:auto;filter:grayscale(1);}
         .app-container{width:100%;height:100vh;background:#000;display:flex;flex-direction:column;overflow:hidden;position:relative;}
         .nav-bar{display:flex;background:#111;border-top:1px solid #333;padding:6px 12px;gap:6px;}
-        .nav-btn{flex:1;text-align:center;padding:8px 0;font-size:14px;font-weight:700;background:transparent;border:1px solid #fff;color:#fff;cursor:pointer;font-family:monospace;text-transform:uppercase;}
+        .nav-btn{flex:1;text-align:center;padding:8px 0;font-size:14px;font-weight:700;background:transparent;border:1px solid #fff;color:#fff;cursor:pointer;font-family:'PT Sans Narrow',sans-serif;text-transform:uppercase;}
         .nav-btn.active{background:#fff;color:#000;}
         .screens-container{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;}
         .screens-container::-webkit-scrollbar{display:none;}
         .screen{flex:0 0 100%;scroll-snap-align:start;padding:12px;overflow-y:auto;}
         .type-switch-wrapper{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;}
         .type-switch{display:flex;gap:4px;background:#111;border:1px solid #333;padding:2px;flex:1;}
-        .type-btn{flex:1;text-align:center;padding:8px 0;font-size:14px;font-weight:700;background:transparent;border:none;color:#aaa;cursor:pointer;font-family:monospace;text-transform:uppercase;}
+        .type-btn{flex:1;text-align:center;padding:8px 0;font-size:14px;font-weight:700;background:transparent;border:none;color:#aaa;cursor:pointer;font-family:'PT Sans Narrow',sans-serif;text-transform:uppercase;}
         .type-btn.active{background:#fff;color:#000;}
         .theme-toggle{background:#111;border:1px solid #333;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:bold;color:#fff;}
         .task-card{background:#111;padding:12px;margin-bottom:8px;border:1px solid #333;cursor:pointer;}
@@ -37,10 +37,10 @@
         .micro-checkbox svg{display:none;}
         .microsteps-list li.checked .micro-checkbox svg{display:block;}
         .task-actions{display:flex;gap:8px;margin-top:8px;}
-        .drift-task-btn{flex:1;background:transparent;border:1px solid #fff;padding:6px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;text-align:center;text-transform:uppercase;font-family:monospace;}
+        .drift-task-btn{flex:1;background:transparent;border:1px solid #fff;padding:6px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;text-align:center;text-transform:uppercase;font-family:'PT Sans Narrow',sans-serif;}
         .edit-icon-btn{width:32px;background:#222;border:1px solid #555;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;font-weight:bold;color:#fff;}
         .custom-select{position:relative;width:100%;margin-bottom:10px;}
-        .select-button{width:100%;padding:8px 10px;background:#111;border:1px solid #333;font-size:14px;color:#fff;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:monospace;}
+        .select-button{width:100%;padding:8px 10px;background:#111;border:1px solid #333;font-size:14px;color:#fff;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:'PT Sans Narrow',sans-serif;}
         .select-button .arrow{width:12px;height:12px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;transition:transform .2s;}
         .select-button.open .arrow{transform:rotate(180deg);}
         .select-dropdown{position:absolute;top:100%;left:0;right:0;background:#000;border:1px solid #333;max-height:150px;overflow-y:auto;z-index:20;display:none;}
@@ -49,12 +49,12 @@
         .select-option:last-child{border-bottom:none;}
         .select-option:hover{background:#222;}
         .select-option.selected{background:#fff;color:#000;}
-        input,textarea{width:100%;margin-bottom:10px;background:#111;border:1px solid #333;padding:8px 10px;color:#fff;font-size:14px;outline:none;font-family:monospace;}
+        input,textarea{width:100%;margin-bottom:10px;background:#111;border:1px solid #333;padding:8px 10px;color:#fff;font-size:14px;outline:none;font-family:'PT Sans Narrow',sans-serif;}
         .slider-container{margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
         .slider-container label{font-size:12px;color:#ccc;flex:1;}
         .slider-container input{flex:3;margin:0 8px 0 0;}
         .slider-value{background:#222;color:#fff;padding:2px 8px;font-size:12px;font-weight:bold;min-width:35px;text-align:center;border:1px solid #444;}
-        button{background:#fff;border:none;padding:10px;font-size:14px;font-weight:700;color:#000;cursor:pointer;width:100%;margin-top:6px;font-family:monospace;text-transform:uppercase;}
+        button{background:#fff;border:none;padding:10px;font-size:14px;font-weight:700;color:#000;cursor:pointer;width:100%;margin-top:6px;font-family:'PT Sans Narrow',sans-serif;text-transform:uppercase;}
         .type-buttons{display:flex;gap:8px;margin-bottom:12px;}
         .type-buttons button{flex:1;background:transparent;color:#fff;border:1px solid #fff;margin-top:0;}
         .type-buttons button.active{background:#fff;color:#000;}
@@ -71,7 +71,7 @@
         .sub-comment button{width:28px;height:28px;padding:0;margin:0;background:#222;color:#fff;border:1px solid #444;}
         .stopwatch{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
         .stopwatch span{font-family:monospace;font-size:18px;background:#111;padding:4px 8px;border:1px solid #333;}
-        .stopwatch button{width:auto;flex:1;margin-top:0;}
+        .stopwatch button{width:auto;flex:1;margin-top:0;font-family:monospace;font-size:16px;}
         .connection-overlay{position:fixed;inset:0;background:#000;display:none;align-items:center;justify-content:center;z-index:2000;}
         .connection-overlay.show{display:flex;}
         .connection-card{background:#000;border:1px solid #fff;padding:16px;width:90%;max-width:360px;}
@@ -169,8 +169,8 @@
     <div class="detail-field"><label>Микрошаги</label><div id="detailMicrosteps"></div><button id="addDetailMicrostep">+ Добавить шаг</button></div>
     <div class="detail-field"><label>Комментарии ожиданий (до 3)</label><div id="detailExpectation"></div><button id="addExpectation">+ Добавить</button></div>
     <div class="detail-field"><label>Комментарии реальности (до 3)</label><div id="detailReality"></div><button id="addReality">+ Добавить</button></div>
-    <div class="detail-field"><label>Секундомер</label><div class="stopwatch"><span id="stopwatchDisplay">${formatTime(stopwatchSeconds)}</span><button id="stopwatchStart">▶ Старт</button><button id="stopwatchPause">⏸ Пауза</button><button id="stopwatchReset">🔄 Сброс</button></div></div>
-    <div class="modal-buttons"><button id="saveDetailBtn">Сохранить изменения</button><button id="closeDetailBtn">Закрыть</button></div>`;
+    <div class="detail-field"><label>Секундомер</label><div class="stopwatch"><span id="stopwatchDisplay">${formatTime(stopwatchSeconds)}</span><button id="stopwatchStart">▶</button><button id="stopwatchPause">▯</button><button id="stopwatchReset">⟲</button></div></div>
+    <div class="modal-buttons"><button id="completeFromDetailBtn">DRIFT TASK</button><button id="saveDetailBtn">Сохранить изменения</button><button id="closeDetailBtn">Закрыть</button></div>`;
     const microDetailContainer=$('detailMicrosteps');function renderMicrostepsDetail(){if(!microDetailContainer)return;microDetailContainer.innerHTML='';microsteps.forEach((step,idx)=>{const div=document.createElement('div');div.className='micro-detail-item';const checkbox=document.createElement('div');checkbox.className='micro-detail-checkbox'+(progress.includes(idx)?' checked':'');checkbox.onclick=async()=>{await window.toggleMicrostep(currentDetailTaskId,idx);const newProgress=progress.includes(idx)?progress.filter(i=>i!==idx):[...progress,idx];progress=newProgress;checkbox.classList.toggle('checked',progress.includes(idx));renderMicrostepsDetail();};const span=document.createElement('span');span.textContent=step;span.style.flex=1;const inp=document.createElement('input');inp.type='text';inp.value=step;inp.style.display='none';const editBtn=document.createElement('button');editBtn.textContent='E';editBtn.style.width='28px';editBtn.style.padding='4px';editBtn.onclick=()=>{span.style.display='none';inp.style.display='block';inp.focus();};const saveBtn=document.createElement('button');saveBtn.textContent='S';saveBtn.style.width='28px';saveBtn.style.display='none';saveBtn.onclick=()=>{microsteps[idx]=inp.value;span.textContent=inp.value;span.style.display='block';inp.style.display='none';saveBtn.style.display='none';editBtn.style.display='block';};inp.addEventListener('blur',()=>{if(inp.value!==step){microsteps[idx]=inp.value;span.textContent=inp.value;}span.style.display='block';inp.style.display='none';saveBtn.style.display='none';editBtn.style.display='block';});const del=document.createElement('button');del.textContent='-';del.style.width='28px';del.style.padding='4px';del.onclick=()=>{microsteps.splice(idx,1);progress=progress.filter(i=>i!==idx);renderMicrostepsDetail();};div.appendChild(checkbox);div.appendChild(span);div.appendChild(inp);div.appendChild(editBtn);div.appendChild(saveBtn);div.appendChild(del);microDetailContainer.appendChild(div);});}renderMicrostepsDetail();
     const addStepBtn=$('addDetailMicrostep');if(addStepBtn)addStepBtn.onclick=()=>{if(microsteps.length<10){microsteps.push('');progress.push(microsteps.length-1);renderMicrostepsDetail();}};
     function renderComments(containerId,comments,type){const cont=$(containerId);if(!cont)return;cont.innerHTML='';comments.forEach((c,idx)=>{const div=document.createElement('div');div.className='sub-comment';const inp=document.createElement('input');inp.value=c;inp.placeholder=`${type} ${idx+1}`;inp.style.flex=1;inp.addEventListener('input',(e)=>{comments[idx]=e.target.value;});const del=document.createElement('button');del.textContent='-';del.onclick=()=>{comments.splice(idx,1);renderComments(containerId,comments,type);};div.appendChild(inp);div.appendChild(del);cont.appendChild(div);});}
@@ -181,6 +181,7 @@
     const startBtn=$('stopwatchStart');if(startBtn)startBtn.onclick=()=>{if(!stopwatchRunning){stopwatchRunning=true;if(stopwatchInterval)clearInterval(stopwatchInterval);stopwatchInterval=setInterval(()=>{if(stopwatchRunning){stopwatchSeconds++;updateStopwatchDisplay();}},1000);}};
     const pauseBtn=$('stopwatchPause');if(pauseBtn)pauseBtn.onclick=()=>{stopwatchRunning=false;if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}};
     const resetBtn=$('stopwatchReset');if(resetBtn)resetBtn.onclick=()=>{stopwatchRunning=false;if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}stopwatchSeconds=0;updateStopwatchDisplay();};
+    const completeFromDetail=$('completeFromDetailBtn');if(completeFromDetail)completeFromDetail.onclick=()=>{const taskFound=currentTasks.find(t=>t.id===currentDetailTaskId);if(taskFound){openCompleteModal(taskFound);document.getElementById('detailModal').classList.remove('show');}else{alert('Задача не найдена');}};
     const saveDetail=$('saveDetailBtn');if(saveDetail)saveDetail.onclick=async()=>{const params={action:'updateDetails',id:currentDetailTaskId,microsteps:JSON.stringify(microsteps),expectation_comments:JSON.stringify(expectationComments),reality_comments:JSON.stringify(realityComments),actual_time_seconds:stopwatchSeconds};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);await loadTasksByType(currentType);const modal=$('detailModal');if(modal)modal.classList.remove('show');}catch(e){alert('Ошибка: '+e.message);}};
     const closeDetail=$('closeDetailBtn');if(closeDetail)closeDetail.onclick=()=>{if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}const modal=$('detailModal');if(modal)modal.classList.remove('show');};
     const modal=$('detailModal');if(modal)modal.classList.add('show');}
