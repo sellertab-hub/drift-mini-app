@@ -5,120 +5,540 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Task Tracker</title>
     <style>
-        :root {
-            --bg-primary: #0c0c0c;
-            --bg-secondary: #1a1a1a;
-            --bg-card: #1a1a1a;
-            --text-primary: #ffffff;
-            --text-secondary: #aaa;
-            --border: #2a2a2a;
-            --accent: #36FF00;
-            --accent-hover: #2de600;
-            --button-bg: #36FF00;
-            --button-text: #000;
-            --danger: #ff4646;
+        /* Чёрно-белый аскетичный стиль, без скруглений, минимум серого */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        body.light {
-            --bg-primary: #f0f0f0;
-            --bg-secondary: #e0e0e0;
-            --bg-card: #ffffff;
-            --text-primary: #000000;
-            --text-secondary: #555;
-            --border: #ccc;
-            --accent: #2e7d32;
-            --accent-hover: #1b5e20;
-            --button-bg: #2e7d32;
-            --button-text: #fff;
-            --danger: #c62828;
+        body {
+            font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', monospace;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
         }
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0;margin:0;transition:background 0.2s, color 0.2s;}
-        .loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-primary);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:1000;transition:opacity .3s;}
-        .loading-screen.hidden{opacity:0;pointer-events:none;}
-        .loading-logo{max-width:100px;height:auto;}
-        .app-container{width:100%;height:100vh;background:var(--bg-primary);display:flex;flex-direction:column;overflow:hidden;position:relative;}
-        .nav-bar{display:flex;background:var(--bg-secondary);border-top:1px solid var(--border);padding:6px 12px;gap:6px;}
-        .nav-btn{flex:1;text-align:center;padding:6px 0;font-size:13px;font-weight:600;background:transparent;border:1.5px solid var(--accent);color:var(--accent);border-radius:30px;transition:.2s;cursor:pointer;}
-        .nav-btn.active{background:var(--accent);color:var(--button-text);border-color:var(--accent);}
-        .screens-container{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;scrollbar-width:none;}
-        .screens-container::-webkit-scrollbar{display:none;}
-        .screen{flex:0 0 100%;scroll-snap-align:start;padding:12px;overflow-y:auto;}
-        .type-switch{display:flex;justify-content:center;gap:8px;margin-bottom:12px;background:var(--bg-secondary);border-radius:30px;padding:3px;}
-        .type-btn{flex:1;max-width:100px;text-align:center;padding:6px 0;font-size:14px;font-weight:600;background:transparent;border:1.5px solid var(--accent);color:var(--accent);border-radius:30px;cursor:pointer;transition:.2s;}
-        .type-btn.active{background:var(--accent);color:var(--button-text);border-color:var(--accent);}
-        .task-card{background:var(--bg-card);border-radius:14px;padding:10px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;transition:0.1s;}
-        .task-card:active{transform:scale(0.98);}
-        .task-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
-        .task-title{font-weight:700;font-size:14px;flex:1;}
-        .task-category{font-size:10px;color:var(--accent);font-weight:600;text-transform:uppercase;margin-bottom:2px;}
-        .task-priority{font-size:10px;color:#FFDD21;font-weight:600;}
-        .microsteps-list{list-style:none;margin:6px 0 8px;padding:0;display:flex;flex-direction:column;gap:3px;}
-        .microsteps-list li{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);cursor:pointer;}
-        .microsteps-list li.checked{color:#888;text-decoration:line-through;}
-        .micro-checkbox{width:14px;height:14px;min-width:14px;border-radius:3px;border:1px solid #888;display:flex;align-items:center;justify-content:center;background:transparent;}
-        .microsteps-list li.checked .micro-checkbox{background:var(--accent);border-color:var(--accent);}
-        .micro-checkbox svg{display:none;}
-        .microsteps-list li.checked .micro-checkbox svg{display:block;}
-        .task-actions{display:flex;gap:8px;margin-top:6px;}
-        .drift-task-btn{flex:1;background:transparent;border:1.5px solid var(--accent);border-radius:10px;padding:6px;font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;text-align:center;}
-        .edit-icon-btn{width:32px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent);}
-        .edit-icon-btn svg{width:14px;height:14px;}
-        .custom-select{position:relative;width:100%;margin-bottom:8px;}
-        .select-button{width:100%;padding:8px 10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;font-size:14px;color:var(--text-primary);text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
-        .select-button .arrow{width:12px;height:12px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23aaaaaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;transition:transform .2s;}
-        .select-button.open .arrow{transform:rotate(180deg);}
-        .select-dropdown{position:absolute;top:calc(100% + 2px);left:0;right:0;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;max-height:150px;overflow-y:auto;z-index:20;display:none;}
-        .select-dropdown.show{display:block;}
-        .select-option{padding:8px;cursor:pointer;color:var(--text-primary);border-bottom:1px solid var(--border);font-size:13px;}
-        .select-option:last-child{border-bottom:none;}
-        .select-option:hover{background:var(--bg-primary);}
-        .select-option.selected{background:var(--accent);color:#000;}
-        input,textarea{width:100%;margin-bottom:8px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;padding:8px 10px;color:var(--text-primary);font-size:14px;outline:none;}
-        .slider-container{margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
-        .slider-container label{font-size:12px;color:var(--text-secondary);flex:1;}
-        .slider-container input{flex:3;margin:0 8px 0 0;}
-        .slider-value{background:var(--accent);color:#000;padding:2px 8px;border-radius:16px;font-size:12px;font-weight:bold;min-width:35px;text-align:center;}
-        button{background:var(--button-bg);border:none;border-radius:40px;padding:10px;font-size:14px;font-weight:600;color:var(--button-text);cursor:pointer;width:100%;margin-top:6px;}
-        .type-buttons{display:flex;gap:8px;margin-bottom:12px;}
-        .type-buttons button{flex:1;background:transparent;color:var(--accent);border:1.5px solid var(--accent);margin-top:0;}
-        .type-buttons button.active{background:var(--accent);color:var(--button-text);border-color:var(--accent);}
-        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:1000;}
-        .modal.show{display:flex;}
-        .modal-content{background:var(--bg-primary);border:1.5px solid var(--accent);border-radius:24px;padding:16px;width:90%;max-width:380px;max-height:85vh;overflow-y:auto;}
-        .modal-title{font-size:16px;font-weight:bold;margin-bottom:12px;text-align:center;color:var(--accent);}
-        .modal-buttons{display:flex;gap:8px;margin-top:12px;}
-        .delete-btn{background:var(--danger);color:#fff;margin-top:6px;}
-        .detail-field{margin-bottom:12px;}
-        .detail-field label{font-size:12px;font-weight:600;color:var(--accent);display:block;margin-bottom:4px;}
-        .sub-comment{display:flex;gap:6px;margin-bottom:6px;align-items:center;}
-        .sub-comment input{flex:1;margin-bottom:0;}
-        .sub-comment button{width:28px;height:28px;padding:0;margin:0;background:var(--bg-secondary);color:var(--accent);border:1px solid var(--border);border-radius:8px;font-size:16px;}
-        .stopwatch{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
-        .stopwatch span{font-family:monospace;font-size:20px;font-weight:bold;background:var(--bg-secondary);padding:4px 8px;border-radius:12px;}
-        .stopwatch button{width:auto;flex:1;margin-top:0;}
-        .connection-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:2000;}
-        .connection-overlay.show{display:flex;}
-        .connection-card{background:var(--bg-primary);border:1px solid var(--accent);border-radius:24px;padding:16px;width:90%;max-width:360px;}
-        .status{margin-top:6px;text-align:center;padding:6px;border-radius:12px;font-size:12px;}
-        .status.success{background:rgba(54,255,0,0.2);color:var(--accent);}
-        .status.error{background:rgba(255,70,70,0.2);color:var(--danger);}
-        .theme-toggle{position:absolute;top:8px;right:50px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;}
-        .theme-toggle svg{width:18px;height:18px;fill:var(--accent);}
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .loading-logo {
+            max-width: 100px;
+            height: auto;
+            filter: grayscale(1);
+        }
+        .app-container {
+            width: 100%;
+            height: 100vh;
+            background: #000000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        /* Навигация */
+        .nav-bar {
+            display: flex;
+            background: #111111;
+            border-top: 1px solid #333;
+            padding: 6px 12px;
+            gap: 6px;
+        }
+        .nav-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            font-weight: 700;
+            background: transparent;
+            border: 1px solid #ffffff;
+            color: #ffffff;
+            transition: 0.2s;
+            cursor: pointer;
+            font-family: monospace;
+            text-transform: uppercase;
+        }
+        .nav-btn.active {
+            background: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+        }
+        /* Контейнер экранов */
+        .screens-container {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+        }
+        .screens-container::-webkit-scrollbar {
+            display: none;
+        }
+        .screen {
+            flex: 0 0 100%;
+            scroll-snap-align: start;
+            padding: 12px;
+            overflow-y: auto;
+        }
+        /* Переключатель FAST/LONG + кнопка темы */
+        .type-switch-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+        .type-switch {
+            display: flex;
+            gap: 4px;
+            background: #111;
+            border: 1px solid #333;
+            padding: 2px;
+            flex: 1;
+        }
+        .type-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            font-weight: 700;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-family: monospace;
+            text-transform: uppercase;
+        }
+        .type-btn.active {
+            background: #ffffff;
+            color: #000000;
+        }
+        /* Кнопка переключения темы (на самом деле только ч/б, но оставим для совместимости) */
+        .theme-toggle {
+            background: #111;
+            border: 1px solid #333;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+        }
+        /* Карточки задач */
+        .task-card {
+            background: #111111;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #333;
+            cursor: pointer;
+        }
+        .task-card.top3 {
+            border-left: 4px solid #ffffff;
+            background: #181818;
+        }
+        .task-card.other {
+            opacity: 0.7;
+            background: #0a0a0a;
+        }
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 6px;
+        }
+        .task-title {
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .task-priority {
+            font-size: 11px;
+            color: #ccc;
+        }
+        .task-category {
+            font-size: 10px;
+            color: #aaa;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .microsteps-list {
+            list-style: none;
+            margin: 8px 0 10px;
+            padding: 0;
+        }
+        .microsteps-list li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #ccc;
+            cursor: pointer;
+            margin-bottom: 4px;
+        }
+        .microsteps-list li.checked {
+            color: #555;
+            text-decoration: line-through;
+        }
+        .micro-checkbox {
+            width: 14px;
+            height: 14px;
+            border: 1px solid #777;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+        }
+        .microsteps-list li.checked .micro-checkbox {
+            background: #fff;
+            border-color: #fff;
+        }
+        .micro-checkbox svg {
+            display: none;
+        }
+        .microsteps-list li.checked .micro-checkbox svg {
+            display: block;
+        }
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .drift-task-btn {
+            flex: 1;
+            background: transparent;
+            border: 1px solid #fff;
+            padding: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            text-align: center;
+            text-transform: uppercase;
+            font-family: monospace;
+        }
+        .edit-icon-btn {
+            width: 32px;
+            background: #222;
+            border: 1px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+        }
+        /* Кастомные селекты (аскетичные) */
+        .custom-select {
+            position: relative;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .select-button {
+            width: 100%;
+            padding: 8px 10px;
+            background: #111;
+            border: 1px solid #333;
+            font-size: 14px;
+            color: #fff;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: monospace;
+        }
+        .select-button .arrow {
+            width: 12px;
+            height: 12px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform .2s;
+        }
+        .select-button.open .arrow {
+            transform: rotate(180deg);
+        }
+        .select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #000;
+            border: 1px solid #333;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 20;
+            display: none;
+        }
+        .select-dropdown.show {
+            display: block;
+        }
+        .select-option {
+            padding: 8px;
+            cursor: pointer;
+            color: #fff;
+            border-bottom: 1px solid #222;
+            font-size: 13px;
+        }
+        .select-option:last-child {
+            border-bottom: none;
+        }
+        .select-option:hover {
+            background: #222;
+        }
+        .select-option.selected {
+            background: #fff;
+            color: #000;
+        }
+        /* Формы */
+        input, textarea {
+            width: 100%;
+            margin-bottom: 10px;
+            background: #111;
+            border: 1px solid #333;
+            padding: 8px 10px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            font-family: monospace;
+        }
+        .slider-container {
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .slider-container label {
+            font-size: 12px;
+            color: #ccc;
+            flex: 1;
+        }
+        .slider-container input {
+            flex: 3;
+            margin: 0 8px 0 0;
+        }
+        .slider-value {
+            background: #222;
+            color: #fff;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 35px;
+            text-align: center;
+            border: 1px solid #444;
+        }
+        button {
+            background: #fff;
+            border: none;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #000;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 6px;
+            font-family: monospace;
+            text-transform: uppercase;
+        }
+        .type-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .type-buttons button {
+            flex: 1;
+            background: transparent;
+            color: #fff;
+            border: 1px solid #fff;
+            margin-top: 0;
+        }
+        .type-buttons button.active {
+            background: #fff;
+            color: #000;
+        }
+        /* Модалки */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: #000;
+            border: 1px solid #fff;
+            padding: 16px;
+            width: 90%;
+            max-width: 380px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-align: center;
+            color: #fff;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .delete-btn {
+            background: #fff;
+            color: #000;
+            margin-top: 6px;
+        }
+        .detail-field {
+            margin-bottom: 12px;
+        }
+        .detail-field label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #aaa;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .sub-comment {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+            align-items: center;
+        }
+        .sub-comment input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        .sub-comment button {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            margin: 0;
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+        }
+        .stopwatch {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .stopwatch span {
+            font-family: monospace;
+            font-size: 18px;
+            background: #111;
+            padding: 4px 8px;
+            border: 1px solid #333;
+        }
+        .stopwatch button {
+            width: auto;
+            flex: 1;
+            margin-top: 0;
+        }
+        .connection-overlay {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .connection-overlay.show {
+            display: flex;
+        }
+        .connection-card {
+            background: #000;
+            border: 1px solid #fff;
+            padding: 16px;
+            width: 90%;
+            max-width: 360px;
+        }
+        .status {
+            margin-top: 6px;
+            text-align: center;
+            padding: 6px;
+            font-size: 12px;
+        }
+        .status.success {
+            background: #fff;
+            color: #000;
+        }
+        .status.error {
+            background: #fff;
+            color: #000;
+        }
+        /* Убираем все эмодзи, иконки только текстом */
+        .emoji {
+            display: none;
+        }
     </style>
 </head>
 <body>
-<div class="loading-screen" id="loadingScreen"><img src="logo.png" alt="Logo" class="loading-logo"><div>Загрузка...</div></div>
+<div class="loading-screen" id="loadingScreen"><img src="logo.png" alt="Logo" class="loading-logo"><div>Загрузка</div></div>
 <div class="connection-overlay" id="connectionOverlay"><div class="connection-card"><h3>Подключение к Apps Script</h3><input type="text" id="appUrlInput" placeholder="https://script.google.com/macros/s/.../exec"><button id="saveConnectionBtn">Сохранить</button><div id="connectionStatus"></div></div></div>
 <div class="app-container" id="appContainer" style="display:none;">
-    <div class="theme-toggle" id="themeToggle"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.41 5.41 0 0 1-4.4 2.26 5.5 5.5 0 0 1-3.14-9.8c-.35-.1-.71-.16-1.1-.16H12z"/></svg></div>
     <div class="screens-container" id="screensContainer">
-        <div class="screen" id="screenDrift"><div class="type-switch"><button class="type-btn" data-type="long">LONG</button><button class="type-btn" data-type="fast">FAST</button></div><div id="tasksList"></div></div>
-        <div class="screen" id="screenAdd"><div class="type-buttons" id="addTypeButtons"><button data-type="long" class="active">LONG</button><button data-type="fast">FAST</button></div><div class="custom-select" id="categoryContainer"><div class="select-button" id="categoryButton"><span id="categorySelectedText">Выберите категорию</span><span class="arrow"></span></div><div class="select-dropdown" id="categoryDropdown"></div></div><input type="text" id="taskTitle" placeholder="Название задачи"><div id="microstepsContainer"></div><div class="slider-container"><label>Сложность</label><input type="range" id="complexity" min="0" max="10" step="1" value="5"><span id="complexityVal" class="slider-value">5</span></div><div class="slider-container"><label>Творчество</label><input type="range" id="creativity" min="0" max="10" step="1" value="5"><span id="creativityVal" class="slider-value">5</span></div><div class="slider-container"><label>Фокусировка</label><input type="range" id="focus" min="0" max="10" step="1" value="5"><span id="focusVal" class="slider-value">5</span></div><div class="slider-container"><label>Стоимость ($)</label><input type="range" id="cost" min="0" max="2000" step="50" value="0"><span id="costVal" class="slider-value">$0</span></div><div class="slider-container"><label>Стресс</label><input type="range" id="stress" min="0" max="10" step="1" value="5"><span id="stressVal" class="slider-value">5</span></div><button id="saveTaskBtn">Сохранить задачу</button><div id="addStatus" class="status"></div></div>
+        <!-- DRIFT экран -->
+        <div class="screen" id="screenDrift">
+            <div class="type-switch-wrapper">
+                <div class="type-switch">
+                    <button class="type-btn" data-type="long">LONG</button>
+                    <button class="type-btn" data-type="fast">FAST</button>
+                </div>
+                <div class="theme-toggle" id="themeToggle">[ ]</div>
+            </div>
+            <div id="tasksList"></div>
+        </div>
+        <!-- ADD экран -->
+        <div class="screen" id="screenAdd">
+            <div class="type-buttons" id="addTypeButtons"><button data-type="long" class="active">LONG</button><button data-type="fast">FAST</button></div>
+            <div class="custom-select" id="categoryContainer"><div class="select-button" id="categoryButton"><span id="categorySelectedText">Выберите категорию</span><span class="arrow"></span></div><div class="select-dropdown" id="categoryDropdown"></div></div>
+            <input type="text" id="taskTitle" placeholder="Название задачи">
+            <div id="microstepsContainer"></div>
+            <div class="slider-container"><label>Сложность</label><input type="range" id="complexity" min="0" max="10" step="1" value="5"><span id="complexityVal" class="slider-value">5</span></div>
+            <div class="slider-container"><label>Творчество</label><input type="range" id="creativity" min="0" max="10" step="1" value="5"><span id="creativityVal" class="slider-value">5</span></div>
+            <div class="slider-container"><label>Фокусировка</label><input type="range" id="focus" min="0" max="10" step="1" value="5"><span id="focusVal" class="slider-value">5</span></div>
+            <div class="slider-container"><label>Стоимость ($)</label><input type="range" id="cost" min="0" max="2000" step="50" value="0"><span id="costVal" class="slider-value">0</span></div>
+            <div class="slider-container"><label>Стресс</label><input type="range" id="stress" min="0" max="10" step="1" value="5"><span id="stressVal" class="slider-value">5</span></div>
+            <button id="saveTaskBtn">Сохранить задачу</button>
+            <div id="addStatus" class="status"></div>
+        </div>
     </div>
     <div class="nav-bar"><button class="nav-btn" data-screen="drift">DRIFT</button><button class="nav-btn" data-screen="add">ADD</button></div>
 </div>
-<div class="modal" id="trialWarningModal"><div class="modal-content"><div class="modal-title">⚠️ Внимание</div><p id="trialWarningText"></p><div class="modal-buttons"><button id="trialOkBtn">Ок</button></div></div></div>
-<div class="modal" id="completeModal"><div class="modal-content"><div class="modal-title">🏁 Выполнение задачи</div><div id="completeTaskTitle" style="margin-bottom:10px;text-align:center;"></div><div class="slider-container"><label>Факт. сложность</label><input type="range" id="actualComplexity" min="0" max="10" step="1" value="5"><span id="actualComplexityVal">5</span></div><div class="slider-container"><label>Факт. творчество</label><input type="range" id="actualCreativity" min="0" max="10" step="1" value="5"><span id="actualCreativityVal">5</span></div><div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal">5</span></div><div class="slider-container"><label>Факт. стоимость ($)</label><input type="range" id="actualCost" min="0" max="2000" step="50" value="0"><span id="actualCostVal">$0</span></div><div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal">5</span></div><div class="modal-buttons"><button id="cancelCompleteBtn">Отмена</button><button id="confirmCompleteBtn">Завершить</button></div></div></div>
+<div class="modal" id="trialWarningModal"><div class="modal-content"><div class="modal-title">Внимание</div><p id="trialWarningText"></p><div class="modal-buttons"><button id="trialOkBtn">Ok</button></div></div></div>
+<div class="modal" id="completeModal"><div class="modal-content"><div class="modal-title">Выполнение задачи</div><div id="completeTaskTitle" style="margin-bottom:10px;text-align:center;"></div><div class="slider-container"><label>Факт. сложность</label><input type="range" id="actualComplexity" min="0" max="10" step="1" value="5"><span id="actualComplexityVal">5</span></div><div class="slider-container"><label>Факт. творчество</label><input type="range" id="actualCreativity" min="0" max="10" step="1" value="5"><span id="actualCreativityVal">5</span></div><div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal">5</span></div><div class="slider-container"><label>Факт. стоимость ($)</label><input type="range" id="actualCost" min="0" max="2000" step="50" value="0"><span id="actualCostVal">0</span></div><div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal">5</span></div><div class="modal-buttons"><button id="cancelCompleteBtn">Отмена</button><button id="confirmCompleteBtn">Завершить</button></div></div></div>
 <div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
 <script>
 (function(){
@@ -143,26 +563,26 @@
     function renderMicrostepsDynamic(cont,vals=[]){if(!cont)return;cont.innerHTML='';let stepCount=0;function addStep(v=''){if(stepCount>=5)return;const inp=document.createElement('input');inp.type='text';inp.placeholder=`Шаг ${stepCount+1}`;inp.value=v;inp.classList.add('microstep');inp.addEventListener('input',function(){const steps=Array.from(cont.children);const idx=steps.indexOf(this);if(this.value.trim()!==''&&idx===steps.length-1&&steps.length<5)addStep();});cont.appendChild(inp);stepCount++;}vals.forEach(v=>addStep(v));if(vals.length===0)addStep();}
     function getMicrosteps(cont){if(!cont)return[];return Array.from(cont.querySelectorAll('.microstep')).map(i=>i.value).filter(v=>v.trim()!=='');}
 
-    async function loadTasksByType(type){const cont=$('tasksList');if(!cont)return;cont.innerHTML='<div style="text-align:center;padding:20px;">Загрузка...</div>';try{const data=await apiCall({action:'tasksByType',task_type:type});if(data.error)throw new Error(data.error);currentTasks=data;renderTasks();}catch(e){cont.innerHTML='<div style="color:var(--danger);text-align:center;padding:20px;">Ошибка</div>';}}
-    function renderTasks(){const cont=$('tasksList');if(!cont)return;if(!currentTasks.length){cont.innerHTML='<div style="color:var(--text-secondary);text-align:center;padding:30px;">Нет задач</div>';return;}cont.innerHTML='';currentTasks.forEach(task=>{const card=createTaskCard(task);cont.appendChild(card);attachTaskHandlers(card);});}
-    function createTaskCard(task){const card=document.createElement('div');card.className='task-card';card.dataset.id=task.id;let steps=[];try{steps=JSON.parse(task.microsteps||'[]');}catch(e){}let stepsHtml='';if(steps.length){const checked=task.microstepsProgress||[];stepsHtml=`<ul class="microsteps-list">`+steps.map((s,idx)=>{const isChecked=checked.includes(idx);return `<li data-idx="${idx}" class="${isChecked?'checked':''}" onclick="event.stopPropagation();window.toggleMicrostep('${task.id}',${idx})"><span class="micro-checkbox"><svg width="8" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.5"/></svg></span><span>${escapeHtml(s)}</span></li>`;}).join('')+`</ul>`;}card.innerHTML=`<div class="task-header"><span class="task-title">${escapeHtml(task.title)}</span><span class="task-priority">⭐ ${Number(task.priority||0).toFixed(1)}</span></div><div class="task-category">${escapeHtml(task.category)}</div>${stepsHtml}<div class="task-actions"><button class="drift-task-btn complete-btn" data-id="${task.id}">DRIFT</button><button class="edit-icon-btn edit-btn" data-id="${task.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div>`;return card;}
+    async function loadTasksByType(type){const cont=$('tasksList');if(!cont)return;cont.innerHTML='<div style="text-align:center;padding:20px;">Загрузка...</div>';try{const data=await apiCall({action:'tasksByType',task_type:type});if(data.error)throw new Error(data.error);currentTasks=data;renderTasks();}catch(e){cont.innerHTML='<div style="color:#aaa;text-align:center;padding:20px;">Ошибка</div>';}}
+    function renderTasks(){const cont=$('tasksList');if(!cont)return;if(!currentTasks.length){cont.innerHTML='<div style="color:#555;text-align:center;padding:30px;">Нет задач</div>';return;}cont.innerHTML='';currentTasks.forEach((task,idx)=>{const isTop3=idx<3;const card=createTaskCard(task,isTop3);cont.appendChild(card);attachTaskHandlers(card);});}
+    function createTaskCard(task,isTop3){const card=document.createElement('div');card.className='task-card'+(isTop3?' top3':' other');card.dataset.id=task.id;let steps=[];try{steps=JSON.parse(task.microsteps||'[]');}catch(e){}let stepsHtml='';if(steps.length){const checked=task.microstepsProgress||[];stepsHtml=`<ul class="microsteps-list">`+steps.map((s,idx)=>{const isChecked=checked.includes(idx);return `<li data-idx="${idx}" class="${isChecked?'checked':''}" onclick="event.stopPropagation();window.toggleMicrostep('${task.id}',${idx})"><span class="micro-checkbox"><svg width="6" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.5"/></svg></span><span>${escapeHtml(s)}</span></li>`;}).join('')+`</ul>`;}card.innerHTML=`<div class="task-header"><span class="task-title">${escapeHtml(task.title)}</span><span class="task-priority">[${Number(task.priority||0).toFixed(1)}]</span></div><div class="task-category">${escapeHtml(task.category)}</div>${stepsHtml}<div class="task-actions"><button class="drift-task-btn complete-btn" data-id="${task.id}">DRIFT</button><button class="edit-icon-btn edit-btn" data-id="${task.id}">[E]</button></div>`;return card;}
     function attachTaskHandlers(card){const complete=card.querySelector('.complete-btn');if(complete)complete.addEventListener('click',(e)=>{e.stopPropagation();const id=complete.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openCompleteModal(task);});const edit=card.querySelector('.edit-btn');if(edit)edit.addEventListener('click',(e)=>{e.stopPropagation();const id=edit.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openEditModal(task);});card.addEventListener('click',()=>{const id=card.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openDetailModal(task);});}
     window.toggleMicrostep=async function(taskId,idx){try{const res=await apiCall({action:'toggleMicrostep',id:taskId,step_index:idx},'POST');if(res.error)throw new Error(res.error);const task=currentTasks.find(t=>t.id===taskId);if(task){if(!task.microstepsProgress)task.microstepsProgress=[];const pos=task.microstepsProgress.indexOf(idx);if(pos===-1)task.microstepsProgress.push(idx);else task.microstepsProgress.splice(pos,1);renderTasks();}}catch(e){alert('Ошибка: '+e.message);}};
 
     let currentCompleteTaskId=null;
-    function openCompleteModal(task){currentCompleteTaskId=task.id;const titleEl=$('completeTaskTitle');if(titleEl)titleEl.innerText=task.title;const complexity=$('actualComplexity');if(complexity)complexity.value=5;const complexityVal=$('actualComplexityVal');if(complexityVal)complexityVal.innerText='5';const creativity=$('actualCreativity');if(creativity)creativity.value=5;const creativityVal=$('actualCreativityVal');if(creativityVal)creativityVal.innerText='5';const focus=$('actualFocus');if(focus)focus.value=5;const focusVal=$('actualFocusVal');if(focusVal)focusVal.innerText='5';const cost=$('actualCost');if(cost)cost.value=0;const costVal=$('actualCostVal');if(costVal)costVal.innerText='$0';const stress=$('actualStress');if(stress)stress.value=5;const stressVal=$('actualStressVal');if(stressVal)stressVal.innerText='5';const modal=$('completeModal');if(modal)modal.classList.add('show');}
+    function openCompleteModal(task){currentCompleteTaskId=task.id;const titleEl=$('completeTaskTitle');if(titleEl)titleEl.innerText=task.title;document.querySelectorAll('#completeModal input[type=range]').forEach(s=>s.value=5);document.querySelectorAll('#completeModal .slider-value').forEach(v=>v.innerText='5');const costInp=$('actualCost');if(costInp)costInp.value=0;const costSpan=$('actualCostVal');if(costSpan)costSpan.innerText='0';const modal=$('completeModal');if(modal)modal.classList.add('show');}
     const cancelComplete=$('cancelCompleteBtn');if(cancelComplete)cancelComplete.addEventListener('click',()=>{const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;});
     const confirmComplete=$('confirmCompleteBtn');if(confirmComplete)confirmComplete.addEventListener('click',async()=>{if(!currentCompleteTaskId)return;const params={action:'completeTask',id:currentCompleteTaskId,actual_complexity:$('actualComplexity')?$('actualComplexity').value:5,actual_creativity:$('actualCreativity')?$('actualCreativity').value:5,actual_focus:$('actualFocus')?$('actualFocus').value:5,actual_cost:$('actualCost')?$('actualCost').value:0,actual_stress:$('actualStress')?$('actualStress').value:5};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
 
     let currentEditId=null;
-    function openEditModal(task){currentEditId=task.id;const idInput=$('editTaskId');if(idInput)idInput.value=task.id;const titleInput=$('editTitle');if(titleInput)titleInput.value=task.title;const catText=$('editCategorySelectedText');if(catText)catText.textContent=task.category;window.editSelectedCategory=task.category;let microsteps=[];try{microsteps=JSON.parse(task.microsteps||'[]');}catch(e){}const editMicroContainer=$('editMicrostepsContainer');if(editMicroContainer)renderMicrostepsDynamic(editMicroContainer,microsteps);const complexity=$('editComplexity');if(complexity)complexity.value=task.complexity||5;const creativity=$('editCreativity');if(creativity)creativity.value=task.creativity||5;const focus=$('editFocus');if(focus)focus.value=task.focus||5;const cost=$('editCost');if(cost)cost.value=task.cost||0;const stress=$('editStress');if(stress)stress.value=task.stress||5;const complexityVal=$('editComplexityVal');if(complexityVal)complexityVal.innerText=task.complexity||5;const creativityVal=$('editCreativityVal');if(creativityVal)creativityVal.innerText=task.creativity||5;const focusVal=$('editFocusVal');if(focusVal)focusVal.innerText=task.focus||5;const costVal=$('editCostVal');if(costVal)costVal.innerText=`$${task.cost||0}`;const stressVal=$('editStressVal');if(stressVal)stressVal.innerText=task.stress||5;const modal=$('editModal');if(modal)modal.classList.add('show');}
+    function openEditModal(task){currentEditId=task.id;const idInput=$('editTaskId');if(idInput)idInput.value=task.id;const titleInput=$('editTitle');if(titleInput)titleInput.value=task.title;const catText=$('editCategorySelectedText');if(catText)catText.textContent=task.category;window.editSelectedCategory=task.category;let microsteps=[];try{microsteps=JSON.parse(task.microsteps||'[]');}catch(e){}const editMicroContainer=$('editMicrostepsContainer');if(editMicroContainer)renderMicrostepsDynamic(editMicroContainer,microsteps);const complexity=$('editComplexity');if(complexity)complexity.value=task.complexity||5;const creativity=$('editCreativity');if(creativity)creativity.value=task.creativity||5;const focus=$('editFocus');if(focus)focus.value=task.focus||5;const cost=$('editCost');if(cost)cost.value=task.cost||0;const stress=$('editStress');if(stress)stress.value=task.stress||5;['editComplexity','editCreativity','editFocus','editStress'].forEach(id=>{const valSpan=$(id+'Val');if(valSpan)valSpan.innerText=document.getElementById(id).value;});const costSpan=$('editCostVal');if(costSpan)costSpan.innerText=`${task.cost||0}`;const modal=$('editModal');if(modal)modal.classList.add('show');}
     const cancelEdit=$('cancelEditBtn');if(cancelEdit)cancelEdit.addEventListener('click',()=>{const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;});
     const saveEdit=$('saveEditBtn');if(saveEdit)saveEdit.addEventListener('click',async()=>{if(!currentEditId)return;const microsteps=getMicrosteps($('editMicrostepsContainer'));const params={action:'updateTask',id:currentEditId,title:$('editTitle')?$('editTitle').value:'',category:window.editSelectedCategory||'',microsteps:JSON.stringify(microsteps),complexity:$('editComplexity')?$('editComplexity').value:5,creativity:$('editCreativity')?$('editCreativity').value:5,focus:$('editFocus')?$('editFocus').value:5,cost:$('editCost')?$('editCost').value:0,stress:$('editStress')?$('editStress').value:5};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
     const deleteTaskBtn=$('deleteTaskBtn');if(deleteTaskBtn)deleteTaskBtn.addEventListener('click',async()=>{if(!currentEditId)return;if(!confirm('Удалить задачу?'))return;try{const res=await apiCall({action:'deleteTask',id:currentEditId},'POST');if(res.error)throw new Error(res.error);const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
 
     let selectedAddType='long';
     const addTypeBtns=$$('#addTypeButtons button');addTypeBtns.forEach(btn=>{btn.addEventListener('click',()=>{addTypeBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedAddType=btn.dataset.type;});});
-    const saveTask=$('saveTaskBtn');if(saveTask)saveTask.addEventListener('click',async()=>{const category=window.selectedCategory||'';const title=$('taskTitle')?$('taskTitle').value:'';if(!category||!title){showStatus('addStatus','Заполните категорию и название','error');return;}const microsteps=getMicrosteps($('microstepsContainer'));const params={action:'addTask',category,title,microsteps:JSON.stringify(microsteps),complexity:$('complexity')?$('complexity').value:5,creativity:$('creativity')?$('creativity').value:5,focus:$('focus')?$('focus').value:5,cost:$('cost')?$('cost').value:0,stress:$('stress')?$('stress').value:5,task_type:selectedAddType};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);showStatus('addStatus','✅ Задача добавлена','success');if($('taskTitle'))$('taskTitle').value='';const catText=$('categorySelectedText');if(catText)catText.textContent='Выберите категорию';window.selectedCategory='';renderMicrostepsDynamic($('microstepsContainer'),[]);['complexity','creativity','focus','stress'].forEach(id=>{const el=$(id);if(el)el.value=5;const valSpan=$(id+'Val');if(valSpan)valSpan.innerText='5';});const costEl=$('cost');if(costEl)costEl.value=0;const costSpan=$('costVal');if(costSpan)costSpan.innerText='$0';await loadTasksByType(currentType);}catch(e){showStatus('addStatus','Ошибка: '+e.message,'error');}});
+    const saveTask=$('saveTaskBtn');if(saveTask)saveTask.addEventListener('click',async()=>{const category=window.selectedCategory||'';const title=$('taskTitle')?$('taskTitle').value:'';if(!category||!title){showStatus('addStatus','Заполните категорию и название','error');return;}const microsteps=getMicrosteps($('microstepsContainer'));const params={action:'addTask',category,title,microsteps:JSON.stringify(microsteps),complexity:$('complexity')?$('complexity').value:5,creativity:$('creativity')?$('creativity').value:5,focus:$('focus')?$('focus').value:5,cost:$('cost')?$('cost').value:0,stress:$('stress')?$('stress').value:5,task_type:selectedAddType};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);showStatus('addStatus','Задача добавлена','success');if($('taskTitle'))$('taskTitle').value='';const catText=$('categorySelectedText');if(catText)catText.textContent='Выберите категорию';window.selectedCategory='';renderMicrostepsDynamic($('microstepsContainer'),[]);['complexity','creativity','focus','stress'].forEach(id=>{const el=$(id);if(el)el.value=5;const valSpan=$(id+'Val');if(valSpan)valSpan.innerText='5';});const costEl=$('cost');if(costEl)costEl.value=0;const costSpan=$('costVal');if(costSpan)costSpan.innerText='0';await loadTasksByType(currentType);}catch(e){showStatus('addStatus','Ошибка: '+e.message,'error');}});
 
     async function loadCategories(){try{const data=await apiCall({action:'categories'});if(data.error)throw new Error(data.error);categoriesList=data;initCustomSelect('categoryButton','categoryDropdown',categoriesList,(value)=>{const catText=$('categorySelectedText');if(catText)catText.textContent=value;window.selectedCategory=value;});initCustomSelect('editCategoryButton','editCategoryDropdown',categoriesList,(value)=>{const catText=$('editCategorySelectedText');if(catText)catText.textContent=value;window.editSelectedCategory=value;});}catch(e){console.error(e);}}
 
@@ -172,7 +592,7 @@
 
     function showStatus(eid,msg,tp){const el=$(eid);if(el){el.textContent=msg;el.className=`status ${tp}`;setTimeout(()=>{if(el)el.className='status';},3000);}}
     function escapeHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-    function bindSlider(sid,spid,isMoney=false){const s=$(sid),sp=$(spid);if(s&&sp)s.addEventListener('input',()=>{sp.innerText=isMoney?`$${s.value}`:s.value;});}
+    function bindSlider(sid,spid,isMoney=false){const s=$(sid),sp=$(spid);if(s&&sp)s.addEventListener('input',()=>{sp.innerText=isMoney?`${s.value}`:s.value;});}
     ['complexity','creativity','focus','stress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('cost','costVal',true);['actualComplexity','actualCreativity','actualFocus','actualStress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('actualCost','actualCostVal',true);['editComplexity','editCreativity','editFocus','editStress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('editCost','editCostVal',true);
     renderMicrostepsDynamic($('microstepsContainer'),[]);renderMicrostepsDynamic($('editMicrostepsContainer'),[]);
 
@@ -187,9 +607,9 @@
     <div class="detail-field"><label>Комментарии реальности (до 3)</label><div id="detailReality"></div><button id="addReality">+ Добавить</button></div>
     <div class="detail-field"><label>Секундомер</label><div class="stopwatch"><span id="stopwatchDisplay">${formatTime(stopwatchSeconds)}</span><button id="stopwatchStart">▶ Старт</button><button id="stopwatchPause">⏸ Пауза</button><button id="stopwatchReset">🔄 Сброс</button></div></div>
     <div class="modal-buttons"><button id="saveDetailBtn">Сохранить изменения</button><button id="closeDetailBtn">Закрыть</button></div>`;
-    const microDetailContainer=$('detailMicrosteps');function renderMicrostepsDetail(){if(!microDetailContainer)return;microDetailContainer.innerHTML='';microsteps.forEach((step,idx)=>{const div=document.createElement('div');div.style.display='flex';div.style.gap='6px';div.style.marginBottom='6px';const inp=document.createElement('input');inp.value=step;inp.placeholder=`Шаг ${idx+1}`;inp.style.flex=1;inp.addEventListener('input',(e)=>{microsteps[idx]=e.target.value;});const del=document.createElement('button');del.textContent='✖';del.style.width='28px';del.style.padding='4px';del.onclick=()=>{microsteps.splice(idx,1);renderMicrostepsDetail();};div.appendChild(inp);div.appendChild(del);microDetailContainer.appendChild(div);});}renderMicrostepsDetail();
+    const microDetailContainer=$('detailMicrosteps');function renderMicrostepsDetail(){if(!microDetailContainer)return;microDetailContainer.innerHTML='';microsteps.forEach((step,idx)=>{const div=document.createElement('div');div.style.display='flex';div.style.gap='6px';div.style.marginBottom='6px';const inp=document.createElement('input');inp.value=step;inp.placeholder=`Шаг ${idx+1}`;inp.style.flex=1;inp.addEventListener('input',(e)=>{microsteps[idx]=e.target.value;});const del=document.createElement('button');del.textContent='-';del.style.width='28px';del.style.padding='4px';del.onclick=()=>{microsteps.splice(idx,1);renderMicrostepsDetail();};div.appendChild(inp);div.appendChild(del);microDetailContainer.appendChild(div);});}renderMicrostepsDetail();
     const addStepBtn=$('addDetailMicrostep');if(addStepBtn)addStepBtn.onclick=()=>{if(microsteps.length<10){microsteps.push('');renderMicrostepsDetail();}};
-    function renderComments(containerId,comments,type){const cont=$(containerId);if(!cont)return;cont.innerHTML='';comments.forEach((c,idx)=>{const div=document.createElement('div');div.className='sub-comment';const inp=document.createElement('input');inp.value=c;inp.placeholder=`${type} ${idx+1}`;inp.style.flex=1;inp.addEventListener('input',(e)=>{comments[idx]=e.target.value;});const del=document.createElement('button');del.textContent='✖';del.onclick=()=>{comments.splice(idx,1);renderComments(containerId,comments,type);};div.appendChild(inp);div.appendChild(del);cont.appendChild(div);});}
+    function renderComments(containerId,comments,type){const cont=$(containerId);if(!cont)return;cont.innerHTML='';comments.forEach((c,idx)=>{const div=document.createElement('div');div.className='sub-comment';const inp=document.createElement('input');inp.value=c;inp.placeholder=`${type} ${idx+1}`;inp.style.flex=1;inp.addEventListener('input',(e)=>{comments[idx]=e.target.value;});const del=document.createElement('button');del.textContent='-';del.onclick=()=>{comments.splice(idx,1);renderComments(containerId,comments,type);};div.appendChild(inp);div.appendChild(del);cont.appendChild(div);});}
     renderComments('detailExpectation',expectationComments,'Ожидание');renderComments('detailReality',realityComments,'Реальность');
     const addExp=$('addExpectation');if(addExp)addExp.onclick=()=>{if(expectationComments.length<3){expectationComments.push('');renderComments('detailExpectation',expectationComments,'Ожидание');}};
     const addReal=$('addReality');if(addReal)addReal.onclick=()=>{if(realityComments.length<3){realityComments.push('');renderComments('detailReality',realityComments,'Реальность');}};
@@ -201,7 +621,7 @@
     const closeDetail=$('closeDetailBtn');if(closeDetail)closeDetail.onclick=()=>{if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}const modal=$('detailModal');if(modal)modal.classList.remove('show');};
     const modal=$('detailModal');if(modal)modal.classList.add('show');}
 
-    async function initApp(){const url=getAppUrl();if(!url){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');const appContainer=$('appContainer');if(appContainer)appContainer.style.display='flex';const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');await loadCategories();await loadTasksByType('long');switchScreen('drift');const savedTheme=localStorage.getItem('theme')||'dark';if(savedTheme==='light')document.body.classList.add('light');else document.body.classList.remove('light');const themeToggle=$('themeToggle');if(themeToggle){themeToggle.addEventListener('click',()=>{document.body.classList.toggle('light');localStorage.setItem('theme',document.body.classList.contains('light')?'light':'dark');});}}catch(e){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Ошибка: '+e.message;}}
+    async function initApp(){const url=getAppUrl();if(!url){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');const appContainer=$('appContainer');if(appContainer)appContainer.style.display='flex';const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');await loadCategories();await loadTasksByType('long');switchScreen('drift');const themeToggle=$('themeToggle');if(themeToggle){themeToggle.addEventListener('click',()=>{document.body.classList.toggle('invert');});}}catch(e){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Ошибка: '+e.message;}}
     const saveConn=$('saveConnectionBtn');if(saveConn)saveConn.addEventListener('click',async()=>{const url=$('appUrlInput')?$('appUrlInput').value:'';try{await testConnection(url);saveAppUrl(url);const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');initApp();}catch(e){const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Неверный URL: '+e.message;}});
     initApp();
 })();
