@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Task Tracker</title>
     <style id="theme-style">
-        /* Базовые переменные (тёмная тема по умолчанию) */
         :root {
             --bg-primary: #0c0c0c;
             --bg-secondary: #1a1a1a;
@@ -44,7 +43,6 @@
         .screens-container{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;scrollbar-width:none;}
         .screens-container::-webkit-scrollbar{display:none;}
         .screen{flex:0 0 100%;scroll-snap-align:start;padding:12px;overflow-y:auto;}
-        /* Компактные отступы */
         .type-switch{display:flex;justify-content:center;gap:8px;margin-bottom:12px;background:var(--bg-secondary);border-radius:30px;padding:3px;}
         .type-btn{flex:1;max-width:100px;text-align:center;padding:6px 0;font-size:14px;font-weight:600;background:transparent;border:1.5px solid var(--accent);color:var(--accent);border-radius:30px;cursor:pointer;transition:.2s;}
         .type-btn.active{background:var(--accent);color:var(--button-text);border-color:var(--accent);}
@@ -65,7 +63,6 @@
         .drift-task-btn{flex:1;background:transparent;border:1.5px solid var(--accent);border-radius:10px;padding:6px;font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;text-align:center;}
         .edit-icon-btn{width:32px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent);}
         .edit-icon-btn svg{width:14px;height:14px;}
-        /* Кастомные селекты */
         .custom-select{position:relative;width:100%;margin-bottom:8px;}
         .select-button{width:100%;padding:8px 10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;font-size:14px;color:var(--text-primary);text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
         .select-button .arrow{width:12px;height:12px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23aaaaaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;transition:transform .2s;}
@@ -76,7 +73,6 @@
         .select-option:last-child{border-bottom:none;}
         .select-option:hover{background:var(--bg-primary);}
         .select-option.selected{background:var(--accent);color:#000;}
-        /* Формы */
         input,textarea{width:100%;margin-bottom:8px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;padding:8px 10px;color:var(--text-primary);font-size:14px;outline:none;}
         .slider-container{margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
         .slider-container label{font-size:12px;color:var(--text-secondary);flex:1;}
@@ -86,14 +82,12 @@
         .type-buttons{display:flex;gap:8px;margin-bottom:12px;}
         .type-buttons button{flex:1;background:transparent;color:var(--accent);border:1.5px solid var(--accent);margin-top:0;}
         .type-buttons button.active{background:var(--accent);color:var(--button-text);border-color:var(--accent);}
-        /* Модалки */
         .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:1000;}
         .modal.show{display:flex;}
         .modal-content{background:var(--bg-primary);border:1.5px solid var(--accent);border-radius:24px;padding:16px;width:90%;max-width:380px;max-height:85vh;overflow-y:auto;}
         .modal-title{font-size:16px;font-weight:bold;margin-bottom:12px;text-align:center;color:var(--accent);}
         .modal-buttons{display:flex;gap:8px;margin-top:12px;}
         .delete-btn{background:var(--danger);color:#fff;margin-top:6px;}
-        /* Детальный вид */
         .detail-field{margin-bottom:12px;}
         .detail-field label{font-size:12px;font-weight:600;color:var(--accent);display:block;margin-bottom:4px;}
         .sub-comment{display:flex;gap:6px;margin-bottom:6px;align-items:center;}
@@ -123,7 +117,6 @@
     </div>
     <div class="nav-bar"><button class="nav-btn" data-screen="drift">DRIFT</button><button class="nav-btn" data-screen="add">ADD</button></div>
 </div>
-<!-- Модалки -->
 <div class="modal" id="trialWarningModal"><div class="modal-content"><div class="modal-title">⚠️ Внимание</div><p id="trialWarningText"></p><div class="modal-buttons"><button id="trialOkBtn">Ок</button></div></div></div>
 <div class="modal" id="completeModal"><div class="modal-content"><div class="modal-title">🏁 Выполнение задачи</div><div id="completeTaskTitle" style="margin-bottom:10px;text-align:center;"></div><div class="slider-container"><label>Факт. сложность</label><input type="range" id="actualComplexity" min="0" max="10" step="1" value="5"><span id="actualComplexityVal">5</span></div><div class="slider-container"><label>Факт. творчество</label><input type="range" id="actualCreativity" min="0" max="10" step="1" value="5"><span id="actualCreativityVal">5</span></div><div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal">5</span></div><div class="slider-container"><label>Факт. стоимость ($)</label><input type="range" id="actualCost" min="0" max="2000" step="50" value="0"><span id="actualCostVal">$0</span></div><div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal">5</span></div><div class="modal-buttons"><button id="cancelCompleteBtn">Отмена</button><button id="confirmCompleteBtn">Завершить</button></div></div></div>
 <div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
@@ -166,8 +159,7 @@ function bindSlider(sid,spid,isMoney=false){const s=document.getElementById(sid)
 renderMicrostepsDynamic(document.getElementById('microstepsContainer'),[]);renderMicrostepsDynamic(document.getElementById('editMicrostepsContainer'),[]);
 function showTrialWarning(daysLeft){const modal=document.getElementById('trialWarningModal');const text=document.getElementById('trialWarningText');text.innerText=`Пробный период скоро закончится. Осталось ${daysLeft} дн. Обратитесь к разработчику.`;modal.classList.add('show');document.getElementById('trialOkBtn').onclick=()=>modal.classList.remove('show');}
 function showTrialExpired(){const loading=document.getElementById('loadingScreen');loading.innerHTML='<div style="text-align:center;padding:20px;"><h2>Пробный период закончился</h2><p>Обратитесь к разработчику.</p></div>';loading.classList.remove('hidden');document.getElementById('appContainer').style.display='none';}
-// Детальный вид
-async function openDetailModal(task){currentDetailTaskId=task.id;const container=document.getElementById('detailContent');let microsteps=[];try{microsteps=JSON.parse(task.microsteps||'[]');}catch(e){}let expectationComments=[];let realityComments=[];let actualTimeSec=0;try{const fullTask=await apiCall({action:'tasksByType',task_type:currentType});const found=fullTask.find(t=>t.id===task.id);if(found){expectationComments=found.expectation_comments?JSON.parse(found.expectation_comments):[];realityComments=found.reality_comments?JSON.parse(found.reality_comments):[];actualTimeSec=found.actual_time_seconds||0;}}catch(e){}stopwatchSeconds=actualTimeSec;stopwatchRunning=false;if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}
+async function openDetailModal(task){currentDetailTaskId=task.id;const container=document.getElementById('detailContent');let microsteps=[];try{microsteps=JSON.parse(task.microsteps||'[]');}catch(e){}let expectationComments=[];let realityComments=[];let actualTimeSec=0;try{const fullTask=await apiCall({action:'tasksByType',task_type:currentType});const found=fullTask.find(t=>t.id===task.id);if(found){if(found.expectation_comments)expectationComments=JSON.parse(found.expectation_comments);if(found.reality_comments)realityComments=JSON.parse(found.reality_comments);actualTimeSec=found.actual_time_seconds||0;}}catch(e){}stopwatchSeconds=actualTimeSec;stopwatchRunning=false;if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}
 function formatTime(sec){const h=Math.floor(sec/3600);const m=Math.floor((sec%3600)/60);const s=sec%60;return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;}
 container.innerHTML=`<div class="modal-title">${escapeHtml(task.title)}</div>
 <div class="detail-field"><label>Микрошаги</label><div id="detailMicrosteps"></div><button id="addDetailMicrostep">+ Добавить шаг</button></div>
@@ -188,10 +180,8 @@ document.getElementById('stopwatchReset').onclick=()=>{stopwatchRunning=false;if
 document.getElementById('saveDetailBtn').onclick=async()=>{const params={action:'updateDetails',id:currentDetailTaskId,microsteps:JSON.stringify(microsteps),expectation_comments:JSON.stringify(expectationComments),reality_comments:JSON.stringify(realityComments),actual_time_seconds:stopwatchSeconds};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);await loadTasksByType(currentType);document.getElementById('detailModal').classList.remove('show');}catch(e){alert('Ошибка: '+e.message);}};
 document.getElementById('closeDetailBtn').onclick=()=>{if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}document.getElementById('detailModal').classList.remove('show');};
 document.getElementById('detailModal').classList.add('show');}
-// Тема
-function initTheme(){const saved=localStorage.getItem('theme')||'dark';if(saved==='light')document.body.classList.add('light');else document.body.classList.remove('light');}initTheme();
-document.getElementById('themeToggle').addEventListener('click',()=>{document.body.classList.toggle('light');localStorage.setItem('theme',document.body.classList.contains('light')?'light':'dark');});
-async function initApp(){const url=getAppUrl();if(!url){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('connectionOverlay').classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}document.getElementById('connectionOverlay').classList.remove('show');document.getElementById('appContainer').style.display='flex';document.getElementById('loadingScreen').classList.add('hidden');await loadCategories();await loadTasksByType('long');switchScreen('drift');}catch(e){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('connectionOverlay').classList.add('show');document.getElementById('connectionStatus').innerText='Ошибка: '+e.message;}}
+async function initApp(){const url=getAppUrl();if(!url){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('connectionOverlay').classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}document.getElementById('connectionOverlay').classList.remove('show');document.getElementById('appContainer').style.display='flex';document.getElementById('loadingScreen').classList.add('hidden');await loadCategories();await loadTasksByType('long');switchScreen('drift');
+const savedTheme=localStorage.getItem('theme')||'dark';if(savedTheme==='light')document.body.classList.add('light');else document.body.classList.remove('light');const themeToggle=document.getElementById('themeToggle');if(themeToggle){themeToggle.addEventListener('click',()=>{document.body.classList.toggle('light');localStorage.setItem('theme',document.body.classList.contains('light')?'light':'dark');});}}catch(e){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('connectionOverlay').classList.add('show');document.getElementById('connectionStatus').innerText='Ошибка: '+e.message;}}
 document.getElementById('saveConnectionBtn').addEventListener('click',async()=>{const url=document.getElementById('appUrlInput').value;try{await testConnection(url);saveAppUrl(url);document.getElementById('connectionOverlay').classList.remove('show');initApp();}catch(e){document.getElementById('connectionStatus').innerText='Неверный URL: '+e.message;}});
 initApp();
 </script>
