@@ -5,503 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Task Tracker</title>
     <style>
-        /* Чёрно-белый аскетичный стиль, без скруглений, минимум серого */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', monospace;
-            background: #000000;
-            color: #ffffff;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            margin: 0;
-        }
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            z-index: 1000;
-            transition: opacity 0.3s;
-        }
-        .loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .loading-logo {
-            max-width: 100px;
-            height: auto;
-            filter: grayscale(1);
-        }
-        .app-container {
-            width: 100%;
-            height: 100vh;
-            background: #000000;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-        /* Навигация */
-        .nav-bar {
-            display: flex;
-            background: #111111;
-            border-top: 1px solid #333;
-            padding: 6px 12px;
-            gap: 6px;
-        }
-        .nav-btn {
-            flex: 1;
-            text-align: center;
-            padding: 8px 0;
-            font-size: 14px;
-            font-weight: 700;
-            background: transparent;
-            border: 1px solid #ffffff;
-            color: #ffffff;
-            transition: 0.2s;
-            cursor: pointer;
-            font-family: monospace;
-            text-transform: uppercase;
-        }
-        .nav-btn.active {
-            background: #ffffff;
-            color: #000000;
-            border-color: #ffffff;
-        }
-        /* Контейнер экранов */
-        .screens-container {
-            flex: 1;
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scroll-behavior: smooth;
-            scrollbar-width: none;
-        }
-        .screens-container::-webkit-scrollbar {
-            display: none;
-        }
-        .screen {
-            flex: 0 0 100%;
-            scroll-snap-align: start;
-            padding: 12px;
-            overflow-y: auto;
-        }
-        /* Переключатель FAST/LONG + кнопка темы */
-        .type-switch-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-            gap: 12px;
-        }
-        .type-switch {
-            display: flex;
-            gap: 4px;
-            background: #111;
-            border: 1px solid #333;
-            padding: 2px;
-            flex: 1;
-        }
-        .type-btn {
-            flex: 1;
-            text-align: center;
-            padding: 8px 0;
-            font-size: 14px;
-            font-weight: 700;
-            background: transparent;
-            border: none;
-            color: #aaa;
-            cursor: pointer;
-            font-family: monospace;
-            text-transform: uppercase;
-        }
-        .type-btn.active {
-            background: #ffffff;
-            color: #000000;
-        }
-        /* Кнопка переключения темы (на самом деле только ч/б, но оставим для совместимости) */
-        .theme-toggle {
-            background: #111;
-            border: 1px solid #333;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            color: #fff;
-        }
-        /* Карточки задач */
-        .task-card {
-            background: #111111;
-            padding: 12px;
-            margin-bottom: 8px;
-            border: 1px solid #333;
-            cursor: pointer;
-        }
-        .task-card.top3 {
-            border-left: 4px solid #ffffff;
-            background: #181818;
-        }
-        .task-card.other {
-            opacity: 0.7;
-            background: #0a0a0a;
-        }
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 6px;
-        }
-        .task-title {
-            font-weight: 700;
-            font-size: 14px;
-            text-transform: uppercase;
-        }
-        .task-priority {
-            font-size: 11px;
-            color: #ccc;
-        }
-        .task-category {
-            font-size: 10px;
-            color: #aaa;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-        .microsteps-list {
-            list-style: none;
-            margin: 8px 0 10px;
-            padding: 0;
-        }
-        .microsteps-list li {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: #ccc;
-            cursor: pointer;
-            margin-bottom: 4px;
-        }
-        .microsteps-list li.checked {
-            color: #555;
-            text-decoration: line-through;
-        }
-        .micro-checkbox {
-            width: 14px;
-            height: 14px;
-            border: 1px solid #777;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-        }
-        .microsteps-list li.checked .micro-checkbox {
-            background: #fff;
-            border-color: #fff;
-        }
-        .micro-checkbox svg {
-            display: none;
-        }
-        .microsteps-list li.checked .micro-checkbox svg {
-            display: block;
-        }
-        .task-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .drift-task-btn {
-            flex: 1;
-            background: transparent;
-            border: 1px solid #fff;
-            padding: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #fff;
-            cursor: pointer;
-            text-align: center;
-            text-transform: uppercase;
-            font-family: monospace;
-        }
-        .edit-icon-btn {
-            width: 32px;
-            background: #222;
-            border: 1px solid #555;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            color: #fff;
-        }
-        /* Кастомные селекты (аскетичные) */
-        .custom-select {
-            position: relative;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        .select-button {
-            width: 100%;
-            padding: 8px 10px;
-            background: #111;
-            border: 1px solid #333;
-            font-size: 14px;
-            color: #fff;
-            text-align: left;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-family: monospace;
-        }
-        .select-button .arrow {
-            width: 12px;
-            height: 12px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: center;
-            transition: transform .2s;
-        }
-        .select-button.open .arrow {
-            transform: rotate(180deg);
-        }
-        .select-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #000;
-            border: 1px solid #333;
-            max-height: 150px;
-            overflow-y: auto;
-            z-index: 20;
-            display: none;
-        }
-        .select-dropdown.show {
-            display: block;
-        }
-        .select-option {
-            padding: 8px;
-            cursor: pointer;
-            color: #fff;
-            border-bottom: 1px solid #222;
-            font-size: 13px;
-        }
-        .select-option:last-child {
-            border-bottom: none;
-        }
-        .select-option:hover {
-            background: #222;
-        }
-        .select-option.selected {
-            background: #fff;
-            color: #000;
-        }
-        /* Формы */
-        input, textarea {
-            width: 100%;
-            margin-bottom: 10px;
-            background: #111;
-            border: 1px solid #333;
-            padding: 8px 10px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-            font-family: monospace;
-        }
-        .slider-container {
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .slider-container label {
-            font-size: 12px;
-            color: #ccc;
-            flex: 1;
-        }
-        .slider-container input {
-            flex: 3;
-            margin: 0 8px 0 0;
-        }
-        .slider-value {
-            background: #222;
-            color: #fff;
-            padding: 2px 8px;
-            font-size: 12px;
-            font-weight: bold;
-            min-width: 35px;
-            text-align: center;
-            border: 1px solid #444;
-        }
-        button {
-            background: #fff;
-            border: none;
-            padding: 10px;
-            font-size: 14px;
-            font-weight: 700;
-            color: #000;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 6px;
-            font-family: monospace;
-            text-transform: uppercase;
-        }
-        .type-buttons {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-        .type-buttons button {
-            flex: 1;
-            background: transparent;
-            color: #fff;
-            border: 1px solid #fff;
-            margin-top: 0;
-        }
-        .type-buttons button.active {
-            background: #fff;
-            color: #000;
-        }
-        /* Модалки */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.9);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal.show {
-            display: flex;
-        }
-        .modal-content {
-            background: #000;
-            border: 1px solid #fff;
-            padding: 16px;
-            width: 90%;
-            max-width: 380px;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-        .modal-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 12px;
-            text-align: center;
-            color: #fff;
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-        }
-        .delete-btn {
-            background: #fff;
-            color: #000;
-            margin-top: 6px;
-        }
-        .detail-field {
-            margin-bottom: 12px;
-        }
-        .detail-field label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #aaa;
-            display: block;
-            margin-bottom: 4px;
-        }
-        .sub-comment {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 6px;
-            align-items: center;
-        }
-        .sub-comment input {
-            flex: 1;
-            margin-bottom: 0;
-        }
-        .sub-comment button {
-            width: 28px;
-            height: 28px;
-            padding: 0;
-            margin: 0;
-            background: #222;
-            color: #fff;
-            border: 1px solid #444;
-        }
-        .stopwatch {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .stopwatch span {
-            font-family: monospace;
-            font-size: 18px;
-            background: #111;
-            padding: 4px 8px;
-            border: 1px solid #333;
-        }
-        .stopwatch button {
-            width: auto;
-            flex: 1;
-            margin-top: 0;
-        }
-        .connection-overlay {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-        }
-        .connection-overlay.show {
-            display: flex;
-        }
-        .connection-card {
-            background: #000;
-            border: 1px solid #fff;
-            padding: 16px;
-            width: 90%;
-            max-width: 360px;
-        }
-        .status {
-            margin-top: 6px;
-            text-align: center;
-            padding: 6px;
-            font-size: 12px;
-        }
-        .status.success {
-            background: #fff;
-            color: #000;
-        }
-        .status.error {
-            background: #fff;
-            color: #000;
-        }
-        /* Убираем все эмодзи, иконки только текстом */
-        .emoji {
-            display: none;
-        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Courier New',Courier,monospace;background:#000;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0;margin:0;}
+        .loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:1000;transition:opacity .3s;}
+        .loading-screen.hidden{opacity:0;pointer-events:none;}
+        .loading-logo{max-width:100px;height:auto;filter:grayscale(1);}
+        .app-container{width:100%;height:100vh;background:#000;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+        .nav-bar{display:flex;background:#111;border-top:1px solid #333;padding:6px 12px;gap:6px;}
+        .nav-btn{flex:1;text-align:center;padding:8px 0;font-size:14px;font-weight:700;background:transparent;border:1px solid #fff;color:#fff;cursor:pointer;font-family:monospace;text-transform:uppercase;}
+        .nav-btn.active{background:#fff;color:#000;}
+        .screens-container{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;}
+        .screens-container::-webkit-scrollbar{display:none;}
+        .screen{flex:0 0 100%;scroll-snap-align:start;padding:12px;overflow-y:auto;}
+        .type-switch-wrapper{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;}
+        .type-switch{display:flex;gap:4px;background:#111;border:1px solid #333;padding:2px;flex:1;}
+        .type-btn{flex:1;text-align:center;padding:8px 0;font-size:14px;font-weight:700;background:transparent;border:none;color:#aaa;cursor:pointer;font-family:monospace;text-transform:uppercase;}
+        .type-btn.active{background:#fff;color:#000;}
+        .theme-toggle{background:#111;border:1px solid #333;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:bold;color:#fff;}
+        .task-card{background:#111;padding:12px;margin-bottom:8px;border:1px solid #333;cursor:pointer;}
+        .task-card.top3{border-left:4px solid #fff;background:#181818;}
+        .task-card.other{opacity:0.7;background:#0a0a0a;}
+        .task-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+        .task-title{font-weight:700;font-size:14px;text-transform:uppercase;}
+        .task-priority{font-size:11px;color:#ccc;}
+        .task-category{font-size:10px;color:#aaa;text-transform:uppercase;margin-bottom:6px;}
+        .microsteps-list{list-style:none;margin:8px 0 10px;padding:0;}
+        .microsteps-list li{display:flex;align-items:center;gap:6px;font-size:11px;color:#ccc;cursor:pointer;margin-bottom:4px;}
+        .microsteps-list li.checked{color:#555;text-decoration:line-through;}
+        .micro-checkbox{width:14px;height:14px;border:1px solid #777;display:flex;align-items:center;justify-content:center;background:transparent;}
+        .microsteps-list li.checked .micro-checkbox{background:#fff;border-color:#fff;}
+        .micro-checkbox svg{display:none;}
+        .microsteps-list li.checked .micro-checkbox svg{display:block;}
+        .task-actions{display:flex;gap:8px;margin-top:8px;}
+        .drift-task-btn{flex:1;background:transparent;border:1px solid #fff;padding:6px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;text-align:center;text-transform:uppercase;font-family:monospace;}
+        .edit-icon-btn{width:32px;background:#222;border:1px solid #555;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;font-weight:bold;color:#fff;}
+        .custom-select{position:relative;width:100%;margin-bottom:10px;}
+        .select-button{width:100%;padding:8px 10px;background:#111;border:1px solid #333;font-size:14px;color:#fff;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:monospace;}
+        .select-button .arrow{width:12px;height:12px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;transition:transform .2s;}
+        .select-button.open .arrow{transform:rotate(180deg);}
+        .select-dropdown{position:absolute;top:100%;left:0;right:0;background:#000;border:1px solid #333;max-height:150px;overflow-y:auto;z-index:20;display:none;}
+        .select-dropdown.show{display:block;}
+        .select-option{padding:8px;cursor:pointer;color:#fff;border-bottom:1px solid #222;font-size:13px;}
+        .select-option:last-child{border-bottom:none;}
+        .select-option:hover{background:#222;}
+        .select-option.selected{background:#fff;color:#000;}
+        input,textarea{width:100%;margin-bottom:10px;background:#111;border:1px solid #333;padding:8px 10px;color:#fff;font-size:14px;outline:none;font-family:monospace;}
+        .slider-container{margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+        .slider-container label{font-size:12px;color:#ccc;flex:1;}
+        .slider-container input{flex:3;margin:0 8px 0 0;}
+        .slider-value{background:#222;color:#fff;padding:2px 8px;font-size:12px;font-weight:bold;min-width:35px;text-align:center;border:1px solid #444;}
+        button{background:#fff;border:none;padding:10px;font-size:14px;font-weight:700;color:#000;cursor:pointer;width:100%;margin-top:6px;font-family:monospace;text-transform:uppercase;}
+        .type-buttons{display:flex;gap:8px;margin-bottom:12px;}
+        .type-buttons button{flex:1;background:transparent;color:#fff;border:1px solid #fff;margin-top:0;}
+        .type-buttons button.active{background:#fff;color:#000;}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);align-items:center;justify-content:center;z-index:1000;}
+        .modal.show{display:flex;}
+        .modal-content{background:#000;border:1px solid #fff;padding:16px;width:90%;max-width:380px;max-height:85vh;overflow-y:auto;}
+        .modal-title{font-size:16px;font-weight:bold;margin-bottom:12px;text-align:center;color:#fff;}
+        .modal-buttons{display:flex;gap:8px;margin-top:12px;}
+        .delete-btn{background:#fff;color:#000;margin-top:6px;}
+        .detail-field{margin-bottom:12px;}
+        .detail-field label{font-size:12px;font-weight:600;color:#aaa;display:block;margin-bottom:4px;}
+        .sub-comment{display:flex;gap:6px;margin-bottom:6px;align-items:center;}
+        .sub-comment input{flex:1;margin-bottom:0;}
+        .sub-comment button{width:28px;height:28px;padding:0;margin:0;background:#222;color:#fff;border:1px solid #444;}
+        .stopwatch{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+        .stopwatch span{font-family:monospace;font-size:18px;background:#111;padding:4px 8px;border:1px solid #333;}
+        .stopwatch button{width:auto;flex:1;margin-top:0;}
+        .connection-overlay{position:fixed;inset:0;background:#000;display:none;align-items:center;justify-content:center;z-index:2000;}
+        .connection-overlay.show{display:flex;}
+        .connection-card{background:#000;border:1px solid #fff;padding:16px;width:90%;max-width:360px;}
+        .status{margin-top:6px;text-align:center;padding:6px;font-size:12px;}
+        .status.success{background:#fff;color:#000;}
+        .status.error{background:#fff;color:#000;}
+        .micro-detail-checkbox{width:14px;height:14px;border:1px solid #fff;display:inline-flex;align-items:center;justify-content:center;margin-right:8px;background:transparent;cursor:pointer;}
+        .micro-detail-checkbox.checked{background:#fff;}
+        .micro-detail-checkbox.checked::after{content:'✓';color:#000;font-size:10px;}
+        .micro-detail-item{display:flex;align-items:center;margin-bottom:6px;}
     </style>
 </head>
 <body>
@@ -509,7 +89,6 @@
 <div class="connection-overlay" id="connectionOverlay"><div class="connection-card"><h3>Подключение к Apps Script</h3><input type="text" id="appUrlInput" placeholder="https://script.google.com/macros/s/.../exec"><button id="saveConnectionBtn">Сохранить</button><div id="connectionStatus"></div></div></div>
 <div class="app-container" id="appContainer" style="display:none;">
     <div class="screens-container" id="screensContainer">
-        <!-- DRIFT экран -->
         <div class="screen" id="screenDrift">
             <div class="type-switch-wrapper">
                 <div class="type-switch">
@@ -520,7 +99,6 @@
             </div>
             <div id="tasksList"></div>
         </div>
-        <!-- ADD экран -->
         <div class="screen" id="screenAdd">
             <div class="type-buttons" id="addTypeButtons"><button data-type="long" class="active">LONG</button><button data-type="fast">FAST</button></div>
             <div class="custom-select" id="categoryContainer"><div class="select-button" id="categoryButton"><span id="categorySelectedText">Выберите категорию</span><span class="arrow"></span></div><div class="select-dropdown" id="categoryDropdown"></div></div>
@@ -544,62 +122,48 @@
 (function(){
     const APP_URL_STORAGE_KEY='taskTracker_appUrl';
     let cachedAppUrl=null,categoriesList=[],currentType='long',currentTasks=[],trialWarningShown=false,stopwatchInterval=null,stopwatchRunning=false,stopwatchSeconds=0,currentDetailTaskId=null;
-
+    let currentDetailMicrosteps=[],currentDetailMicrostepsProgress=[];
     function $(id){return document.getElementById(id);}
     function $$(sel){return document.querySelectorAll(sel);}
-
     function normalizeUrl(u){if(!u)return '';let uu=u.trim();uu=uu.split('#')[0];uu=uu.split('?')[0];return uu.replace(/\/+$/,'');}
     function getAppUrl(){if(cachedAppUrl)return cachedAppUrl;const saved=localStorage.getItem(APP_URL_STORAGE_KEY);cachedAppUrl=normalizeUrl(saved);return cachedAppUrl;}
     function saveAppUrl(u){const norm=normalizeUrl(u);localStorage.setItem(APP_URL_STORAGE_KEY,norm);cachedAppUrl=norm;}
     async function testConnection(u){const res=await fetch(`${u}?action=categories`);const d=await res.json();if(d.error)throw new Error(d.error);return true;}
     async function apiCall(p,m='GET'){const url=getAppUrl();if(!url)throw new Error('URL не настроен');if(m==='GET'){const q='?'+new URLSearchParams(p).toString();const r=await fetch(url+q);return await r.json();}else{const fd=new URLSearchParams(p);const r=await fetch(url,{method:'POST',body:fd});return await r.json();}}
-
     let activeDropdown=null;
     function closeAllDropdowns(){if(activeDropdown){activeDropdown.dropdown.classList.remove('show');activeDropdown.button.classList.remove('open');activeDropdown=null;}}
     document.addEventListener('click',closeAllDropdowns);
-
     function initCustomSelect(bId,dId,items,onSelect,selected=null){const b=$(bId),d=$(dId);if(!b||!d)return;b.addEventListener('click',(e)=>{e.stopPropagation();closeAllDropdowns();d.classList.add('show');b.classList.add('open');activeDropdown={dropdown:d,button:b};});function render(){d.innerHTML='';items.forEach(it=>{const div=document.createElement('div');div.className='select-option';div.textContent=it;if(selected===it)div.classList.add('selected');div.addEventListener('click',(e)=>{e.stopPropagation();onSelect(it);closeAllDropdowns();});d.appendChild(div);});}render();return{update:(ni,ns)=>{items=ni;selected=ns;render();}};}
-
     function renderMicrostepsDynamic(cont,vals=[]){if(!cont)return;cont.innerHTML='';let stepCount=0;function addStep(v=''){if(stepCount>=5)return;const inp=document.createElement('input');inp.type='text';inp.placeholder=`Шаг ${stepCount+1}`;inp.value=v;inp.classList.add('microstep');inp.addEventListener('input',function(){const steps=Array.from(cont.children);const idx=steps.indexOf(this);if(this.value.trim()!==''&&idx===steps.length-1&&steps.length<5)addStep();});cont.appendChild(inp);stepCount++;}vals.forEach(v=>addStep(v));if(vals.length===0)addStep();}
     function getMicrosteps(cont){if(!cont)return[];return Array.from(cont.querySelectorAll('.microstep')).map(i=>i.value).filter(v=>v.trim()!=='');}
-
     async function loadTasksByType(type){const cont=$('tasksList');if(!cont)return;cont.innerHTML='<div style="text-align:center;padding:20px;">Загрузка...</div>';try{const data=await apiCall({action:'tasksByType',task_type:type});if(data.error)throw new Error(data.error);currentTasks=data;renderTasks();}catch(e){cont.innerHTML='<div style="color:#aaa;text-align:center;padding:20px;">Ошибка</div>';}}
     function renderTasks(){const cont=$('tasksList');if(!cont)return;if(!currentTasks.length){cont.innerHTML='<div style="color:#555;text-align:center;padding:30px;">Нет задач</div>';return;}cont.innerHTML='';currentTasks.forEach((task,idx)=>{const isTop3=idx<3;const card=createTaskCard(task,isTop3);cont.appendChild(card);attachTaskHandlers(card);});}
     function createTaskCard(task,isTop3){const card=document.createElement('div');card.className='task-card'+(isTop3?' top3':' other');card.dataset.id=task.id;let steps=[];try{steps=JSON.parse(task.microsteps||'[]');}catch(e){}let stepsHtml='';if(steps.length){const checked=task.microstepsProgress||[];stepsHtml=`<ul class="microsteps-list">`+steps.map((s,idx)=>{const isChecked=checked.includes(idx);return `<li data-idx="${idx}" class="${isChecked?'checked':''}" onclick="event.stopPropagation();window.toggleMicrostep('${task.id}',${idx})"><span class="micro-checkbox"><svg width="6" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.5"/></svg></span><span>${escapeHtml(s)}</span></li>`;}).join('')+`</ul>`;}card.innerHTML=`<div class="task-header"><span class="task-title">${escapeHtml(task.title)}</span><span class="task-priority">[${Number(task.priority||0).toFixed(1)}]</span></div><div class="task-category">${escapeHtml(task.category)}</div>${stepsHtml}<div class="task-actions"><button class="drift-task-btn complete-btn" data-id="${task.id}">DRIFT</button><button class="edit-icon-btn edit-btn" data-id="${task.id}">[E]</button></div>`;return card;}
     function attachTaskHandlers(card){const complete=card.querySelector('.complete-btn');if(complete)complete.addEventListener('click',(e)=>{e.stopPropagation();const id=complete.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openCompleteModal(task);});const edit=card.querySelector('.edit-btn');if(edit)edit.addEventListener('click',(e)=>{e.stopPropagation();const id=edit.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openEditModal(task);});card.addEventListener('click',()=>{const id=card.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openDetailModal(task);});}
     window.toggleMicrostep=async function(taskId,idx){try{const res=await apiCall({action:'toggleMicrostep',id:taskId,step_index:idx},'POST');if(res.error)throw new Error(res.error);const task=currentTasks.find(t=>t.id===taskId);if(task){if(!task.microstepsProgress)task.microstepsProgress=[];const pos=task.microstepsProgress.indexOf(idx);if(pos===-1)task.microstepsProgress.push(idx);else task.microstepsProgress.splice(pos,1);renderTasks();}}catch(e){alert('Ошибка: '+e.message);}};
-
     let currentCompleteTaskId=null;
     function openCompleteModal(task){currentCompleteTaskId=task.id;const titleEl=$('completeTaskTitle');if(titleEl)titleEl.innerText=task.title;document.querySelectorAll('#completeModal input[type=range]').forEach(s=>s.value=5);document.querySelectorAll('#completeModal .slider-value').forEach(v=>v.innerText='5');const costInp=$('actualCost');if(costInp)costInp.value=0;const costSpan=$('actualCostVal');if(costSpan)costSpan.innerText='0';const modal=$('completeModal');if(modal)modal.classList.add('show');}
     const cancelComplete=$('cancelCompleteBtn');if(cancelComplete)cancelComplete.addEventListener('click',()=>{const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;});
     const confirmComplete=$('confirmCompleteBtn');if(confirmComplete)confirmComplete.addEventListener('click',async()=>{if(!currentCompleteTaskId)return;const params={action:'completeTask',id:currentCompleteTaskId,actual_complexity:$('actualComplexity')?$('actualComplexity').value:5,actual_creativity:$('actualCreativity')?$('actualCreativity').value:5,actual_focus:$('actualFocus')?$('actualFocus').value:5,actual_cost:$('actualCost')?$('actualCost').value:0,actual_stress:$('actualStress')?$('actualStress').value:5};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
-
     let currentEditId=null;
     function openEditModal(task){currentEditId=task.id;const idInput=$('editTaskId');if(idInput)idInput.value=task.id;const titleInput=$('editTitle');if(titleInput)titleInput.value=task.title;const catText=$('editCategorySelectedText');if(catText)catText.textContent=task.category;window.editSelectedCategory=task.category;let microsteps=[];try{microsteps=JSON.parse(task.microsteps||'[]');}catch(e){}const editMicroContainer=$('editMicrostepsContainer');if(editMicroContainer)renderMicrostepsDynamic(editMicroContainer,microsteps);const complexity=$('editComplexity');if(complexity)complexity.value=task.complexity||5;const creativity=$('editCreativity');if(creativity)creativity.value=task.creativity||5;const focus=$('editFocus');if(focus)focus.value=task.focus||5;const cost=$('editCost');if(cost)cost.value=task.cost||0;const stress=$('editStress');if(stress)stress.value=task.stress||5;['editComplexity','editCreativity','editFocus','editStress'].forEach(id=>{const valSpan=$(id+'Val');if(valSpan)valSpan.innerText=document.getElementById(id).value;});const costSpan=$('editCostVal');if(costSpan)costSpan.innerText=`${task.cost||0}`;const modal=$('editModal');if(modal)modal.classList.add('show');}
     const cancelEdit=$('cancelEditBtn');if(cancelEdit)cancelEdit.addEventListener('click',()=>{const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;});
     const saveEdit=$('saveEditBtn');if(saveEdit)saveEdit.addEventListener('click',async()=>{if(!currentEditId)return;const microsteps=getMicrosteps($('editMicrostepsContainer'));const params={action:'updateTask',id:currentEditId,title:$('editTitle')?$('editTitle').value:'',category:window.editSelectedCategory||'',microsteps:JSON.stringify(microsteps),complexity:$('editComplexity')?$('editComplexity').value:5,creativity:$('editCreativity')?$('editCreativity').value:5,focus:$('editFocus')?$('editFocus').value:5,cost:$('editCost')?$('editCost').value:0,stress:$('editStress')?$('editStress').value:5};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
     const deleteTaskBtn=$('deleteTaskBtn');if(deleteTaskBtn)deleteTaskBtn.addEventListener('click',async()=>{if(!currentEditId)return;if(!confirm('Удалить задачу?'))return;try{const res=await apiCall({action:'deleteTask',id:currentEditId},'POST');if(res.error)throw new Error(res.error);const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
-
     let selectedAddType='long';
     const addTypeBtns=$$('#addTypeButtons button');addTypeBtns.forEach(btn=>{btn.addEventListener('click',()=>{addTypeBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedAddType=btn.dataset.type;});});
     const saveTask=$('saveTaskBtn');if(saveTask)saveTask.addEventListener('click',async()=>{const category=window.selectedCategory||'';const title=$('taskTitle')?$('taskTitle').value:'';if(!category||!title){showStatus('addStatus','Заполните категорию и название','error');return;}const microsteps=getMicrosteps($('microstepsContainer'));const params={action:'addTask',category,title,microsteps:JSON.stringify(microsteps),complexity:$('complexity')?$('complexity').value:5,creativity:$('creativity')?$('creativity').value:5,focus:$('focus')?$('focus').value:5,cost:$('cost')?$('cost').value:0,stress:$('stress')?$('stress').value:5,task_type:selectedAddType};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);showStatus('addStatus','Задача добавлена','success');if($('taskTitle'))$('taskTitle').value='';const catText=$('categorySelectedText');if(catText)catText.textContent='Выберите категорию';window.selectedCategory='';renderMicrostepsDynamic($('microstepsContainer'),[]);['complexity','creativity','focus','stress'].forEach(id=>{const el=$(id);if(el)el.value=5;const valSpan=$(id+'Val');if(valSpan)valSpan.innerText='5';});const costEl=$('cost');if(costEl)costEl.value=0;const costSpan=$('costVal');if(costSpan)costSpan.innerText='0';await loadTasksByType(currentType);}catch(e){showStatus('addStatus','Ошибка: '+e.message,'error');}});
-
     async function loadCategories(){try{const data=await apiCall({action:'categories'});if(data.error)throw new Error(data.error);categoriesList=data;initCustomSelect('categoryButton','categoryDropdown',categoriesList,(value)=>{const catText=$('categorySelectedText');if(catText)catText.textContent=value;window.selectedCategory=value;});initCustomSelect('editCategoryButton','editCategoryDropdown',categoriesList,(value)=>{const catText=$('editCategorySelectedText');if(catText)catText.textContent=value;window.editSelectedCategory=value;});}catch(e){console.error(e);}}
-
     const screensContainer=$('screensContainer');const navBtns=$$('.nav-btn');function switchScreen(sid){const order={drift:0,add:1};const idx=order[sid];if(screensContainer)screensContainer.scrollTo({left:screensContainer.clientWidth*idx,behavior:'smooth'});navBtns.forEach(btn=>btn.classList.toggle('active',btn.dataset.screen===sid));}navBtns.forEach(btn=>btn.addEventListener('click',()=>switchScreen(btn.dataset.screen)));if(screensContainer)screensContainer.addEventListener('scroll',()=>{const activeIndex=Math.round(screensContainer.scrollLeft/screensContainer.clientWidth);navBtns.forEach((btn,i)=>btn.classList.toggle('active',i===activeIndex));});
-
     const typeBtns=$$('.type-btn');typeBtns.forEach(btn=>{btn.addEventListener('click',()=>{typeBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentType=btn.dataset.type;loadTasksByType(currentType);});});
-
     function showStatus(eid,msg,tp){const el=$(eid);if(el){el.textContent=msg;el.className=`status ${tp}`;setTimeout(()=>{if(el)el.className='status';},3000);}}
     function escapeHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
     function bindSlider(sid,spid,isMoney=false){const s=$(sid),sp=$(spid);if(s&&sp)s.addEventListener('input',()=>{sp.innerText=isMoney?`${s.value}`:s.value;});}
     ['complexity','creativity','focus','stress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('cost','costVal',true);['actualComplexity','actualCreativity','actualFocus','actualStress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('actualCost','actualCostVal',true);['editComplexity','editCreativity','editFocus','editStress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('editCost','editCostVal',true);
     renderMicrostepsDynamic($('microstepsContainer'),[]);renderMicrostepsDynamic($('editMicrostepsContainer'),[]);
-
     function showTrialWarning(daysLeft){const modal=$('trialWarningModal');const text=$('trialWarningText');if(modal&&text){text.innerText=`Пробный период скоро закончится. Осталось ${daysLeft} дн. Обратитесь к разработчику.`;modal.classList.add('show');const ok=$('trialOkBtn');if(ok)ok.onclick=()=>modal.classList.remove('show');}}
     function showTrialExpired(){const loading=$('loadingScreen');if(loading){loading.innerHTML='<div style="text-align:center;padding:20px;"><h2>Пробный период закончился</h2><p>Обратитесь к разработчику.</p></div>';loading.classList.remove('hidden');const app=$('appContainer');if(app)app.style.display='none';}}
-
-    async function openDetailModal(task){currentDetailTaskId=task.id;const container=$('detailContent');if(!container)return;let microsteps=[];try{microsteps=JSON.parse(task.microsteps||'[]');}catch(e){}let expectationComments=[],realityComments=[],actualTimeSec=0;try{const fullTask=await apiCall({action:'tasksByType',task_type:currentType});const found=fullTask.find(t=>t.id===task.id);if(found){if(found.expectation_comments)expectationComments=JSON.parse(found.expectation_comments);if(found.reality_comments)realityComments=JSON.parse(found.reality_comments);actualTimeSec=found.actual_time_seconds||0;}}catch(e){}stopwatchSeconds=actualTimeSec;stopwatchRunning=false;if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}
+    async function openDetailModal(task){currentDetailTaskId=task.id;const container=$('detailContent');if(!container)return;let microsteps=[];try{microsteps=JSON.parse(task.microsteps||'[]');}catch(e){}let expectationComments=[],realityComments=[],actualTimeSec=0,progress=task.microstepsProgress||[];try{const fullTask=await apiCall({action:'tasksByType',task_type:currentType});const found=fullTask.find(t=>t.id===task.id);if(found){if(found.expectation_comments)expectationComments=JSON.parse(found.expectation_comments);if(found.reality_comments)realityComments=JSON.parse(found.reality_comments);actualTimeSec=found.actual_time_seconds||0;if(found.microstepsProgress)progress=found.microstepsProgress;}}catch(e){}stopwatchSeconds=actualTimeSec;stopwatchRunning=false;if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}
     function formatTime(sec){const h=Math.floor(sec/3600);const m=Math.floor((sec%3600)/60);const s=sec%60;return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;}
     container.innerHTML=`<div class="modal-title">${escapeHtml(task.title)}</div>
     <div class="detail-field"><label>Микрошаги</label><div id="detailMicrosteps"></div><button id="addDetailMicrostep">+ Добавить шаг</button></div>
@@ -607,8 +171,8 @@
     <div class="detail-field"><label>Комментарии реальности (до 3)</label><div id="detailReality"></div><button id="addReality">+ Добавить</button></div>
     <div class="detail-field"><label>Секундомер</label><div class="stopwatch"><span id="stopwatchDisplay">${formatTime(stopwatchSeconds)}</span><button id="stopwatchStart">▶ Старт</button><button id="stopwatchPause">⏸ Пауза</button><button id="stopwatchReset">🔄 Сброс</button></div></div>
     <div class="modal-buttons"><button id="saveDetailBtn">Сохранить изменения</button><button id="closeDetailBtn">Закрыть</button></div>`;
-    const microDetailContainer=$('detailMicrosteps');function renderMicrostepsDetail(){if(!microDetailContainer)return;microDetailContainer.innerHTML='';microsteps.forEach((step,idx)=>{const div=document.createElement('div');div.style.display='flex';div.style.gap='6px';div.style.marginBottom='6px';const inp=document.createElement('input');inp.value=step;inp.placeholder=`Шаг ${idx+1}`;inp.style.flex=1;inp.addEventListener('input',(e)=>{microsteps[idx]=e.target.value;});const del=document.createElement('button');del.textContent='-';del.style.width='28px';del.style.padding='4px';del.onclick=()=>{microsteps.splice(idx,1);renderMicrostepsDetail();};div.appendChild(inp);div.appendChild(del);microDetailContainer.appendChild(div);});}renderMicrostepsDetail();
-    const addStepBtn=$('addDetailMicrostep');if(addStepBtn)addStepBtn.onclick=()=>{if(microsteps.length<10){microsteps.push('');renderMicrostepsDetail();}};
+    const microDetailContainer=$('detailMicrosteps');function renderMicrostepsDetail(){if(!microDetailContainer)return;microDetailContainer.innerHTML='';microsteps.forEach((step,idx)=>{const div=document.createElement('div');div.className='micro-detail-item';const checkbox=document.createElement('div');checkbox.className='micro-detail-checkbox'+(progress.includes(idx)?' checked':'');checkbox.onclick=async()=>{await window.toggleMicrostep(currentDetailTaskId,idx);const newProgress=progress.includes(idx)?progress.filter(i=>i!==idx):[...progress,idx];progress=newProgress;checkbox.classList.toggle('checked',progress.includes(idx));renderMicrostepsDetail();};const span=document.createElement('span');span.textContent=step;span.style.flex=1;const inp=document.createElement('input');inp.type='text';inp.value=step;inp.style.display='none';const editBtn=document.createElement('button');editBtn.textContent='E';editBtn.style.width='28px';editBtn.style.padding='4px';editBtn.onclick=()=>{span.style.display='none';inp.style.display='block';inp.focus();};const saveBtn=document.createElement('button');saveBtn.textContent='S';saveBtn.style.width='28px';saveBtn.style.display='none';saveBtn.onclick=()=>{microsteps[idx]=inp.value;span.textContent=inp.value;span.style.display='block';inp.style.display='none';saveBtn.style.display='none';editBtn.style.display='block';};inp.addEventListener('blur',()=>{if(inp.value!==step){microsteps[idx]=inp.value;span.textContent=inp.value;}span.style.display='block';inp.style.display='none';saveBtn.style.display='none';editBtn.style.display='block';});const del=document.createElement('button');del.textContent='-';del.style.width='28px';del.style.padding='4px';del.onclick=()=>{microsteps.splice(idx,1);progress=progress.filter(i=>i!==idx);renderMicrostepsDetail();};div.appendChild(checkbox);div.appendChild(span);div.appendChild(inp);div.appendChild(editBtn);div.appendChild(saveBtn);div.appendChild(del);microDetailContainer.appendChild(div);});}renderMicrostepsDetail();
+    const addStepBtn=$('addDetailMicrostep');if(addStepBtn)addStepBtn.onclick=()=>{if(microsteps.length<10){microsteps.push('');progress.push(microsteps.length-1);renderMicrostepsDetail();}};
     function renderComments(containerId,comments,type){const cont=$(containerId);if(!cont)return;cont.innerHTML='';comments.forEach((c,idx)=>{const div=document.createElement('div');div.className='sub-comment';const inp=document.createElement('input');inp.value=c;inp.placeholder=`${type} ${idx+1}`;inp.style.flex=1;inp.addEventListener('input',(e)=>{comments[idx]=e.target.value;});const del=document.createElement('button');del.textContent='-';del.onclick=()=>{comments.splice(idx,1);renderComments(containerId,comments,type);};div.appendChild(inp);div.appendChild(del);cont.appendChild(div);});}
     renderComments('detailExpectation',expectationComments,'Ожидание');renderComments('detailReality',realityComments,'Реальность');
     const addExp=$('addExpectation');if(addExp)addExp.onclick=()=>{if(expectationComments.length<3){expectationComments.push('');renderComments('detailExpectation',expectationComments,'Ожидание');}};
@@ -620,7 +184,6 @@
     const saveDetail=$('saveDetailBtn');if(saveDetail)saveDetail.onclick=async()=>{const params={action:'updateDetails',id:currentDetailTaskId,microsteps:JSON.stringify(microsteps),expectation_comments:JSON.stringify(expectationComments),reality_comments:JSON.stringify(realityComments),actual_time_seconds:stopwatchSeconds};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);await loadTasksByType(currentType);const modal=$('detailModal');if(modal)modal.classList.remove('show');}catch(e){alert('Ошибка: '+e.message);}};
     const closeDetail=$('closeDetailBtn');if(closeDetail)closeDetail.onclick=()=>{if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}const modal=$('detailModal');if(modal)modal.classList.remove('show');};
     const modal=$('detailModal');if(modal)modal.classList.add('show');}
-
     async function initApp(){const url=getAppUrl();if(!url){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');const appContainer=$('appContainer');if(appContainer)appContainer.style.display='flex';const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');await loadCategories();await loadTasksByType('long');switchScreen('drift');const themeToggle=$('themeToggle');if(themeToggle){themeToggle.addEventListener('click',()=>{document.body.classList.toggle('invert');});}}catch(e){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Ошибка: '+e.message;}}
     const saveConn=$('saveConnectionBtn');if(saveConn)saveConn.addEventListener('click',async()=>{const url=$('appUrlInput')?$('appUrlInput').value:'';try{await testConnection(url);saveAppUrl(url);const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');initApp();}catch(e){const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Неверный URL: '+e.message;}});
     initApp();
