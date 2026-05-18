@@ -22,6 +22,12 @@
         .type-btn{flex:1;text-align:center;padding:8px 0;font-size:14px;font-weight:700;background:transparent;border:none;color:#aaa;cursor:pointer;font-family:'PT Sans Narrow',sans-serif;text-transform:uppercase;line-height:1;}
         .type-btn.active{background:#fff;color:#000;}
         .theme-toggle{background:#111;border:1px solid #333;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:bold;color:#fff;}
+        .epic-group{margin-bottom:16px;border:1px solid #333;background:#0a0a0a;}
+        .epic-header{background:#111;padding:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:bold;border-bottom:1px solid #333;}
+        .epic-header .epic-title{font-size:14px;text-transform:uppercase;}
+        .epic-header .toggle-icon{font-size:16px;}
+        .epic-tasks{padding:8px;display:block;}
+        .epic-tasks.collapsed{display:none;}
         .task-card{background:#111;padding:12px;margin-bottom:8px;border:1px solid #333;cursor:pointer;}
         .task-card.top3{border-left:4px solid #fff;background:#181818;}
         .task-card.other{opacity:0.7;background:#0a0a0a;}
@@ -84,8 +90,11 @@
         .micro-detail-checkbox.checked{background:#fff;}
         .micro-detail-checkbox.checked::after{content:'✓';color:#000;font-size:10px;}
         .micro-detail-item{display:flex;align-items:center;margin-bottom:6px;}
-        #manageCategoriesBtn{width:auto;padding:8px 12px;margin:0;background:#222;color:#fff;border:1px solid #444;font-size:12px;line-height:1;white-space:nowrap;}
+        #manageCategoriesBtn, #createEpicBtn{width:auto;padding:8px 12px;margin:0;background:#222;color:#fff;border:1px solid #444;font-size:12px;line-height:1;white-space:nowrap;}
+        .flex-row{display:flex;gap:8px;align-items:center;}
         .flow-time{font-size:11px;color:#888;margin-top:4px;}
+        .epic-select-wrapper{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+        .epic-select-wrapper .custom-select{flex:1;margin-bottom:0;}
     </style>
 </head>
 <body>
@@ -107,12 +116,19 @@
         <!-- Экран ADD -->
         <div class="screen" id="screenAdd">
             <div class="type-buttons" id="addTypeButtons"><button data-type="long" class="active">LONG</button><button data-type="fast">FAST</button></div>
-            <div style="display:flex; gap:8px; align-items:center;">
+            <div class="flex-row">
                 <div class="custom-select" style="flex:1;" id="categoryContainer">
                     <div class="select-button" id="categoryButton"><span id="categorySelectedText">Выберите категорию</span><span class="arrow"></span></div>
                     <div class="select-dropdown" id="categoryDropdown"></div>
                 </div>
                 <button id="manageCategoriesBtn">Управление</button>
+            </div>
+            <div id="epicAddContainer" style="display:none;" class="epic-select-wrapper">
+                <div class="custom-select" id="epicSelectContainer">
+                    <div class="select-button" id="epicButton"><span id="epicSelectedText">Без эпика</span><span class="arrow"></span></div>
+                    <div class="select-dropdown" id="epicDropdown"></div>
+                </div>
+                <button id="createEpicBtn" style="width:auto;">+ Эпик</button>
             </div>
             <input type="text" id="taskTitle" placeholder="Название задачи">
             <div id="microstepsContainer"></div>
@@ -144,14 +160,16 @@
 <div class="modal" id="completeModal"><div class="modal-content"><div class="modal-title">Выполнение задачи</div><div id="completeTaskTitle" style="margin-bottom:10px;text-align:center;"></div><div class="slider-container"><label>Факт. сложность</label><input type="range" id="actualComplexity" min="0" max="10" step="1" value="5"><span id="actualComplexityVal">5</span></div><div class="slider-container"><label>Факт. творчество</label><input type="range" id="actualCreativity" min="0" max="10" step="1" value="5"><span id="actualCreativityVal">5</span></div><div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal">5</span></div><div class="slider-container"><label>Факт. стоимость ($)</label><input type="range" id="actualCost" min="0" max="2000" step="50" value="0"><span id="actualCostVal">0</span></div><div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal">5</span></div><div class="modal-buttons"><button id="cancelCompleteBtn">Отмена</button><button id="confirmCompleteBtn">Завершить</button></div></div></div>
 <div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
 <div class="modal" id="categoryModal"><div class="modal-content"><div class="modal-title">Управление категориями</div><input type="text" id="newCategoryName" placeholder="Новая категория"><button id="addCategoryModalBtn">Добавить</button><div id="categoriesList" style="margin:12px 0;"></div><button id="closeCategoryModalBtn">Закрыть</button></div></div>
+<div class="modal" id="epicModal"><div class="modal-content"><div class="modal-title">Создать эпик</div><input type="text" id="newEpicTitle" placeholder="Название эпика"><textarea id="newEpicDesc" placeholder="Описание (необязательно)" rows="3"></textarea><button id="addEpicModalBtn">Создать</button><div class="modal-buttons"><button id="closeEpicModalBtn">Отмена</button></div></div></div>
 
 <script>
 (function(){
     const APP_URL_STORAGE_KEY='taskTracker_appUrl';
     let cachedAppUrl=null,categoriesList=[],currentType='long',currentTasks=[],trialWarningShown=false,stopwatchInterval=null,stopwatchRunning=false,stopwatchSeconds=0,currentDetailTaskId=null;
-    let flowTasksList=[]; 
+    let flowTasksList=[],epicsList=[];
     let selectedSimilarTaskTime=0;
     let pendingActualTimeSec=0;
+    let currentSelectedEpicId=null;
     
     function $(id){return document.getElementById(id);}
     function $$(sel){return document.querySelectorAll(sel);}
@@ -164,7 +182,6 @@
     let activeDropdown=null;
     function closeAllDropdowns(){if(activeDropdown){activeDropdown.dropdown.classList.remove('show');activeDropdown.button.classList.remove('open');activeDropdown=null;}}
     document.addEventListener('click',function(e){closeAllDropdowns();});
-    
     document.addEventListener('click',function(e){
         if(e.target.classList && e.target.classList.contains('modal')){
             e.target.classList.remove('show');
@@ -172,7 +189,7 @@
         }
     });
     
-    function initCustomSelect(bId,dId,items,onSelect,selected=null,placeholder='Выберите'){
+    function initCustomSelect(bId,dId,items,onSelect,selected=null,placeholder='Выберите',valueKey='id',labelKey='title'){
         const b=$(bId),d=$(dId);
         if(!b||!d)return;
         const textSpan=b.querySelector('span:first-child');
@@ -182,8 +199,9 @@
             items.forEach(it=>{
                 const div=document.createElement('div');
                 div.className='select-option';
-                div.textContent=it.title||it;
-                if(selected===it || (selected && it.title===selected.title))div.classList.add('selected');
+                const displayText=typeof it === 'object' ? (it[labelKey] || it.title || it.name) : it;
+                div.textContent=displayText;
+                if(selected && ((typeof it === 'object' && it[valueKey]===selected) || it===selected)) div.classList.add('selected');
                 div.addEventListener('click',(e)=>{e.stopPropagation();onSelect(it);closeAllDropdowns();});
                 d.appendChild(div);
             });
@@ -197,7 +215,8 @@
         render();
         function updateText(val){
             if(textSpan){
-                if(val && (val.title||val)) textSpan.textContent=val.title||val;
+                if(val && typeof val === 'object') textSpan.textContent=val[labelKey]||val.title||val.name;
+                else if(val) textSpan.textContent=val;
                 else textSpan.textContent=placeholder;
             }
         }
@@ -207,11 +226,106 @@
     function renderMicrostepsDynamic(cont,vals=[]){if(!cont)return;cont.innerHTML='';let stepCount=0;function addStep(v=''){if(stepCount>=5)return;const inp=document.createElement('input');inp.type='text';inp.placeholder=`Шаг ${stepCount+1}`;inp.value=v;inp.classList.add('microstep');inp.addEventListener('input',function(){const steps=Array.from(cont.children);const idx=steps.indexOf(this);if(this.value.trim()!==''&&idx===steps.length-1&&steps.length<5)addStep();});cont.appendChild(inp);stepCount++;}vals.forEach(v=>addStep(v));if(vals.length===0)addStep();}
     function getMicrosteps(cont){if(!cont)return[];return Array.from(cont.querySelectorAll('.microstep')).map(i=>i.value).filter(v=>v.trim()!=='');}
     
+    async function loadEpics(){try{const data=await apiCall({action:'epics'});if(data.error)throw new Error(data.error);epicsList=data;updateEpicSelectors();}catch(e){console.error(e);epicsList=[];}}
+    function updateEpicSelectors(){
+        const epicItems=[{id:null,title:'Без эпика'}].concat(epicsList.map(e=>({id:e.id,title:e.title})));
+        if(window.epicSelectHandler) window.epicSelectHandler.update(epicItems, currentSelectedEpicId);
+        else{
+            window.epicSelectHandler=initCustomSelect('epicButton','epicDropdown',epicItems,(selected)=>{
+                currentSelectedEpicId=selected.id;
+                const span=$('epicSelectedText'); if(span) span.textContent=selected.title;
+            }, currentSelectedEpicId,'Без эпика','id','title');
+        }
+        if(window.editEpicSelectHandler){
+            window.editEpicSelectHandler.update(epicItems, window.editSelectedEpicId);
+        }
+    }
+    
     async function loadTasksByType(type){const cont=$('tasksList');if(!cont)return;cont.innerHTML='<div style="text-align:center;padding:20px;">Загрузка...</div>';try{const data=await apiCall({action:'tasksByType',task_type:type});if(data.error)throw new Error(data.error);currentTasks=data;renderTasks();}catch(e){cont.innerHTML='<div style="color:#aaa;text-align:center;padding:20px;">Ошибка</div>';}}
     
     function formatTimeSec(sec){if(!sec) return '';const h=Math.floor(sec/3600);const m=Math.floor((sec%3600)/60);const s=sec%60;let str='';if(h>0) str+=h+'ч ';if(m>0) str+=m+'м ';if(s>0) str+=s+'с';return str.trim();}
     
-    function renderTasks(){const cont=$('tasksList');if(!cont)return;if(!currentTasks.length){cont.innerHTML='<div style="color:#555;text-align:center;padding:30px;">Нет задач</div>';return;}cont.innerHTML='';currentTasks.forEach((task,idx)=>{const isTop3=idx<3;const card=createTaskCard(task,isTop3);cont.appendChild(card);attachTaskHandlers(card);});}
+    function renderTasks(){
+        const cont=$('tasksList');if(!cont)return;
+        if(!currentTasks.length){cont.innerHTML='<div style="color:#555;text-align:center;padding:30px;">Нет задач</div>';return;}
+        if(currentType==='fast'){
+            // FAST: показываем все задачи в виде списка
+            cont.innerHTML='';
+            currentTasks.forEach((task,idx)=>{
+                const isTop3=idx<3;
+                const card=createTaskCard(task,isTop3);
+                cont.appendChild(card);
+                attachTaskHandlers(card);
+            });
+        } else {
+            // LONG: группировка по эпикам
+            const epicMap=new Map();
+            const noEpicTasks=[];
+            for(let task of currentTasks){
+                const epicId=task.epic_id;
+                if(epicId){
+                    if(!epicMap.has(epicId)) epicMap.set(epicId,[]);
+                    epicMap.get(epicId).push(task);
+                } else {
+                    noEpicTasks.push(task);
+                }
+            }
+            cont.innerHTML='';
+            // Сначала эпики
+            for(let epic of epicsList){
+                const tasksArr=epicMap.get(epic.id);
+                if(tasksArr && tasksArr.length){
+                    const groupDiv=document.createElement('div');
+                    groupDiv.className='epic-group';
+                    const headerDiv=document.createElement('div');
+                    headerDiv.className='epic-header';
+                    headerDiv.innerHTML=`<span class="epic-title">📁 ${escapeHtml(epic.title)}</span><span class="toggle-icon">▼</span>`;
+                    const tasksDiv=document.createElement('div');
+                    tasksDiv.className='epic-tasks';
+                    tasksArr.forEach((task,idx)=>{
+                        const isTop3=idx<3;
+                        const card=createTaskCard(task,isTop3);
+                        tasksDiv.appendChild(card);
+                        attachTaskHandlers(card);
+                    });
+                    groupDiv.appendChild(headerDiv);
+                    groupDiv.appendChild(tasksDiv);
+                    let collapsed=false;
+                    headerDiv.addEventListener('click',()=>{
+                        collapsed=!collapsed;
+                        tasksDiv.classList.toggle('collapsed',collapsed);
+                        headerDiv.querySelector('.toggle-icon').textContent=collapsed?'▶':'▼';
+                    });
+                    cont.appendChild(groupDiv);
+                }
+            }
+            // Задачи без эпика
+            if(noEpicTasks.length){
+                const groupDiv=document.createElement('div');
+                groupDiv.className='epic-group';
+                const headerDiv=document.createElement('div');
+                headerDiv.className='epic-header';
+                headerDiv.innerHTML=`<span class="epic-title">📂 Без эпика</span><span class="toggle-icon">▼</span>`;
+                const tasksDiv=document.createElement('div');
+                tasksDiv.className='epic-tasks';
+                noEpicTasks.forEach((task,idx)=>{
+                    const isTop3=idx<3;
+                    const card=createTaskCard(task,isTop3);
+                    tasksDiv.appendChild(card);
+                    attachTaskHandlers(card);
+                });
+                groupDiv.appendChild(headerDiv);
+                groupDiv.appendChild(tasksDiv);
+                let collapsed=false;
+                headerDiv.addEventListener('click',()=>{
+                    collapsed=!collapsed;
+                    tasksDiv.classList.toggle('collapsed',collapsed);
+                    headerDiv.querySelector('.toggle-icon').textContent=collapsed?'▶':'▼';
+                });
+                cont.appendChild(groupDiv);
+            }
+        }
+    }
     
     function createTaskCard(task,isTop3){const card=document.createElement('div');card.className='task-card'+(isTop3?' top3':' other');card.dataset.id=task.id;let steps=[];try{steps=JSON.parse(task.microsteps||'[]');}catch(e){}let stepsHtml='';if(steps.length){const checked=task.microstepsProgress||[];stepsHtml=`<ul class="microsteps-list">`+steps.map((s,idx)=>{const isChecked=checked.includes(idx);return `<li data-idx="${idx}" class="${isChecked?'checked':''}" onclick="event.stopPropagation();window.toggleMicrostep('${task.id}',${idx})"><span class="micro-checkbox"><svg width="6" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.5"/></svg></span><span>${escapeHtml(s)}</span></li>`;}).join('')+`</ul>`;}const estimatedTime=task.estimated_time_seconds||0;const timeHtml=estimatedTime?`<div class="task-estimated-time">⏱ ~${formatTimeSec(estimatedTime)}</div>`:'';card.innerHTML=`<div class="task-header"><span class="task-title">${escapeHtml(task.title)}</span><span class="task-priority">[${Number(task.priority||0).toFixed(1)}]</span></div><div class="task-category">${escapeHtml(task.category)}</div>${timeHtml}${stepsHtml}<div class="task-actions"><button class="drift-task-btn complete-btn" data-id="${task.id}">DRIFT</button><button class="edit-icon-btn edit-btn" data-id="${task.id}">[E]</button></div>`;return card;}
     
@@ -226,21 +340,27 @@
     const confirmComplete=$('confirmCompleteBtn');if(confirmComplete)confirmComplete.addEventListener('click',async()=>{if(!currentCompleteTaskId)return;const params={action:'completeTask',id:currentCompleteTaskId,actual_complexity:$('actualComplexity')?$('actualComplexity').value:5,actual_creativity:$('actualCreativity')?$('actualCreativity').value:5,actual_focus:$('actualFocus')?$('actualFocus').value:5,actual_cost:$('actualCost')?$('actualCost').value:0,actual_stress:$('actualStress')?$('actualStress').value:5,actual_time_seconds:pendingActualTimeSec};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;await loadTasksByType(currentType);await loadFlowTasks();}catch(e){alert('Ошибка: '+e.message);}});
     
     let currentEditId=null;
-    function openEditModal(task){currentEditId=task.id;const idInput=$('editTaskId');if(idInput)idInput.value=task.id;const titleInput=$('editTitle');if(titleInput)titleInput.value=task.title;const catText=$('editCategorySelectedText');if(catText)catText.textContent=task.category;window.editSelectedCategory=task.category;let microsteps=[];try{microsteps=JSON.parse(task.microsteps||'[]');}catch(e){}const editMicroContainer=$('editMicrostepsContainer');if(editMicroContainer)renderMicrostepsDynamic(editMicroContainer,microsteps);const complexity=$('editComplexity');if(complexity)complexity.value=task.complexity||5;const creativity=$('editCreativity');if(creativity)creativity.value=task.creativity||5;const focus=$('editFocus');if(focus)focus.value=task.focus||5;const cost=$('editCost');if(cost)cost.value=task.cost||0;const stress=$('editStress');if(stress)stress.value=task.stress||5;['editComplexity','editCreativity','editFocus','editStress'].forEach(id=>{const valSpan=$(id+'Val');if(valSpan)valSpan.innerText=document.getElementById(id).value;});const costSpan=$('editCostVal');if(costSpan)costSpan.innerText=`${task.cost||0}`;const modal=$('editModal');if(modal)modal.classList.add('show');}
+    let editSelectedEpicId=null;
+    function openEditModal(task){currentEditId=task.id;editSelectedEpicId=task.epic_id||null;const titleInput=$('editTitle');if(titleInput)titleInput.value=task.title;const catText=$('editCategorySelectedText');if(catText)catText.textContent=task.category;window.editSelectedCategory=task.category;let microsteps=[];try{microsteps=JSON.parse(task.microsteps||'[]');}catch(e){}const editMicroContainer=$('editMicrostepsContainer');if(editMicroContainer)renderMicrostepsDynamic(editMicroContainer,microsteps);const complexity=$('editComplexity');if(complexity)complexity.value=task.complexity||5;const creativity=$('editCreativity');if(creativity)creativity.value=task.creativity||5;const focus=$('editFocus');if(focus)focus.value=task.focus||5;const cost=$('editCost');if(cost)cost.value=task.cost||0;const stress=$('editStress');if(stress)stress.value=task.stress||5;['editComplexity','editCreativity','editFocus','editStress'].forEach(id=>{const valSpan=$(id+'Val');if(valSpan)valSpan.innerText=document.getElementById(id).value;});const costSpan=$('editCostVal');if(costSpan)costSpan.innerText=`${task.cost||0}`;
+        const epicItems=[{id:null,title:'Без эпика'}].concat(epicsList.map(e=>({id:e.id,title:e.title})));
+        if(window.editEpicSelectHandler) window.editEpicSelectHandler.update(epicItems, editSelectedEpicId);
+        else{ window.editEpicSelectHandler=initCustomSelect('editEpicButton','editEpicDropdown',epicItems,(selected)=>{ editSelectedEpicId=selected.id; const span=$('editEpicSelectedText'); if(span) span.textContent=selected.title; }, editSelectedEpicId,'Без эпика','id','title'); }
+        const editEpicContainer=$('editEpicContainer'); if(editEpicContainer) editEpicContainer.style.display=task.task_type==='long'?'flex':'none';
+        const modal=$('editModal'); if(modal)modal.classList.add('show');}
+    
     const cancelEdit=$('cancelEditBtn');if(cancelEdit)cancelEdit.addEventListener('click',()=>{const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;});
-    const saveEdit=$('saveEditBtn');if(saveEdit)saveEdit.addEventListener('click',async()=>{if(!currentEditId)return;const microsteps=getMicrosteps($('editMicrostepsContainer'));const params={action:'updateTask',id:currentEditId,title:$('editTitle')?$('editTitle').value:'',category:window.editSelectedCategory||'',microsteps:JSON.stringify(microsteps),complexity:$('editComplexity')?$('editComplexity').value:5,creativity:$('editCreativity')?$('editCreativity').value:5,focus:$('editFocus')?$('editFocus').value:5,cost:$('editCost')?$('editCost').value:0,stress:$('editStress')?$('editStress').value:5,estimated_time_seconds:selectedSimilarTaskTime};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
+    const saveEdit=$('saveEditBtn');if(saveEdit)saveEdit.addEventListener('click',async()=>{if(!currentEditId)return;const microsteps=getMicrosteps($('editMicrostepsContainer'));const params={action:'updateTask',id:currentEditId,title:$('editTitle')?$('editTitle').value:'',category:window.editSelectedCategory||'',microsteps:JSON.stringify(microsteps),complexity:$('editComplexity')?$('editComplexity').value:5,creativity:$('editCreativity')?$('editCreativity').value:5,focus:$('editFocus')?$('editFocus').value:5,cost:$('editCost')?$('editCost').value:0,stress:$('editStress')?$('editStress').value:5,estimated_time_seconds:selectedSimilarTaskTime,epic_id:editSelectedEpicId};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
     const deleteTaskBtn=$('deleteTaskBtn');if(deleteTaskBtn)deleteTaskBtn.addEventListener('click',async()=>{if(!currentEditId)return;if(!confirm('Удалить задачу?'))return;try{const res=await apiCall({action:'deleteTask',id:currentEditId},'POST');if(res.error)throw new Error(res.error);const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
     
     let selectedAddType='long';
-    const addTypeBtns=$$('#addTypeButtons button');addTypeBtns.forEach(btn=>{btn.addEventListener('click',()=>{addTypeBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedAddType=btn.dataset.type;});});
+    const addTypeBtns=$$('#addTypeButtons button');addTypeBtns.forEach(btn=>{btn.addEventListener('click',()=>{addTypeBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedAddType=btn.dataset.type;const epicDiv=$('epicAddContainer');if(epicDiv) epicDiv.style.display=selectedAddType==='long'?'flex':'none';});});
     
     async function loadFlowTasks(){try{const data=await apiCall({action:'flow_tasks',limit:100});if(data.error)throw new Error(data.error);flowTasksList=data;renderFlowList();}catch(e){console.error(e);}}
-    
     function renderFlowList(){const container=$('flowList');if(!container)return;if(!flowTasksList.length){container.innerHTML='<div style="color:#555;text-align:center;padding:30px;">Нет выполненных задач</div>';return;}container.innerHTML='';flowTasksList.forEach(item=>{const card=document.createElement('div');card.className='flow-card';const dateStr=item.completed?new Date(item.completed).toLocaleDateString():'';card.innerHTML=`<div class="task-header"><span class="task-title">${escapeHtml(item.title)}</span></div><div class="task-category">${dateStr}</div><div class="flow-time">⏱ Время: ${formatTimeSec(item.actualTimeSec)}</div>`;container.appendChild(card);});}
     
     async function loadFlowTasksForSimilar(){try{const data=await apiCall({action:'flow_tasks',limit:50});if(data.error)throw new Error(data.error);const items=data.map(t=>{return {title:t.title+' ('+formatTimeSec(t.actualTimeSec)+')', time:t.actualTimeSec, original:t};});initCustomSelect('similarTaskButton','similarTaskDropdown',items,(selected)=>{if(selected && selected.time){selectedSimilarTaskTime=selected.time;const span=$('similarTaskSelectedText');if(span)span.textContent=selected.title;}else{selectedSimilarTaskTime=0;const span=$('similarTaskSelectedText');if(span)span.textContent='Похожая задача (необязательно)';}},null,'Похожая задача (необязательно)');}catch(e){console.error(e);}}
     
-    const saveTask=$('saveTaskBtn');if(saveTask)saveTask.addEventListener('click',async()=>{const category=window.selectedCategory||'';const title=$('taskTitle')?$('taskTitle').value:'';if(!category||!title){showStatus('addStatus','Заполните категорию и название','error');return;}const microsteps=getMicrosteps($('microstepsContainer'));const params={action:'addTask',category,title,microsteps:JSON.stringify(microsteps),complexity:$('complexity')?$('complexity').value:5,creativity:$('creativity')?$('creativity').value:5,focus:$('focus')?$('focus').value:5,cost:$('cost')?$('cost').value:0,stress:$('stress')?$('stress').value:5,task_type:selectedAddType,estimated_time_seconds:selectedSimilarTaskTime};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);showStatus('addStatus','Задача добавлена','success');if($('taskTitle'))$('taskTitle').value='';const catText=$('categorySelectedText');if(catText)catText.textContent='Выберите категорию';window.selectedCategory='';renderMicrostepsDynamic($('microstepsContainer'),[]);['complexity','creativity','focus','stress'].forEach(id=>{const el=$(id);if(el)el.value=5;const valSpan=$(id+'Val');if(valSpan)valSpan.innerText='5';});const costEl=$('cost');if(costEl)costEl.value=0;const costSpan=$('costVal');if(costSpan)costSpan.innerText='0';selectedSimilarTaskTime=0;const simSpan=$('similarTaskSelectedText');if(simSpan)simSpan.textContent='Похожая задача (необязательно)';await loadTasksByType(currentType);}catch(e){showStatus('addStatus','Ошибка: '+e.message,'error');}});
+    const saveTask=$('saveTaskBtn');if(saveTask)saveTask.addEventListener('click',async()=>{const category=window.selectedCategory||'';const title=$('taskTitle')?$('taskTitle').value:'';if(!category||!title){showStatus('addStatus','Заполните категорию и название','error');return;}const microsteps=getMicrosteps($('microstepsContainer'));const params={action:'addTask',category,title,microsteps:JSON.stringify(microsteps),complexity:$('complexity')?$('complexity').value:5,creativity:$('creativity')?$('creativity').value:5,focus:$('focus')?$('focus').value:5,cost:$('cost')?$('cost').value:0,stress:$('stress')?$('stress').value:5,task_type:selectedAddType,estimated_time_seconds:selectedSimilarTaskTime,epic_id:currentSelectedEpicId};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);showStatus('addStatus','Задача добавлена','success');if($('taskTitle'))$('taskTitle').value='';const catText=$('categorySelectedText');if(catText)catText.textContent='Выберите категорию';window.selectedCategory='';renderMicrostepsDynamic($('microstepsContainer'),[]);['complexity','creativity','focus','stress'].forEach(id=>{const el=$(id);if(el)el.value=5;const valSpan=$(id+'Val');if(valSpan)valSpan.innerText='5';});const costEl=$('cost');if(costEl)costEl.value=0;const costSpan=$('costVal');if(costSpan)costSpan.innerText='0';selectedSimilarTaskTime=0;const simSpan=$('similarTaskSelectedText');if(simSpan)simSpan.textContent='Похожая задача (необязательно)';currentSelectedEpicId=null;const epicSpan=$('epicSelectedText');if(epicSpan)epicSpan.textContent='Без эпика';await loadTasksByType(currentType);}catch(e){showStatus('addStatus','Ошибка: '+e.message,'error');}});
     
     async function loadCategories(){try{const data=await apiCall({action:'categories'});if(data.error)throw new Error(data.error);categoriesList=data;initCustomSelect('categoryButton','categoryDropdown',categoriesList,(value)=>{const catText=$('categorySelectedText');if(catText)catText.textContent=value;window.selectedCategory=value;});initCustomSelect('editCategoryButton','editCategoryDropdown',categoriesList,(value)=>{const catText=$('editCategorySelectedText');if(catText)catText.textContent=value;window.editSelectedCategory=value;});}catch(e){console.error(e);}}
     
@@ -252,6 +372,15 @@
     if(manageCategoriesBtn)manageCategoriesBtn.addEventListener('click',openCategoryModal);
     const addCategoryModalBtn=$('addCategoryModalBtn');if(addCategoryModalBtn)addCategoryModalBtn.addEventListener('click',async()=>{const newCat=$('newCategoryName')?$('newCategoryName').value.trim():'';if(!newCat){alert('Введите название');return;}try{const res=await apiCall({action:'addCategory',category:newCat},'POST');if(res.error)throw new Error(res.error);$('newCategoryName').value='';await loadCategories();renderCategoriesList();}catch(e){alert(e.message);}});
     const closeCategoryModalBtn=$('closeCategoryModalBtn');if(closeCategoryModalBtn)closeCategoryModalBtn.addEventListener('click',closeCategoryModal);
+    
+    // Эпики модалка
+    const createEpicBtn=$('createEpicBtn');
+    const epicModal=$('epicModal');
+    function openEpicModal(){if(epicModal)epicModal.classList.add('show');}
+    function closeEpicModal(){if(epicModal)epicModal.classList.remove('show');}
+    if(createEpicBtn) createEpicBtn.addEventListener('click',openEpicModal);
+    const addEpicModalBtn=$('addEpicModalBtn'); if(addEpicModalBtn) addEpicModalBtn.addEventListener('click',async()=>{const title=$('newEpicTitle')?$('newEpicTitle').value.trim():'';if(!title){alert('Введите название эпика');return;}const desc=$('newEpicDesc')?$('newEpicDesc').value:'';try{const res=await apiCall({action:'addEpic',title,description:desc},'POST');if(res.error)throw new Error(res.error);$('newEpicTitle').value='';$('newEpicDesc').value='';await loadEpics();closeEpicModal();}catch(e){alert(e.message);}});
+    const closeEpicModalBtn=$('closeEpicModalBtn'); if(closeEpicModalBtn) closeEpicModalBtn.addEventListener('click',closeEpicModal);
     
     const screensContainer=$('screensContainer');const navBtns=$$('.nav-btn');function switchScreen(sid){const order={drift:0,add:1,flow:2};const idx=order[sid];if(screensContainer)screensContainer.scrollTo({left:screensContainer.clientWidth*idx,behavior:'smooth'});navBtns.forEach(btn=>btn.classList.toggle('active',btn.dataset.screen===sid));}navBtns.forEach(btn=>btn.addEventListener('click',()=>switchScreen(btn.dataset.screen)));if(screensContainer)screensContainer.addEventListener('scroll',()=>{const activeIndex=Math.round(screensContainer.scrollLeft/screensContainer.clientWidth);navBtns.forEach((btn,i)=>btn.classList.toggle('active',i===activeIndex));});
     
@@ -269,13 +398,11 @@
     async function openDetailModal(task){
         currentDetailTaskId=task.id;
         const container=$('detailContent');if(!container)return;
-        // Используем данные из task, без дополнительного запроса
         let microsteps=[]; try{microsteps=JSON.parse(task.microsteps||'[]');}catch(e){}
         let expectationComments=[]; try{expectationComments=JSON.parse(task.expectation_comments||'[]');}catch(e){}
         let realityComments=[]; try{realityComments=JSON.parse(task.reality_comments||'[]');}catch(e){}
         let actualTimeSec=task.actual_time_seconds||0;
         let progress=task.microstepsProgress||[];
-        
         stopwatchSeconds=actualTimeSec; stopwatchRunning=false; if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}
         function formatTime(sec){const h=Math.floor(sec/3600);const m=Math.floor((sec%3600)/60);const s=sec%60;return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;}
         container.innerHTML=`<div class="modal-title">${escapeHtml(task.title)}</div>
@@ -284,9 +411,7 @@
         <div class="detail-field"><label>Комментарии реальности (до 3)</label><div id="detailReality"></div><button id="addReality">+ Добавить</button></div>
         <div class="detail-field"><label>Секундомер</label><div class="stopwatch"><span id="stopwatchDisplay">${formatTime(stopwatchSeconds)}</span><button id="stopwatchStart">▶</button><button id="stopwatchPause">▯</button><button id="stopwatchReset">⟲</button></div></div>
         <div class="modal-buttons"><button id="completeFromDetailBtn">DRIFT TASK</button><button id="saveDetailBtn">Сохранить изменения</button><button id="closeDetailBtn">Закрыть</button></div>`;
-        
-        const microDetailContainer=$('detailMicrosteps');
-        function renderMicrostepsDetail(){if(!microDetailContainer)return;microDetailContainer.innerHTML='';microsteps.forEach((step,idx)=>{const div=document.createElement('div');div.className='micro-detail-item';const checkbox=document.createElement('div');checkbox.className='micro-detail-checkbox'+(progress.includes(idx)?' checked':'');checkbox.onclick=async()=>{await window.toggleMicrostep(currentDetailTaskId,idx);const newProgress=progress.includes(idx)?progress.filter(i=>i!==idx):[...progress,idx];progress=newProgress;checkbox.classList.toggle('checked',progress.includes(idx));renderMicrostepsDetail();};const span=document.createElement('span');span.textContent=step;span.style.flex=1;const inp=document.createElement('input');inp.type='text';inp.value=step;inp.style.display='none';const editBtn=document.createElement('button');editBtn.textContent='E';editBtn.style.width='28px';editBtn.style.padding='4px';editBtn.onclick=()=>{span.style.display='none';inp.style.display='block';inp.focus();};const saveBtn=document.createElement('button');saveBtn.textContent='S';saveBtn.style.display='none';saveBtn.onclick=()=>{microsteps[idx]=inp.value;span.textContent=inp.value;span.style.display='block';inp.style.display='none';saveBtn.style.display='none';editBtn.style.display='block';};inp.addEventListener('blur',()=>{if(inp.value!==step){microsteps[idx]=inp.value;span.textContent=inp.value;}span.style.display='block';inp.style.display='none';saveBtn.style.display='none';editBtn.style.display='block';});const del=document.createElement('button');del.textContent='-';del.style.width='28px';del.style.padding='4px';del.onclick=()=>{microsteps.splice(idx,1);progress=progress.filter(i=>i!==idx);renderMicrostepsDetail();};div.appendChild(checkbox);div.appendChild(span);div.appendChild(inp);div.appendChild(editBtn);div.appendChild(saveBtn);div.appendChild(del);microDetailContainer.appendChild(div);});}renderMicrostepsDetail();
+        const microDetailContainer=$('detailMicrosteps');function renderMicrostepsDetail(){if(!microDetailContainer)return;microDetailContainer.innerHTML='';microsteps.forEach((step,idx)=>{const div=document.createElement('div');div.className='micro-detail-item';const checkbox=document.createElement('div');checkbox.className='micro-detail-checkbox'+(progress.includes(idx)?' checked':'');checkbox.onclick=async()=>{await window.toggleMicrostep(currentDetailTaskId,idx);const newProgress=progress.includes(idx)?progress.filter(i=>i!==idx):[...progress,idx];progress=newProgress;checkbox.classList.toggle('checked',progress.includes(idx));renderMicrostepsDetail();};const span=document.createElement('span');span.textContent=step;span.style.flex=1;const inp=document.createElement('input');inp.type='text';inp.value=step;inp.style.display='none';const editBtn=document.createElement('button');editBtn.textContent='E';editBtn.style.width='28px';editBtn.style.padding='4px';editBtn.onclick=()=>{span.style.display='none';inp.style.display='block';inp.focus();};const saveBtn=document.createElement('button');saveBtn.textContent='S';saveBtn.style.display='none';saveBtn.onclick=()=>{microsteps[idx]=inp.value;span.textContent=inp.value;span.style.display='block';inp.style.display='none';saveBtn.style.display='none';editBtn.style.display='block';};inp.addEventListener('blur',()=>{if(inp.value!==step){microsteps[idx]=inp.value;span.textContent=inp.value;}span.style.display='block';inp.style.display='none';saveBtn.style.display='none';editBtn.style.display='block';});const del=document.createElement('button');del.textContent='-';del.style.width='28px';del.style.padding='4px';del.onclick=()=>{microsteps.splice(idx,1);progress=progress.filter(i=>i!==idx);renderMicrostepsDetail();};div.appendChild(checkbox);div.appendChild(span);div.appendChild(inp);div.appendChild(editBtn);div.appendChild(saveBtn);div.appendChild(del);microDetailContainer.appendChild(div);});}renderMicrostepsDetail();
         const addStepBtn=$('addDetailMicrostep');if(addStepBtn)addStepBtn.onclick=()=>{if(microsteps.length<10){microsteps.push('');progress.push(microsteps.length-1);renderMicrostepsDetail();}};
         function renderComments(containerId,comments,type){const cont=$(containerId);if(!cont)return;cont.innerHTML='';comments.forEach((c,idx)=>{const div=document.createElement('div');div.className='sub-comment';const inp=document.createElement('input');inp.value=c;inp.placeholder=`${type} ${idx+1}`;inp.style.flex=1;inp.addEventListener('input',(e)=>{comments[idx]=e.target.value;});const del=document.createElement('button');del.textContent='-';del.onclick=()=>{comments.splice(idx,1);renderComments(containerId,comments,type);};div.appendChild(inp);div.appendChild(del);cont.appendChild(div);});}
         renderComments('detailExpectation',expectationComments,'Ожидание');renderComments('detailReality',realityComments,'Реальность');
@@ -302,7 +427,7 @@
         const modal=$('detailModal');if(modal)modal.classList.add('show');
     }
     
-    async function initApp(){const url=getAppUrl();if(!url){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');const appContainer=$('appContainer');if(appContainer)appContainer.style.display='flex';const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');await loadCategories();await loadFlowTasks();await loadFlowTasksForSimilar();await loadTasksByType('long');switchScreen('drift');const themeToggle=$('themeToggle');if(themeToggle){themeToggle.addEventListener('click',()=>{document.body.classList.toggle('invert');});}}catch(e){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Ошибка: '+e.message;}}
+    async function initApp(){const url=getAppUrl();if(!url){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');const appContainer=$('appContainer');if(appContainer)appContainer.style.display='flex';const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');await loadCategories();await loadEpics();await loadFlowTasks();await loadFlowTasksForSimilar();await loadTasksByType('long');switchScreen('drift');const themeToggle=$('themeToggle');if(themeToggle){themeToggle.addEventListener('click',()=>{document.body.classList.toggle('invert');});}}catch(e){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Ошибка: '+e.message;}}
     const saveConn=$('saveConnectionBtn');if(saveConn)saveConn.addEventListener('click',async()=>{const url=$('appUrlInput')?$('appUrlInput').value:'';try{await testConnection(url);saveAppUrl(url);const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');initApp();}catch(e){const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Неверный URL: '+e.message;}});
     initApp();
 })();
