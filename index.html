@@ -95,7 +95,7 @@
         .flow-time{font-size:11px;color:#888;margin-top:4px;}
         .epic-select-wrapper{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
         .epic-select-wrapper .custom-select{flex:1;margin-bottom:0;}
-        #epicAddContainer{display:flex;} /* по умолчанию показываем для LONG */
+        #epicAddContainer{display:flex;}
     </style>
 </head>
 <body>
@@ -103,7 +103,6 @@
 <div class="connection-overlay" id="connectionOverlay"><div class="connection-card"><h3>Подключение к Apps Script</h3><input type="text" id="appUrlInput" placeholder="https://script.google.com/macros/s/.../exec"><button id="saveConnectionBtn">Сохранить</button><div id="connectionStatus"></div></div></div>
 <div class="app-container" id="appContainer" style="display:none;">
     <div class="screens-container" id="screensContainer">
-        <!-- Экран DRIFT -->
         <div class="screen" id="screenDrift">
             <div class="type-switch-wrapper">
                 <div class="type-switch">
@@ -114,7 +113,6 @@
             </div>
             <div id="tasksList"></div>
         </div>
-        <!-- Экран ADD -->
         <div class="screen" id="screenAdd">
             <div class="type-buttons" id="addTypeButtons"><button data-type="long" class="active">LONG</button><button data-type="fast">FAST</button></div>
             <div class="flex-row">
@@ -145,7 +143,6 @@
             <button id="saveTaskBtn">Сохранить задачу</button>
             <div id="addStatus" class="status"></div>
         </div>
-        <!-- Экран FLOW -->
         <div class="screen" id="screenFlow">
             <h3 style="margin-bottom:12px;">Выполненные задачи</h3>
             <div id="flowList"></div>
@@ -169,7 +166,8 @@
     let cachedAppUrl=null,categoriesList=[],currentType='long',currentTasks=[],trialWarningShown=false,stopwatchInterval=null,stopwatchRunning=false,stopwatchSeconds=0,currentDetailTaskId=null;
     let flowTasksList=[],epicsList=[];
     let selectedSimilarTaskTime=0;
-    let pendingActualTimeSec=0;
+    let currentCompleteTaskId=null;
+    let currentCompleteTaskTime=0;  // время для завершаемой задачи
     let currentSelectedEpicId=null;
     
     function $(id){return document.getElementById(id);}
@@ -246,7 +244,7 @@
     
     function formatTimeSec(sec){if(!sec) return '';const h=Math.floor(sec/3600);const m=Math.floor((sec%3600)/60);const s=sec%60;let str='';if(h>0) str+=h+'ч ';if(m>0) str+=m+'м ';if(s>0) str+=s+'с';return str.trim();}
     
-     function renderTasks(){
+    function renderTasks(){
         const cont=$('tasksList');if(!cont)return;
         if(!currentTasks.length){cont.innerHTML='<div style="color:#555;text-align:center;padding:30px;">Нет задач</div>';return;}
         if(currentType==='fast'){
@@ -258,8 +256,7 @@
                 attachTaskHandlers(card);
             });
         } else {
-            // LONG: группировка по эпикам с сортировкой по суммарному приоритету
-            const epicMap=new Map(); // epicId -> { tasks: [], totalPriority: 0 }
+            const epicMap=new Map();
             const noEpicTasks=[];
             for(let task of currentTasks){
                 const epicId=task.epic_id;
@@ -272,7 +269,6 @@
                     noEpicTasks.push(task);
                 }
             }
-            // Собираем эпики с их суммарным приоритетом
             let epicEntries = [];
             for(let epic of epicsList){
                 const entry=epicMap.get(epic.id);
@@ -284,13 +280,10 @@
                     });
                 }
             }
-            // Сортируем эпики по убыванию суммарного приоритета (самый горячий сверху)
             epicEntries.sort((a,b)=>b.totalPriority - a.totalPriority);
-            // Суммарный приоритет задач без эпика
             const noEpicTotalPriority = noEpicTasks.reduce((sum,t)=>sum+(t.priority||0),0);
             
             cont.innerHTML='';
-            // Отрисовка эпиков
             for(let entry of epicEntries){
                 const groupDiv=document.createElement('div');
                 groupDiv.className='epic-group';
@@ -315,7 +308,6 @@
                 });
                 cont.appendChild(groupDiv);
             }
-            // Задачи без эпика (всегда в конце)
             if(noEpicTasks.length){
                 const groupDiv=document.createElement('div');
                 groupDiv.className='epic-group';
@@ -342,17 +334,26 @@
             }
         }
     }
+    
     function createTaskCard(task,isTop3){const card=document.createElement('div');card.className='task-card'+(isTop3?' top3':' other');card.dataset.id=task.id;let steps=[];try{steps=JSON.parse(task.microsteps||'[]');}catch(e){}let stepsHtml='';if(steps.length){const checked=task.microstepsProgress||[];stepsHtml=`<ul class="microsteps-list">`+steps.map((s,idx)=>{const isChecked=checked.includes(idx);return `<li data-idx="${idx}" class="${isChecked?'checked':''}" onclick="event.stopPropagation();window.toggleMicrostep('${task.id}',${idx})"><span class="micro-checkbox"><svg width="6" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.5"/></svg></span><span>${escapeHtml(s)}</span></li>`;}).join('')+`</ul>`;}const estimatedTime=task.estimated_time_seconds||0;const timeHtml=estimatedTime?`<div class="task-estimated-time">⏱ ~${formatTimeSec(estimatedTime)}</div>`:'';card.innerHTML=`<div class="task-header"><span class="task-title">${escapeHtml(task.title)}</span><span class="task-priority">[${Number(task.priority||0).toFixed(1)}]</span></div><div class="task-category">${escapeHtml(task.category)}</div>${timeHtml}${stepsHtml}<div class="task-actions"><button class="drift-task-btn complete-btn" data-id="${task.id}">DRIFT</button><button class="edit-icon-btn edit-btn" data-id="${task.id}">[E]</button></div>`;return card;}
     
-    function attachTaskHandlers(card){const complete=card.querySelector('.complete-btn');if(complete)complete.addEventListener('click',(e)=>{e.stopPropagation();const id=complete.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openCompleteModal(task);});const edit=card.querySelector('.edit-btn');if(edit)edit.addEventListener('click',(e)=>{e.stopPropagation();const id=edit.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openEditModal(task);});card.addEventListener('click',()=>{const id=card.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openDetailModal(task);});}
+    function attachTaskHandlers(card){const complete=card.querySelector('.complete-btn');if(complete)complete.addEventListener('click',(e)=>{e.stopPropagation();const id=complete.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openCompleteModal(task,0);});const edit=card.querySelector('.edit-btn');if(edit)edit.addEventListener('click',(e)=>{e.stopPropagation();const id=edit.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openEditModal(task);});card.addEventListener('click',()=>{const id=card.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openDetailModal(task);});}
     
     window.toggleMicrostep=async function(taskId,idx){try{const res=await apiCall({action:'toggleMicrostep',id:taskId,step_index:idx},'POST');if(res.error)throw new Error(res.error);const task=currentTasks.find(t=>t.id===taskId);if(task){if(!task.microstepsProgress)task.microstepsProgress=[];const pos=task.microstepsProgress.indexOf(idx);if(pos===-1)task.microstepsProgress.push(idx);else task.microstepsProgress.splice(pos,1);renderTasks();}}catch(e){alert('Ошибка: '+e.message);}};
     
-    let currentCompleteTaskId=null;
-    function openCompleteModal(task){currentCompleteTaskId=task.id;const titleEl=$('completeTaskTitle');if(titleEl)titleEl.innerText=task.title;document.querySelectorAll('#completeModal input[type=range]').forEach(s=>s.value=5);document.querySelectorAll('#completeModal .slider-value').forEach(v=>v.innerText='5');const costInp=$('actualCost');if(costInp)costInp.value=0;const costSpan=$('actualCostVal');if(costSpan)costSpan.innerText='0';const modal=$('completeModal');if(modal)modal.classList.add('show');}
+    function openCompleteModal(task, initialTime){
+        currentCompleteTaskId=task.id;
+        currentCompleteTaskTime=initialTime;
+        const titleEl=$('completeTaskTitle');if(titleEl)titleEl.innerText=task.title;
+        document.querySelectorAll('#completeModal input[type=range]').forEach(s=>s.value=5);
+        document.querySelectorAll('#completeModal .slider-value').forEach(v=>v.innerText='5');
+        const costInp=$('actualCost');if(costInp)costInp.value=0;
+        const costSpan=$('actualCostVal');if(costSpan)costSpan.innerText='0';
+        const modal=$('completeModal');if(modal)modal.classList.add('show');
+    }
     
-    const cancelComplete=$('cancelCompleteBtn');if(cancelComplete)cancelComplete.addEventListener('click',()=>{const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;});
-    const confirmComplete=$('confirmCompleteBtn');if(confirmComplete)confirmComplete.addEventListener('click',async()=>{if(!currentCompleteTaskId)return;const params={action:'completeTask',id:currentCompleteTaskId,actual_complexity:$('actualComplexity')?$('actualComplexity').value:5,actual_creativity:$('actualCreativity')?$('actualCreativity').value:5,actual_focus:$('actualFocus')?$('actualFocus').value:5,actual_cost:$('actualCost')?$('actualCost').value:0,actual_stress:$('actualStress')?$('actualStress').value:5,actual_time_seconds:pendingActualTimeSec};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;await loadTasksByType(currentType);await loadFlowTasks();}catch(e){alert('Ошибка: '+e.message);}});
+    const cancelComplete=$('cancelCompleteBtn');if(cancelComplete)cancelComplete.addEventListener('click',()=>{const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;currentCompleteTaskTime=0;});
+    const confirmComplete=$('confirmCompleteBtn');if(confirmComplete)confirmComplete.addEventListener('click',async()=>{if(!currentCompleteTaskId)return;const params={action:'completeTask',id:currentCompleteTaskId,actual_complexity:$('actualComplexity')?$('actualComplexity').value:5,actual_creativity:$('actualCreativity')?$('actualCreativity').value:5,actual_focus:$('actualFocus')?$('actualFocus').value:5,actual_cost:$('actualCost')?$('actualCost').value:0,actual_stress:$('actualStress')?$('actualStress').value:5,actual_time_seconds:currentCompleteTaskTime};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;currentCompleteTaskTime=0;await loadTasksByType(currentType);await loadFlowTasks();}catch(e){alert('Ошибка: '+e.message);}});
     
     let currentEditId=null;
     let editSelectedEpicId=null;
@@ -435,7 +436,7 @@
         const startBtn=$('stopwatchStart');if(startBtn)startBtn.onclick=()=>{if(!stopwatchRunning){stopwatchRunning=true;if(stopwatchInterval)clearInterval(stopwatchInterval);stopwatchInterval=setInterval(()=>{if(stopwatchRunning){stopwatchSeconds++;updateStopwatchDisplay();}},1000);}};
         const pauseBtn=$('stopwatchPause');if(pauseBtn)pauseBtn.onclick=()=>{stopwatchRunning=false;if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}};
         const resetBtn=$('stopwatchReset');if(resetBtn)resetBtn.onclick=()=>{stopwatchRunning=false;if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}stopwatchSeconds=0;updateStopwatchDisplay();};
-        const completeFromDetail=$('completeFromDetailBtn');if(completeFromDetail)completeFromDetail.onclick=()=>{const taskFound=currentTasks.find(t=>t.id===currentDetailTaskId);if(taskFound){pendingActualTimeSec=stopwatchSeconds;openCompleteModal(taskFound);document.getElementById('detailModal').classList.remove('show');}else{alert('Задача не найдена');}};
+        const completeFromDetail=$('completeFromDetailBtn');if(completeFromDetail)completeFromDetail.onclick=()=>{const taskFound=currentTasks.find(t=>t.id===currentDetailTaskId);if(taskFound){openCompleteModal(taskFound, stopwatchSeconds);document.getElementById('detailModal').classList.remove('show');}else{alert('Задача не найдена');}};
         const saveDetail=$('saveDetailBtn');if(saveDetail)saveDetail.onclick=async()=>{const params={action:'updateDetails',id:currentDetailTaskId,microsteps:JSON.stringify(microsteps),expectation_comments:JSON.stringify(expectationComments),reality_comments:JSON.stringify(realityComments),actual_time_seconds:stopwatchSeconds};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);await loadTasksByType(currentType);const modal=$('detailModal');if(modal)modal.classList.remove('show');}catch(e){alert('Ошибка: '+e.message);}};
         const closeDetail=$('closeDetailBtn');if(closeDetail)closeDetail.onclick=()=>{if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}const modal=$('detailModal');if(modal)modal.classList.remove('show');};
         const modal=$('detailModal');if(modal)modal.classList.add('show');
