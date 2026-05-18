@@ -246,7 +246,7 @@
     
     function formatTimeSec(sec){if(!sec) return '';const h=Math.floor(sec/3600);const m=Math.floor((sec%3600)/60);const s=sec%60;let str='';if(h>0) str+=h+'ч ';if(m>0) str+=m+'м ';if(s>0) str+=s+'с';return str.trim();}
     
-    function renderTasks(){
+     function renderTasks(){
         const cont=$('tasksList');if(!cont)return;
         if(!currentTasks.length){cont.innerHTML='<div style="color:#555;text-align:center;padding:30px;">Нет задач</div>';return;}
         if(currentType==='fast'){
@@ -258,51 +258,70 @@
                 attachTaskHandlers(card);
             });
         } else {
-            const epicMap=new Map();
+            // LONG: группировка по эпикам с сортировкой по суммарному приоритету
+            const epicMap=new Map(); // epicId -> { tasks: [], totalPriority: 0 }
             const noEpicTasks=[];
             for(let task of currentTasks){
                 const epicId=task.epic_id;
                 if(epicId){
-                    if(!epicMap.has(epicId)) epicMap.set(epicId,[]);
-                    epicMap.get(epicId).push(task);
+                    if(!epicMap.has(epicId)) epicMap.set(epicId, { tasks: [], totalPriority: 0 });
+                    const entry=epicMap.get(epicId);
+                    entry.tasks.push(task);
+                    entry.totalPriority += (task.priority || 0);
                 } else {
                     noEpicTasks.push(task);
                 }
             }
-            cont.innerHTML='';
+            // Собираем эпики с их суммарным приоритетом
+            let epicEntries = [];
             for(let epic of epicsList){
-                const tasksArr=epicMap.get(epic.id);
-                if(tasksArr && tasksArr.length){
-                    const groupDiv=document.createElement('div');
-                    groupDiv.className='epic-group';
-                    const headerDiv=document.createElement('div');
-                    headerDiv.className='epic-header';
-                    headerDiv.innerHTML=`<span class="epic-title">⇲ ${escapeHtml(epic.title)}</span><span class="toggle-icon">▼</span>`;
-                    const tasksDiv=document.createElement('div');
-                    tasksDiv.className='epic-tasks';
-                    tasksArr.forEach((task,idx)=>{
-                        const isTop3=idx<3;
-                        const card=createTaskCard(task,isTop3);
-                        tasksDiv.appendChild(card);
-                        attachTaskHandlers(card);
+                const entry=epicMap.get(epic.id);
+                if(entry && entry.tasks.length){
+                    epicEntries.push({
+                        epic: epic,
+                        tasks: entry.tasks,
+                        totalPriority: entry.totalPriority
                     });
-                    groupDiv.appendChild(headerDiv);
-                    groupDiv.appendChild(tasksDiv);
-                    let collapsed=false;
-                    headerDiv.addEventListener('click',()=>{
-                        collapsed=!collapsed;
-                        tasksDiv.classList.toggle('collapsed',collapsed);
-                        headerDiv.querySelector('.toggle-icon').textContent=collapsed?'▶':'▼';
-                    });
-                    cont.appendChild(groupDiv);
                 }
             }
+            // Сортируем эпики по убыванию суммарного приоритета (самый горячий сверху)
+            epicEntries.sort((a,b)=>b.totalPriority - a.totalPriority);
+            // Суммарный приоритет задач без эпика
+            const noEpicTotalPriority = noEpicTasks.reduce((sum,t)=>sum+(t.priority||0),0);
+            
+            cont.innerHTML='';
+            // Отрисовка эпиков
+            for(let entry of epicEntries){
+                const groupDiv=document.createElement('div');
+                groupDiv.className='epic-group';
+                const headerDiv=document.createElement('div');
+                headerDiv.className='epic-header';
+                headerDiv.innerHTML=`<span class="epic-title">⇲ ${escapeHtml(entry.epic.title)} <span style="font-size:10px; opacity:0.7;">[${entry.totalPriority.toFixed(1)}]</span></span><span class="toggle-icon">▼</span>`;
+                const tasksDiv=document.createElement('div');
+                tasksDiv.className='epic-tasks';
+                entry.tasks.forEach((task,idx)=>{
+                    const isTop3=idx<3;
+                    const card=createTaskCard(task,isTop3);
+                    tasksDiv.appendChild(card);
+                    attachTaskHandlers(card);
+                });
+                groupDiv.appendChild(headerDiv);
+                groupDiv.appendChild(tasksDiv);
+                let collapsed=false;
+                headerDiv.addEventListener('click',()=>{
+                    collapsed=!collapsed;
+                    tasksDiv.classList.toggle('collapsed',collapsed);
+                    headerDiv.querySelector('.toggle-icon').textContent=collapsed?'▶':'▼';
+                });
+                cont.appendChild(groupDiv);
+            }
+            // Задачи без эпика (всегда в конце)
             if(noEpicTasks.length){
                 const groupDiv=document.createElement('div');
                 groupDiv.className='epic-group';
                 const headerDiv=document.createElement('div');
                 headerDiv.className='epic-header';
-                headerDiv.innerHTML=`<span class="epic-title">⇲ Без эпика</span><span class="toggle-icon">▼</span>`;
+                headerDiv.innerHTML=`<span class="epic-title">⇲ Без эпика <span style="font-size:10px; opacity:0.7;">[${noEpicTotalPriority.toFixed(1)}]</span></span><span class="toggle-icon">▼</span>`;
                 const tasksDiv=document.createElement('div');
                 tasksDiv.className='epic-tasks';
                 noEpicTasks.forEach((task,idx)=>{
@@ -323,7 +342,6 @@
             }
         }
     }
-    
     function createTaskCard(task,isTop3){const card=document.createElement('div');card.className='task-card'+(isTop3?' top3':' other');card.dataset.id=task.id;let steps=[];try{steps=JSON.parse(task.microsteps||'[]');}catch(e){}let stepsHtml='';if(steps.length){const checked=task.microstepsProgress||[];stepsHtml=`<ul class="microsteps-list">`+steps.map((s,idx)=>{const isChecked=checked.includes(idx);return `<li data-idx="${idx}" class="${isChecked?'checked':''}" onclick="event.stopPropagation();window.toggleMicrostep('${task.id}',${idx})"><span class="micro-checkbox"><svg width="6" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.5"/></svg></span><span>${escapeHtml(s)}</span></li>`;}).join('')+`</ul>`;}const estimatedTime=task.estimated_time_seconds||0;const timeHtml=estimatedTime?`<div class="task-estimated-time">⏱ ~${formatTimeSec(estimatedTime)}</div>`:'';card.innerHTML=`<div class="task-header"><span class="task-title">${escapeHtml(task.title)}</span><span class="task-priority">[${Number(task.priority||0).toFixed(1)}]</span></div><div class="task-category">${escapeHtml(task.category)}</div>${timeHtml}${stepsHtml}<div class="task-actions"><button class="drift-task-btn complete-btn" data-id="${task.id}">DRIFT</button><button class="edit-icon-btn edit-btn" data-id="${task.id}">[E]</button></div>`;return card;}
     
     function attachTaskHandlers(card){const complete=card.querySelector('.complete-btn');if(complete)complete.addEventListener('click',(e)=>{e.stopPropagation();const id=complete.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openCompleteModal(task);});const edit=card.querySelector('.edit-btn');if(edit)edit.addEventListener('click',(e)=>{e.stopPropagation();const id=edit.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openEditModal(task);});card.addEventListener('click',()=>{const id=card.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openDetailModal(task);});}
