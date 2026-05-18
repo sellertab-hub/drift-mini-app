@@ -103,6 +103,7 @@
         .epic-select-wrapper{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
         .epic-select-wrapper .custom-select{flex:1;margin-bottom:0;}
         #epicAddContainer{display:flex;}
+        .avg-time-info{background:#111;border:1px solid #333;padding:6px 10px;margin-bottom:10px;font-size:12px;color:#aaa;text-align:center;border-radius:2px;}
     </style>
 </head>
 <body>
@@ -129,6 +130,7 @@
                 </div>
                 <button id="manageCategoriesBtn">Управление</button>
             </div>
+            <div id="avgTimeDisplay" class="avg-time-info">⏱ Среднее время: —</div>
             <div id="epicAddContainer" class="epic-select-wrapper">
                 <div class="custom-select" id="epicSelectContainer">
                     <div class="select-button" id="epicButton"><span id="epicSelectedText">Без эпика</span><span class="arrow"></span></div>
@@ -143,10 +145,6 @@
             <div class="slider-container"><label>Фокусировка</label><input type="range" id="focus" min="0" max="10" step="1" value="5"><span id="focusVal" class="slider-value">5</span></div>
             <div class="slider-container"><label>Стоимость ($)</label><input type="range" id="cost" min="0" max="2000" step="50" value="0"><span id="costVal" class="slider-value">0</span></div>
             <div class="slider-container"><label>Стресс</label><input type="range" id="stress" min="0" max="10" step="1" value="5"><span id="stressVal" class="slider-value">5</span></div>
-            <div class="custom-select" id="similarTaskContainer">
-                <div class="select-button" id="similarTaskButton"><span id="similarTaskSelectedText">Похожая задача (необязательно)</span><span class="arrow"></span></div>
-                <div class="select-dropdown" id="similarTaskDropdown"></div>
-            </div>
             <button id="saveTaskBtn">Сохранить задачу</button>
             <div id="addStatus" class="status"></div>
         </div>
@@ -172,10 +170,9 @@
     const APP_URL_STORAGE_KEY='taskTracker_appUrl';
     let cachedAppUrl=null,categoriesList=[],currentType='long',currentTasks=[],trialWarningShown=false,stopwatchInterval=null,stopwatchRunning=false,stopwatchSeconds=0,currentDetailTaskId=null;
     let flowTasksList=[],epicsList=[];
-    let selectedSimilarTaskTime=0;
-    let currentCompleteTaskId=null;
-    let currentCompleteTaskTime=0;
     let currentSelectedEpicId=null;
+    let currentAvgSeconds=0;   // среднее время для выбранной категории
+    let currentCategory=null;
     
     function $(id){return document.getElementById(id);}
     function $$(sel){return document.querySelectorAll(sel);}
@@ -348,6 +345,8 @@
     
     window.toggleMicrostep=async function(taskId,idx){try{const res=await apiCall({action:'toggleMicrostep',id:taskId,step_index:idx},'POST');if(res.error)throw new Error(res.error);const task=currentTasks.find(t=>t.id===taskId);if(task){if(!task.microstepsProgress)task.microstepsProgress=[];const pos=task.microstepsProgress.indexOf(idx);if(pos===-1)task.microstepsProgress.push(idx);else task.microstepsProgress.splice(pos,1);renderTasks();}}catch(e){alert('Ошибка: '+e.message);}};
     
+    let currentCompleteTaskId=null;
+    let currentCompleteTaskTime=0;
     function openCompleteModal(task, initialTime){
         currentCompleteTaskId=task.id;
         currentCompleteTaskTime=initialTime;
@@ -372,11 +371,40 @@
         const modal=$('editModal'); if(modal)modal.classList.add('show');}
     
     const cancelEdit=$('cancelEditBtn');if(cancelEdit)cancelEdit.addEventListener('click',()=>{const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;});
-    const saveEdit=$('saveEditBtn');if(saveEdit)saveEdit.addEventListener('click',async()=>{if(!currentEditId)return;const microsteps=getMicrosteps($('editMicrostepsContainer'));const params={action:'updateTask',id:currentEditId,title:$('editTitle')?$('editTitle').value:'',category:window.editSelectedCategory||'',microsteps:JSON.stringify(microsteps),complexity:$('editComplexity')?$('editComplexity').value:5,creativity:$('editCreativity')?$('editCreativity').value:5,focus:$('editFocus')?$('editFocus').value:5,cost:$('editCost')?$('editCost').value:0,stress:$('editStress')?$('editStress').value:5,estimated_time_seconds:selectedSimilarTaskTime,epic_id:editSelectedEpicId};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
+    const saveEdit=$('saveEditBtn');if(saveEdit)saveEdit.addEventListener('click',async()=>{if(!currentEditId)return;const microsteps=getMicrosteps($('editMicrostepsContainer'));const params={action:'updateTask',id:currentEditId,title:$('editTitle')?$('editTitle').value:'',category:window.editSelectedCategory||'',microsteps:JSON.stringify(microsteps),complexity:$('editComplexity')?$('editComplexity').value:5,creativity:$('editCreativity')?$('editCreativity').value:5,focus:$('editFocus')?$('editFocus').value:5,cost:$('editCost')?$('editCost').value:0,stress:$('editStress')?$('editStress').value:5,estimated_time_seconds:0,epic_id:editSelectedEpicId};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
     const deleteTaskBtn=$('deleteTaskBtn');if(deleteTaskBtn)deleteTaskBtn.addEventListener('click',async()=>{if(!currentEditId)return;if(!confirm('Удалить задачу?'))return;try{const res=await apiCall({action:'deleteTask',id:currentEditId},'POST');if(res.error)throw new Error(res.error);const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
     
     let selectedAddType='long';
-    const addTypeBtns=$$('#addTypeButtons button');addTypeBtns.forEach(btn=>{btn.addEventListener('click',()=>{addTypeBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedAddType=btn.dataset.type;const epicDiv=$('epicAddContainer');if(epicDiv) epicDiv.style.display=selectedAddType==='long'?'flex':'none';});});
+    const addTypeBtns=$$('#addTypeButtons button');addTypeBtns.forEach(btn=>{btn.addEventListener('click',()=>{addTypeBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedAddType=btn.dataset.type;const epicDiv=$('epicAddContainer');if(epicDiv) epicDiv.style.display=selectedAddType==='long'?'flex':'none'; updateAvgTime();});});
+    
+    async function updateAvgTime(){
+        const category = window.selectedCategory;
+        if(!category){
+            const avgDiv = $('#avgTimeDisplay');
+            if(avgDiv) avgDiv.innerHTML = '⏱ Среднее время: —';
+            currentAvgSeconds = 0;
+            return;
+        }
+        try {
+            const res = await apiCall({action:'avg_time_by_category', category: category, task_type: selectedAddType});
+            if(res.error) throw new Error(res.error);
+            const avgSec = res.avgSeconds || 0;
+            currentAvgSeconds = avgSec;
+            const avgDiv = $('#avgTimeDisplay');
+            if(avgDiv){
+                if(avgSec > 0){
+                    avgDiv.innerHTML = `⏱ Среднее время для категории «${escapeHtml(category)}»: ${formatTimeSec(avgSec)} (на основе ${res.count || 0} задач)`;
+                } else {
+                    avgDiv.innerHTML = `⏱ Нет данных для категории «${escapeHtml(category)}»`;
+                }
+            }
+        } catch(e){
+            console.error(e);
+            const avgDiv = $('#avgTimeDisplay');
+            if(avgDiv) avgDiv.innerHTML = '⏱ Ошибка загрузки';
+            currentAvgSeconds = 0;
+        }
+    }
     
     async function loadFlowTasks(){try{const data=await apiCall({action:'flow_tasks',limit:100});if(data.error)throw new Error(data.error);flowTasksList=data;renderFlowList();}catch(e){console.error(e);}}
     
@@ -460,11 +488,9 @@
         }
     }
     
-    async function loadFlowTasksForSimilar(){try{const data=await apiCall({action:'flow_tasks',limit:50});if(data.error)throw new Error(data.error);const items=data.map(t=>{return {title:t.title+' ('+formatTimeSec(t.actualTimeSec)+')', time:t.actualTimeSec, original:t};});initCustomSelect('similarTaskButton','similarTaskDropdown',items,(selected)=>{if(selected && selected.time){selectedSimilarTaskTime=selected.time;const span=$('similarTaskSelectedText');if(span)span.textContent=selected.title;}else{selectedSimilarTaskTime=0;const span=$('similarTaskSelectedText');if(span)span.textContent='Похожая задача (необязательно)';}},null,'Похожая задача (необязательно)');}catch(e){console.error(e);}}
+    const saveTask=$('saveTaskBtn');if(saveTask)saveTask.addEventListener('click',async()=>{const category=window.selectedCategory||'';const title=$('taskTitle')?$('taskTitle').value:'';if(!category||!title){showStatus('addStatus','Заполните категорию и название','error');return;}const microsteps=getMicrosteps($('microstepsContainer'));const params={action:'addTask',category,title,microsteps:JSON.stringify(microsteps),complexity:$('complexity')?$('complexity').value:5,creativity:$('creativity')?$('creativity').value:5,focus:$('focus')?$('focus').value:5,cost:$('cost')?$('cost').value:0,stress:$('stress')?$('stress').value:5,task_type:selectedAddType,estimated_time_seconds:currentAvgSeconds,epic_id:currentSelectedEpicId};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);showStatus('addStatus','Задача добавлена','success');if($('taskTitle'))$('taskTitle').value='';const catText=$('categorySelectedText');if(catText)catText.textContent='Выберите категорию';window.selectedCategory='';renderMicrostepsDynamic($('microstepsContainer'),[]);['complexity','creativity','focus','stress'].forEach(id=>{const el=$(id);if(el)el.value=5;const valSpan=$(id+'Val');if(valSpan)valSpan.innerText='5';});const costEl=$('cost');if(costEl)costEl.value=0;const costSpan=$('costVal');if(costSpan)costSpan.innerText='0';currentAvgSeconds=0;const avgDiv=$('avgTimeDisplay');if(avgDiv)avgDiv.innerHTML='⏱ Среднее время: —';currentSelectedEpicId=null;const epicSpan=$('epicSelectedText');if(epicSpan)epicSpan.textContent='Без эпика';await loadTasksByType(currentType);}catch(e){showStatus('addStatus','Ошибка: '+e.message,'error');}});
     
-    const saveTask=$('saveTaskBtn');if(saveTask)saveTask.addEventListener('click',async()=>{const category=window.selectedCategory||'';const title=$('taskTitle')?$('taskTitle').value:'';if(!category||!title){showStatus('addStatus','Заполните категорию и название','error');return;}const microsteps=getMicrosteps($('microstepsContainer'));const params={action:'addTask',category,title,microsteps:JSON.stringify(microsteps),complexity:$('complexity')?$('complexity').value:5,creativity:$('creativity')?$('creativity').value:5,focus:$('focus')?$('focus').value:5,cost:$('cost')?$('cost').value:0,stress:$('stress')?$('stress').value:5,task_type:selectedAddType,estimated_time_seconds:selectedSimilarTaskTime,epic_id:currentSelectedEpicId};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);showStatus('addStatus','Задача добавлена','success');if($('taskTitle'))$('taskTitle').value='';const catText=$('categorySelectedText');if(catText)catText.textContent='Выберите категорию';window.selectedCategory='';renderMicrostepsDynamic($('microstepsContainer'),[]);['complexity','creativity','focus','stress'].forEach(id=>{const el=$(id);if(el)el.value=5;const valSpan=$(id+'Val');if(valSpan)valSpan.innerText='5';});const costEl=$('cost');if(costEl)costEl.value=0;const costSpan=$('costVal');if(costSpan)costSpan.innerText='0';selectedSimilarTaskTime=0;const simSpan=$('similarTaskSelectedText');if(simSpan)simSpan.textContent='Похожая задача (необязательно)';currentSelectedEpicId=null;const epicSpan=$('epicSelectedText');if(epicSpan)epicSpan.textContent='Без эпика';await loadTasksByType(currentType);}catch(e){showStatus('addStatus','Ошибка: '+e.message,'error');}});
-    
-    async function loadCategories(){try{const data=await apiCall({action:'categories'});if(data.error)throw new Error(data.error);categoriesList=data;initCustomSelect('categoryButton','categoryDropdown',categoriesList,(value)=>{const catText=$('categorySelectedText');if(catText)catText.textContent=value;window.selectedCategory=value;});initCustomSelect('editCategoryButton','editCategoryDropdown',categoriesList,(value)=>{const catText=$('editCategorySelectedText');if(catText)catText.textContent=value;window.editSelectedCategory=value;});}catch(e){console.error(e);}}
+    async function loadCategories(){try{const data=await apiCall({action:'categories'});if(data.error)throw new Error(data.error);categoriesList=data;initCustomSelect('categoryButton','categoryDropdown',categoriesList,(value)=>{const catText=$('categorySelectedText');if(catText)catText.textContent=value;window.selectedCategory=value;updateAvgTime();});initCustomSelect('editCategoryButton','editCategoryDropdown',categoriesList,(value)=>{const catText=$('editCategorySelectedText');if(catText)catText.textContent=value;window.editSelectedCategory=value;});}catch(e){console.error(e);}}
     
     const manageCategoriesBtn=$('manageCategoriesBtn');
     const categoryModal=$('categoryModal');
@@ -597,7 +623,7 @@
         const modal=$('detailModal');if(modal)modal.classList.add('show');
     }
     
-    async function initApp(){const url=getAppUrl();if(!url){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');const appContainer=$('appContainer');if(appContainer)appContainer.style.display='flex';const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');await loadCategories();await loadEpics();await loadFlowTasks();await loadFlowTasksForSimilar();await loadTasksByType('long');switchScreen('drift');showDailyDigest();const themeToggle=$('themeToggle');if(themeToggle){themeToggle.addEventListener('click',()=>{document.body.classList.toggle('invert');});}}catch(e){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Ошибка: '+e.message;}}
+    async function initApp(){const url=getAppUrl();if(!url){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');const appContainer=$('appContainer');if(appContainer)appContainer.style.display='flex';const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');await loadCategories();await loadEpics();await loadFlowTasks();await loadTasksByType('long');switchScreen('drift');showDailyDigest();const themeToggle=$('themeToggle');if(themeToggle){themeToggle.addEventListener('click',()=>{document.body.classList.toggle('invert');});}}catch(e){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Ошибка: '+e.message;}}
     const saveConn=$('saveConnectionBtn');if(saveConn)saveConn.addEventListener('click',async()=>{const url=$('appUrlInput')?$('appUrlInput').value:'';try{await testConnection(url);saveAppUrl(url);const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');initApp();}catch(e){const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Неверный URL: '+e.message;}});
     initApp();
 })();
