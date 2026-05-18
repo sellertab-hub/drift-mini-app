@@ -18,8 +18,8 @@
         .screens-container::-webkit-scrollbar{display:none;}
         .screen{flex:0 0 100%;scroll-snap-align:start;padding:12px;overflow-y:auto;}
         .type-switch-wrapper{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;}
-        .type-switch{display:flex;gap:4px;background:#111;border:1px solid #333;padding:2px;flex:1;}
-        .type-btn{flex:1;text-align:center;padding:8px 0;font-size:14px;font-weight:700;background:transparent;border:none;color:#aaa;cursor:pointer;font-family:'PT Sans Narrow',sans-serif;text-transform:uppercase;}
+        .type-switch{display:flex;gap:4px;background:#111;border:1px solid #333;padding:4px;flex:1;}
+        .type-btn{flex:1;text-align:center;padding:8px 0;font-size:14px;font-weight:700;background:transparent;border:none;color:#aaa;cursor:pointer;font-family:'PT Sans Narrow',sans-serif;text-transform:uppercase;line-height:1;}
         .type-btn.active{background:#fff;color:#000;}
         .theme-toggle{background:#111;border:1px solid #333;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:bold;color:#fff;}
         .task-card{background:#111;padding:12px;margin-bottom:8px;border:1px solid #333;cursor:pointer;}
@@ -85,6 +85,7 @@
         .micro-detail-item{display:flex;align-items:center;margin-bottom:6px;}
         .category-manage{display:flex;gap:8px;margin-bottom:10px;}
         .category-manage button{width:auto;padding:6px 12px;margin-top:0;background:#222;color:#fff;border:1px solid #444;}
+        #manageCategoriesBtn{width:auto;padding:8px 12px;margin:0;background:#222;color:#fff;border:1px solid #444;font-size:12px;line-height:1;white-space:nowrap;}
     </style>
 </head>
 <body>
@@ -109,7 +110,7 @@
                     <div class="select-button" id="categoryButton"><span id="categorySelectedText">Выберите категорию</span><span class="arrow"></span></div>
                     <div class="select-dropdown" id="categoryDropdown"></div>
                 </div>
-                <button id="manageCategoriesBtn" style="width:auto; padding:8px 12px; margin-top:0; background:#222; color:#fff;">Управление</button>
+                <button id="manageCategoriesBtn">Управление</button>
             </div>
             <input type="text" id="taskTitle" placeholder="Название задачи">
             <div id="microstepsContainer"></div>
@@ -139,7 +140,7 @@
     let cachedAppUrl=null,categoriesList=[],currentType='long',currentTasks=[],trialWarningShown=false,stopwatchInterval=null,stopwatchRunning=false,stopwatchSeconds=0,currentDetailTaskId=null;
     let flowTasksList=[]; 
     let selectedSimilarTaskTime=0;
-    let pendingActualTimeSec=0; // для передачи времени из детального режима
+    let pendingActualTimeSec=0;
     
     function $(id){return document.getElementById(id);}
     function $$(sel){return document.querySelectorAll(sel);}
@@ -153,7 +154,7 @@
     function closeAllDropdowns(){if(activeDropdown){activeDropdown.dropdown.classList.remove('show');activeDropdown.button.classList.remove('open');activeDropdown=null;}}
     document.addEventListener('click',function(e){closeAllDropdowns();});
     
-    // Закрытие модальных окон по клику на фон
+    // Закрытие модалок по клику на фон
     document.addEventListener('click',function(e){
         if(e.target.classList && e.target.classList.contains('modal')){
             e.target.classList.remove('show');
