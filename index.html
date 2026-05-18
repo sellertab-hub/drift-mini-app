@@ -31,7 +31,14 @@
         .task-card{background:#111;padding:12px;margin-bottom:8px;border:1px solid #333;cursor:pointer;}
         .task-card.top3{border-left:4px solid #fff;background:#181818;}
         .task-card.other{opacity:0.7;background:#0a0a0a;}
-        .flow-card{background:#111;padding:12px;margin-bottom:8px;border:1px solid #333;}
+        .flow-day-group{margin-bottom:16px;border:1px solid #333;background:#0a0a0a;}
+        .flow-day-header{background:#111;padding:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:bold;border-bottom:1px solid #333;}
+        .flow-day-header .day-title{font-size:14px;text-transform:uppercase;}
+        .flow-day-header .day-stats{font-size:12px;color:#aaa;}
+        .flow-day-header .toggle-icon{font-size:16px;}
+        .flow-day-tasks{padding:8px;display:block;}
+        .flow-day-tasks.collapsed{display:none;}
+        .flow-task-card{background:#111;padding:12px;margin-bottom:8px;border:1px solid #333;}
         .task-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
         .task-title{font-weight:700;font-size:14px;text-transform:uppercase;}
         .task-priority{font-size:11px;color:#ccc;}
@@ -167,7 +174,7 @@
     let flowTasksList=[],epicsList=[];
     let selectedSimilarTaskTime=0;
     let currentCompleteTaskId=null;
-    let currentCompleteTaskTime=0;  // время для завершаемой задачи
+    let currentCompleteTaskTime=0;
     let currentSelectedEpicId=null;
     
     function $(id){return document.getElementById(id);}
@@ -372,7 +379,86 @@
     const addTypeBtns=$$('#addTypeButtons button');addTypeBtns.forEach(btn=>{btn.addEventListener('click',()=>{addTypeBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedAddType=btn.dataset.type;const epicDiv=$('epicAddContainer');if(epicDiv) epicDiv.style.display=selectedAddType==='long'?'flex':'none';});});
     
     async function loadFlowTasks(){try{const data=await apiCall({action:'flow_tasks',limit:100});if(data.error)throw new Error(data.error);flowTasksList=data;renderFlowList();}catch(e){console.error(e);}}
-    function renderFlowList(){const container=$('flowList');if(!container)return;if(!flowTasksList.length){container.innerHTML='<div style="color:#555;text-align:center;padding:30px;">Нет выполненных задач</div>';return;}container.innerHTML='';flowTasksList.forEach(item=>{const card=document.createElement('div');card.className='flow-card';const dateStr=item.completed?new Date(item.completed).toLocaleDateString():'';card.innerHTML=`<div class="task-header"><span class="task-title">${escapeHtml(item.title)}</span></div><div class="task-category">${dateStr}</div><div class="flow-time">⏱ Время: ${formatTimeSec(item.actualTimeSec)}</div>`;container.appendChild(card);});}
+    
+    function renderFlowList(){
+        const container=$('flowList');
+        if(!container) return;
+        if(!flowTasksList.length){
+            container.innerHTML='<div style="color:#555;text-align:center;padding:30px;">Нет выполненных задач</div>';
+            return;
+        }
+        
+        const groups = new Map();
+        for(let item of flowTasksList){
+            if(!item.completed) continue;
+            const dateObj = new Date(item.completed);
+            const dateKey = dateObj.toISOString().slice(0,10);
+            if(!groups.has(dateKey)){
+                groups.set(dateKey, { tasks: [], totalTime: 0 });
+            }
+            const group = groups.get(dateKey);
+            group.tasks.push(item);
+            group.totalTime += (item.actualTimeSec || 0);
+        }
+        
+        const sortedGroups = Array.from(groups.entries()).sort((a,b) => b[0].localeCompare(a[0]));
+        
+        container.innerHTML = '';
+        
+        for(let [dateKey, group] of sortedGroups){
+            const dateObj = new Date(dateKey);
+            const day = dateObj.getDate().toString().padStart(2,'0');
+            const month = (dateObj.getMonth()+1).toString().padStart(2,'0');
+            const weekdayNames = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+            const weekday = weekdayNames[dateObj.getDay()];
+            const formattedDate = `${day}.${month} (${weekday})`;
+            const taskCount = group.tasks.length;
+            const totalHours = Math.floor(group.totalTime / 3600);
+            const totalMinutes = Math.floor((group.totalTime % 3600) / 60);
+            let timeStr = '';
+            if(totalHours > 0) timeStr += totalHours + 'ч ';
+            if(totalMinutes > 0) timeStr += totalMinutes + 'м';
+            if(timeStr === '') timeStr = '0м';
+            
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'flow-day-group';
+            
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'flow-day-header';
+            headerDiv.innerHTML = `
+                <span class="day-title">📅 ${formattedDate}</span>
+                <span class="day-stats">📋 ${taskCount} задач | ⏱ ${timeStr}</span>
+                <span class="toggle-icon">▼</span>
+            `;
+            
+            const tasksDiv = document.createElement('div');
+            tasksDiv.className = 'flow-day-tasks';
+            
+            for(let item of group.tasks){
+                const card = document.createElement('div');
+                card.className = 'flow-task-card';
+                const dateStr = new Date(item.completed).toLocaleDateString();
+                card.innerHTML = `
+                    <div class="task-header"><span class="task-title">${escapeHtml(item.title)}</span></div>
+                    <div class="task-category">${dateStr}</div>
+                    <div class="flow-time">⏱ Время: ${formatTimeSec(item.actualTimeSec)}</div>
+                `;
+                tasksDiv.appendChild(card);
+            }
+            
+            groupDiv.appendChild(headerDiv);
+            groupDiv.appendChild(tasksDiv);
+            
+            let collapsed = false;
+            headerDiv.addEventListener('click', () => {
+                collapsed = !collapsed;
+                tasksDiv.classList.toggle('collapsed', collapsed);
+                headerDiv.querySelector('.toggle-icon').textContent = collapsed ? '▶' : '▼';
+            });
+            
+            container.appendChild(groupDiv);
+        }
+    }
     
     async function loadFlowTasksForSimilar(){try{const data=await apiCall({action:'flow_tasks',limit:50});if(data.error)throw new Error(data.error);const items=data.map(t=>{return {title:t.title+' ('+formatTimeSec(t.actualTimeSec)+')', time:t.actualTimeSec, original:t};});initCustomSelect('similarTaskButton','similarTaskDropdown',items,(selected)=>{if(selected && selected.time){selectedSimilarTaskTime=selected.time;const span=$('similarTaskSelectedText');if(span)span.textContent=selected.title;}else{selectedSimilarTaskTime=0;const span=$('similarTaskSelectedText');if(span)span.textContent='Похожая задача (необязательно)';}},null,'Похожая задача (необязательно)');}catch(e){console.error(e);}}
     
@@ -410,6 +496,75 @@
     function showTrialWarning(daysLeft){const modal=$('trialWarningModal');const text=$('trialWarningText');if(modal&&text){text.innerText=`Пробный период скоро закончится. Осталось ${daysLeft} дн. Обратитесь к разработчику.`;modal.classList.add('show');const ok=$('trialOkBtn');if(ok)ok.onclick=()=>modal.classList.remove('show');}}
     function showTrialExpired(){const loading=$('loadingScreen');if(loading){loading.innerHTML='<div style="text-align:center;padding:20px;"><h2>Пробный период закончился</h2><p>Обратитесь к разработчику.</p></div>';loading.classList.remove('hidden');const app=$('appContainer');if(app)app.style.display='none';}}
     
+    async function showDailyDigest() {
+        const lastDigestDate = localStorage.getItem('lastDigestDate');
+        const todayStr = new Date().toISOString().slice(0,10);
+        if (lastDigestDate === todayStr) return;
+        try {
+            const digest = await apiCall({action:'daily_digest'});
+            if (digest.error) throw new Error(digest.error);
+            
+            function formatTotalTime(sec) {
+                const h = Math.floor(sec / 3600);
+                const m = Math.floor((sec % 3600) / 60);
+                let str = '';
+                if (h > 0) str += h + 'ч ';
+                if (m > 0) str += m + 'м';
+                if (str === '') str = '0м';
+                return str;
+            }
+            
+            let highPriorityHtml = '';
+            if (digest.highPriorityTasks.length > 0) {
+                highPriorityHtml = '<div style="margin-top:12px;"><strong>🔥 Задачи с высоким приоритетом (>20):</strong><ul style="margin-top:6px;">';
+                for (let task of digest.highPriorityTasks.slice(0,5)) {
+                    highPriorityHtml += `<li>${escapeHtml(task.category)} | ${escapeHtml(task.title)} — приоритет ${task.priority.toFixed(1)}</li>`;
+                }
+                if (digest.highPriorityTasks.length > 5) {
+                    highPriorityHtml += `<li>... и ещё ${digest.highPriorityTasks.length - 5}</li>`;
+                }
+                highPriorityHtml += '</ul></div>';
+            } else {
+                highPriorityHtml = '<div style="margin-top:12px;">✅ Нет задач с высоким приоритетом.</div>';
+            }
+            
+            const message = `
+                <div style="text-align:left;">
+                    <p>📅 <strong>Ваш ежедневный дайджест</strong></p>
+                    <p>✅ Выполнено вчера: <strong>${digest.completedYesterday}</strong> задач<br>
+                    ⏱ Общее время: <strong>${formatTotalTime(digest.totalTimeYesterday)}</strong></p>
+                    <p>📋 Всего активных задач: <strong>${digest.activeTasksCount}</strong></p>
+                    ${highPriorityHtml}
+                    <hr style="margin:12px 0; border-color:#333;">
+                    <p style="font-size:12px; color:#aaa;">Дайджест показывается раз в день.</p>
+                </div>
+            `;
+            
+            let digestModal = document.getElementById('digestModal');
+            if (!digestModal) {
+                digestModal = document.createElement('div');
+                digestModal.id = 'digestModal';
+                digestModal.className = 'modal';
+                digestModal.innerHTML = `<div class="modal-content" style="max-width:400px;"><div class="modal-title">📊 Дайджест</div><div id="digestMessage"></div><div class="modal-buttons"><button id="closeDigestBtn">Ок</button></div></div>`;
+                document.body.appendChild(digestModal);
+                document.getElementById('closeDigestBtn').addEventListener('click', () => {
+                    digestModal.classList.remove('show');
+                    localStorage.setItem('lastDigestDate', todayStr);
+                });
+                digestModal.addEventListener('click', (e) => {
+                    if (e.target === digestModal) {
+                        digestModal.classList.remove('show');
+                        localStorage.setItem('lastDigestDate', todayStr);
+                    }
+                });
+            }
+            document.getElementById('digestMessage').innerHTML = message;
+            digestModal.classList.add('show');
+        } catch(e) {
+            console.error('Ошибка загрузки дайджеста:', e);
+        }
+    }
+    
     async function openDetailModal(task){
         currentDetailTaskId=task.id;
         const container=$('detailContent');if(!container)return;
@@ -442,7 +597,7 @@
         const modal=$('detailModal');if(modal)modal.classList.add('show');
     }
     
-    async function initApp(){const url=getAppUrl();if(!url){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');const appContainer=$('appContainer');if(appContainer)appContainer.style.display='flex';const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');await loadCategories();await loadEpics();await loadFlowTasks();await loadFlowTasksForSimilar();await loadTasksByType('long');switchScreen('drift');const themeToggle=$('themeToggle');if(themeToggle){themeToggle.addEventListener('click',()=>{document.body.classList.toggle('invert');});}}catch(e){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Ошибка: '+e.message;}}
+    async function initApp(){const url=getAppUrl();if(!url){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');const appContainer=$('appContainer');if(appContainer)appContainer.style.display='flex';const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');await loadCategories();await loadEpics();await loadFlowTasks();await loadFlowTasksForSimilar();await loadTasksByType('long');switchScreen('drift');showDailyDigest();const themeToggle=$('themeToggle');if(themeToggle){themeToggle.addEventListener('click',()=>{document.body.classList.toggle('invert');});}}catch(e){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Ошибка: '+e.message;}}
     const saveConn=$('saveConnectionBtn');if(saveConn)saveConn.addEventListener('click',async()=>{const url=$('appUrlInput')?$('appUrlInput').value:'';try{await testConnection(url);saveAppUrl(url);const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');initApp();}catch(e){const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Неверный URL: '+e.message;}});
     initApp();
 })();
