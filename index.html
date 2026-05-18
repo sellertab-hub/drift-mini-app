@@ -95,6 +95,7 @@
         .flow-time{font-size:11px;color:#888;margin-top:4px;}
         .epic-select-wrapper{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
         .epic-select-wrapper .custom-select{flex:1;margin-bottom:0;}
+        #epicAddContainer{display:flex;} /* по умолчанию показываем для LONG */
     </style>
 </head>
 <body>
@@ -123,7 +124,7 @@
                 </div>
                 <button id="manageCategoriesBtn">Управление</button>
             </div>
-            <div id="epicAddContainer" style="display:none;" class="epic-select-wrapper">
+            <div id="epicAddContainer" class="epic-select-wrapper">
                 <div class="custom-select" id="epicSelectContainer">
                     <div class="select-button" id="epicButton"><span id="epicSelectedText">Без эпика</span><span class="arrow"></span></div>
                     <div class="select-dropdown" id="epicDropdown"></div>
@@ -249,7 +250,6 @@
         const cont=$('tasksList');if(!cont)return;
         if(!currentTasks.length){cont.innerHTML='<div style="color:#555;text-align:center;padding:30px;">Нет задач</div>';return;}
         if(currentType==='fast'){
-            // FAST: показываем все задачи в виде списка
             cont.innerHTML='';
             currentTasks.forEach((task,idx)=>{
                 const isTop3=idx<3;
@@ -258,7 +258,6 @@
                 attachTaskHandlers(card);
             });
         } else {
-            // LONG: группировка по эпикам
             const epicMap=new Map();
             const noEpicTasks=[];
             for(let task of currentTasks){
@@ -271,7 +270,6 @@
                 }
             }
             cont.innerHTML='';
-            // Сначала эпики
             for(let epic of epicsList){
                 const tasksArr=epicMap.get(epic.id);
                 if(tasksArr && tasksArr.length){
@@ -279,7 +277,7 @@
                     groupDiv.className='epic-group';
                     const headerDiv=document.createElement('div');
                     headerDiv.className='epic-header';
-                    headerDiv.innerHTML=`<span class="epic-title">📁 ${escapeHtml(epic.title)}</span><span class="toggle-icon">▼</span>`;
+                    headerDiv.innerHTML=`<span class="epic-title">⇲ ${escapeHtml(epic.title)}</span><span class="toggle-icon">▼</span>`;
                     const tasksDiv=document.createElement('div');
                     tasksDiv.className='epic-tasks';
                     tasksArr.forEach((task,idx)=>{
@@ -299,13 +297,12 @@
                     cont.appendChild(groupDiv);
                 }
             }
-            // Задачи без эпика
             if(noEpicTasks.length){
                 const groupDiv=document.createElement('div');
                 groupDiv.className='epic-group';
                 const headerDiv=document.createElement('div');
                 headerDiv.className='epic-header';
-                headerDiv.innerHTML=`<span class="epic-title">📂 Без эпика</span><span class="toggle-icon">▼</span>`;
+                headerDiv.innerHTML=`<span class="epic-title">⇲ Без эпика</span><span class="toggle-icon">▼</span>`;
                 const tasksDiv=document.createElement('div');
                 tasksDiv.className='epic-tasks';
                 noEpicTasks.forEach((task,idx)=>{
@@ -373,7 +370,6 @@
     const addCategoryModalBtn=$('addCategoryModalBtn');if(addCategoryModalBtn)addCategoryModalBtn.addEventListener('click',async()=>{const newCat=$('newCategoryName')?$('newCategoryName').value.trim():'';if(!newCat){alert('Введите название');return;}try{const res=await apiCall({action:'addCategory',category:newCat},'POST');if(res.error)throw new Error(res.error);$('newCategoryName').value='';await loadCategories();renderCategoriesList();}catch(e){alert(e.message);}});
     const closeCategoryModalBtn=$('closeCategoryModalBtn');if(closeCategoryModalBtn)closeCategoryModalBtn.addEventListener('click',closeCategoryModal);
     
-    // Эпики модалка
     const createEpicBtn=$('createEpicBtn');
     const epicModal=$('epicModal');
     function openEpicModal(){if(epicModal)epicModal.classList.add('show');}
