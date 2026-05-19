@@ -85,7 +85,8 @@
         .sub-comment input{flex:1;margin-bottom:0;}
         .sub-comment button{width:28px;height:28px;padding:0;margin:0;background:#222;color:#fff;border:1px solid #444;}
         .stopwatch{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
-        .stopwatch span{font-family:monospace;font-size:18px;background:#111;padding:4px 8px;border:1px solid #333;}
+        .stopwatch span{font-family:monospace;font-size:18px;background:#111;padding:4px 8px;border:1px solid #333;transition:color 0.2s;}
+        .stopwatch span.warning{color:#ff6666;}
         .stopwatch button{width:auto;flex:1;margin-top:0;font-family:monospace;font-size:16px;}
         .connection-overlay{position:fixed;inset:0;background:#000;display:none;align-items:center;justify-content:center;z-index:2000;}
         .connection-overlay.show{display:flex;}
@@ -160,7 +161,14 @@
     </div>
 </div>
 <div class="modal" id="trialWarningModal"><div class="modal-content"><div class="modal-title">Внимание</div><p id="trialWarningText"></p><div class="modal-buttons"><button id="trialOkBtn">Ok</button></div></div></div>
-<div class="modal" id="completeModal"><div class="modal-content"><div class="modal-title">Выполнение задачи</div><div id="completeTaskTitle" style="margin-bottom:10px;text-align:center;"></div><div class="slider-container"><label>Факт. сложность</label><input type="range" id="actualComplexity" min="0" max="10" step="1" value="5"><span id="actualComplexityVal">5</span></div><div class="slider-container"><label>Факт. творчество</label><input type="range" id="actualCreativity" min="0" max="10" step="1" value="5"><span id="actualCreativityVal">5</span></div><div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal">5</span></div><div class="slider-container"><label>Факт. стоимость ($)</label><input type="range" id="actualCost" min="0" max="2000" step="50" value="0"><span id="actualCostVal">0</span></div><div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal">5</span></div><div class="modal-buttons"><button id="cancelCompleteBtn">Отмена</button><button id="confirmCompleteBtn">Завершить</button></div></div></div>
+<div class="modal" id="completeModal"><div class="modal-content"><div class="modal-title">Выполнение задачи</div><div id="completeTaskTitle" style="margin-bottom:10px;text-align:center;"></div>
+    <div class="slider-container"><label>Факт. время (сек)</label><input type="range" id="actualTimeSec" min="0" max="7200" step="10" value="0"><span id="actualTimeSecVal">0</span></div>
+    <div class="slider-container"><label>Факт. сложность</label><input type="range" id="actualComplexity" min="0" max="10" step="1" value="5"><span id="actualComplexityVal">5</span></div>
+    <div class="slider-container"><label>Факт. творчество</label><input type="range" id="actualCreativity" min="0" max="10" step="1" value="5"><span id="actualCreativityVal">5</span></div>
+    <div class="slider-container"><label>Факт. фокусировка</label><input type="range" id="actualFocus" min="0" max="10" step="1" value="5"><span id="actualFocusVal">5</span></div>
+    <div class="slider-container"><label>Факт. стоимость ($)</label><input type="range" id="actualCost" min="0" max="2000" step="50" value="0"><span id="actualCostVal">0</span></div>
+    <div class="slider-container"><label>Факт. стресс</label><input type="range" id="actualStress" min="0" max="10" step="1" value="5"><span id="actualStressVal">5</span></div>
+    <div class="modal-buttons"><button id="cancelCompleteBtn">Отмена</button><button id="confirmCompleteBtn">Завершить</button></div></div></div>
 <div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
 <div class="modal" id="categoryModal"><div class="modal-content"><div class="modal-title">Управление категориями</div><input type="text" id="newCategoryName" placeholder="Новая категория"><button id="addCategoryModalBtn">Добавить</button><div id="categoriesList" style="margin:12px 0;"></div><button id="closeCategoryModalBtn">Закрыть</button></div></div>
 <div class="modal" id="epicModal"><div class="modal-content"><div class="modal-title">Создать эпик</div><input type="text" id="newEpicTitle" placeholder="Название эпика"><textarea id="newEpicDesc" placeholder="Описание (необязательно)" rows="3"></textarea><button id="addEpicModalBtn">Создать</button><div class="modal-buttons"><button id="closeEpicModalBtn">Отмена</button></div></div></div>
@@ -340,25 +348,31 @@
     
     function createTaskCard(task,isTop3){const card=document.createElement('div');card.className='task-card'+(isTop3?' top3':' other');card.dataset.id=task.id;let steps=[];try{steps=JSON.parse(task.microsteps||'[]');}catch(e){}let stepsHtml='';if(steps.length){const checked=task.microstepsProgress||[];stepsHtml=`<ul class="microsteps-list">`+steps.map((s,idx)=>{const isChecked=checked.includes(idx);return `<li data-idx="${idx}" class="${isChecked?'checked':''}" onclick="event.stopPropagation();window.toggleMicrostep('${task.id}',${idx})"><span class="micro-checkbox"><svg width="6" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#000" stroke-width="1.5"/></svg></span><span>${escapeHtml(s)}</span></li>`;}).join('')+`</ul>`;}const estimatedTime=task.estimated_time_seconds||0;const timeHtml=estimatedTime?`<div class="task-estimated-time">⏱ ~${formatTimeSec(estimatedTime)}</div>`:'';card.innerHTML=`<div class="task-header"><span class="task-title">${escapeHtml(task.title)}</span><span class="task-priority">[${Number(task.priority||0).toFixed(1)}]</span></div><div class="task-category">${escapeHtml(task.category)}</div>${timeHtml}${stepsHtml}<div class="task-actions"><button class="drift-task-btn complete-btn" data-id="${task.id}">DRIFT</button><button class="edit-icon-btn edit-btn" data-id="${task.id}">[E]</button></div>`;return card;}
     
-    function attachTaskHandlers(card){const complete=card.querySelector('.complete-btn');if(complete)complete.addEventListener('click',(e)=>{e.stopPropagation();const id=complete.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openCompleteModal(task,0);});const edit=card.querySelector('.edit-btn');if(edit)edit.addEventListener('click',(e)=>{e.stopPropagation();const id=edit.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openEditModal(task);});card.addEventListener('click',()=>{const id=card.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openDetailModal(task);});}
+    function attachTaskHandlers(card){const complete=card.querySelector('.complete-btn');if(complete)complete.addEventListener('click',(e)=>{e.stopPropagation();const id=complete.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openCompleteModal(task);});const edit=card.querySelector('.edit-btn');if(edit)edit.addEventListener('click',(e)=>{e.stopPropagation();const id=edit.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openEditModal(task);});card.addEventListener('click',()=>{const id=card.dataset.id;const task=currentTasks.find(t=>t.id===id);if(task)openDetailModal(task);});}
     
     window.toggleMicrostep=async function(taskId,idx){try{const res=await apiCall({action:'toggleMicrostep',id:taskId,step_index:idx},'POST');if(res.error)throw new Error(res.error);const task=currentTasks.find(t=>t.id===taskId);if(task){if(!task.microstepsProgress)task.microstepsProgress=[];const pos=task.microstepsProgress.indexOf(idx);if(pos===-1)task.microstepsProgress.push(idx);else task.microstepsProgress.splice(pos,1);renderTasks();}}catch(e){alert('Ошибка: '+e.message);}};
     
     let currentCompleteTaskId=null;
-    let currentCompleteTaskTime=0;
-    function openCompleteModal(task, initialTime){
+    function openCompleteModal(task){
         currentCompleteTaskId=task.id;
-        currentCompleteTaskTime=initialTime;
         const titleEl=$('completeTaskTitle');if(titleEl)titleEl.innerText=task.title;
-        document.querySelectorAll('#completeModal input[type=range]').forEach(s=>s.value=5);
-        document.querySelectorAll('#completeModal .slider-value').forEach(v=>v.innerText='5');
+        // Устанавливаем значения по умолчанию
+        document.querySelectorAll('#completeModal input[type=range]').forEach(s=>{
+            if(s.id === 'actualTimeSec') {
+                s.value = task.estimated_time_seconds || 0;
+                const span = $('#actualTimeSecVal'); if(span) span.innerText = s.value;
+            } else {
+                s.value = 5;
+            }
+        });
+        document.querySelectorAll('#completeModal .slider-value:not(#actualTimeSecVal)').forEach(v=>v.innerText='5');
         const costInp=$('actualCost');if(costInp)costInp.value=0;
         const costSpan=$('actualCostVal');if(costSpan)costSpan.innerText='0';
         const modal=$('completeModal');if(modal)modal.classList.add('show');
     }
     
-    const cancelComplete=$('cancelCompleteBtn');if(cancelComplete)cancelComplete.addEventListener('click',()=>{const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;currentCompleteTaskTime=0;});
-    const confirmComplete=$('confirmCompleteBtn');if(confirmComplete)confirmComplete.addEventListener('click',async()=>{if(!currentCompleteTaskId)return;const params={action:'completeTask',id:currentCompleteTaskId,actual_complexity:$('actualComplexity')?$('actualComplexity').value:5,actual_creativity:$('actualCreativity')?$('actualCreativity').value:5,actual_focus:$('actualFocus')?$('actualFocus').value:5,actual_cost:$('actualCost')?$('actualCost').value:0,actual_stress:$('actualStress')?$('actualStress').value:5,actual_time_seconds:currentCompleteTaskTime};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;currentCompleteTaskTime=0;await loadTasksByType(currentType);await loadFlowTasks();}catch(e){alert('Ошибка: '+e.message);}});
+    const cancelComplete=$('cancelCompleteBtn');if(cancelComplete)cancelComplete.addEventListener('click',()=>{const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;});
+    const confirmComplete=$('confirmCompleteBtn');if(confirmComplete)confirmComplete.addEventListener('click',async()=>{if(!currentCompleteTaskId)return;const params={action:'completeTask',id:currentCompleteTaskId,actual_complexity:$('actualComplexity')?$('actualComplexity').value:5,actual_creativity:$('actualCreativity')?$('actualCreativity').value:5,actual_focus:$('actualFocus')?$('actualFocus').value:5,actual_cost:$('actualCost')?$('actualCost').value:0,actual_stress:$('actualStress')?$('actualStress').value:5,actual_time_seconds:$('actualTimeSec')?parseInt($('actualTimeSec').value)||0:0};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);const modal=$('completeModal');if(modal)modal.classList.remove('show');currentCompleteTaskId=null;await loadTasksByType(currentType);await loadFlowTasks();}catch(e){alert('Ошибка: '+e.message);}});
     
     let currentEditId=null;
     let editSelectedEpicId=null;
@@ -492,7 +506,9 @@
     function showStatus(eid,msg,tp){const el=$(eid);if(el){el.textContent=msg;el.className=`status ${tp}`;setTimeout(()=>{if(el)el.className='status';},3000);}}
     function escapeHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
     function bindSlider(sid,spid,isMoney=false){const s=$(sid),sp=$(spid);if(s&&sp)s.addEventListener('input',()=>{sp.innerText=isMoney?`${s.value}`:s.value;});}
-    ['complexity','creativity','focus','stress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('cost','costVal',true);['actualComplexity','actualCreativity','actualFocus','actualStress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('actualCost','actualCostVal',true);['editComplexity','editCreativity','editFocus','editStress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('editCost','editCostVal',true);
+    ['complexity','creativity','focus','stress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('cost','costVal',true);['actualComplexity','actualCreativity','actualFocus','actualStress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('actualCost','actualCostVal',true);
+    bindSlider('actualTimeSec','actualTimeSecVal',false);
+    ['editComplexity','editCreativity','editFocus','editStress'].forEach(id=>bindSlider(id,id+'Val'));bindSlider('editCost','editCostVal',true);
     renderMicrostepsDynamic($('microstepsContainer'),[]);renderMicrostepsDynamic($('editMicrostepsContainer'),[]);
     
     function showTrialWarning(daysLeft){const modal=$('trialWarningModal');const text=$('trialWarningText');if(modal&&text){text.innerText=`Пробный период скоро закончится. Осталось ${daysLeft} дн. Обратитесь к разработчику.`;modal.classList.add('show');const ok=$('trialOkBtn');if(ok)ok.onclick=()=>modal.classList.remove('show');}}
@@ -557,28 +573,44 @@
         let realityComments=[]; try{realityComments=JSON.parse(task.reality_comments||'[]');}catch(e){}
         let actualTimeSec=task.actual_time_seconds||0;
         let progress=task.microstepsProgress||[];
+        let avgForTask = task.estimated_time_seconds || 0;
         stopwatchSeconds=actualTimeSec; stopwatchRunning=false; if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}
         function formatTime(sec){const h=Math.floor(sec/3600);const m=Math.floor((sec%3600)/60);const s=sec%60;return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;}
         container.innerHTML=`<div class="modal-title">${escapeHtml(task.title)}</div>
         <div class="detail-field"><label>Микрошаги</label><div id="detailMicrosteps"></div><button id="addDetailMicrostep">+ Добавить шаг</button></div>
         <div class="detail-field"><label>Комментарии ожиданий (до 3)</label><div id="detailExpectation"></div><button id="addExpectation">+ Добавить</button></div>
         <div class="detail-field"><label>Комментарии реальности (до 3)</label><div id="detailReality"></div><button id="addReality">+ Добавить</button></div>
-        <div class="detail-field"><label>Секундомер</label><div class="stopwatch"><span id="stopwatchDisplay">${formatTime(stopwatchSeconds)}</span><button id="stopwatchStart">▶</button><button id="stopwatchPause">▯</button><button id="stopwatchReset">⟲</button></div></div>
+        <div class="detail-field"><label>Секундомер ${avgForTask>0?`(среднее: ${formatTimeSec(avgForTask)})`:''}</label><div class="stopwatch"><span id="stopwatchDisplay">${formatTime(stopwatchSeconds)}</span><button id="stopwatchStart">▶</button><button id="stopwatchPause">▯</button><button id="stopwatchReset">⟲</button></div></div>
         <div class="modal-buttons"><button id="completeFromDetailBtn">DRIFT TASK</button><button id="saveDetailBtn">Сохранить изменения</button><button id="closeDetailBtn">Закрыть</button></div>`;
+        
+        function updateStopwatchColor(){
+            const disp = $('#stopwatchDisplay');
+            if(disp && avgForTask>0 && stopwatchSeconds > avgForTask){
+                disp.classList.add('warning');
+            } else if(disp){
+                disp.classList.remove('warning');
+            }
+        }
+        
         const microDetailContainer=$('detailMicrosteps');function renderMicrostepsDetail(){if(!microDetailContainer)return;microDetailContainer.innerHTML='';microsteps.forEach((step,idx)=>{const div=document.createElement('div');div.className='micro-detail-item';const checkbox=document.createElement('div');checkbox.className='micro-detail-checkbox'+(progress.includes(idx)?' checked':'');checkbox.onclick=async()=>{await window.toggleMicrostep(currentDetailTaskId,idx);const newProgress=progress.includes(idx)?progress.filter(i=>i!==idx):[...progress,idx];progress=newProgress;checkbox.classList.toggle('checked',progress.includes(idx));renderMicrostepsDetail();};const span=document.createElement('span');span.textContent=step;span.style.flex=1;const inp=document.createElement('input');inp.type='text';inp.value=step;inp.style.display='none';const editBtn=document.createElement('button');editBtn.textContent='E';editBtn.style.width='28px';editBtn.style.padding='4px';editBtn.onclick=()=>{span.style.display='none';inp.style.display='block';inp.focus();};const saveBtn=document.createElement('button');saveBtn.textContent='S';saveBtn.style.display='none';saveBtn.onclick=()=>{microsteps[idx]=inp.value;span.textContent=inp.value;span.style.display='block';inp.style.display='none';saveBtn.style.display='none';editBtn.style.display='block';};inp.addEventListener('blur',()=>{if(inp.value!==step){microsteps[idx]=inp.value;span.textContent=inp.value;}span.style.display='block';inp.style.display='none';saveBtn.style.display='none';editBtn.style.display='block';});const del=document.createElement('button');del.textContent='-';del.style.width='28px';del.style.padding='4px';del.onclick=()=>{microsteps.splice(idx,1);progress=progress.filter(i=>i!==idx);renderMicrostepsDetail();};div.appendChild(checkbox);div.appendChild(span);div.appendChild(inp);div.appendChild(editBtn);div.appendChild(saveBtn);div.appendChild(del);microDetailContainer.appendChild(div);});}renderMicrostepsDetail();
         const addStepBtn=$('addDetailMicrostep');if(addStepBtn)addStepBtn.onclick=()=>{if(microsteps.length<10){microsteps.push('');progress.push(microsteps.length-1);renderMicrostepsDetail();}};
         function renderComments(containerId,comments,type){const cont=$(containerId);if(!cont)return;cont.innerHTML='';comments.forEach((c,idx)=>{const div=document.createElement('div');div.className='sub-comment';const inp=document.createElement('input');inp.value=c;inp.placeholder=`${type} ${idx+1}`;inp.style.flex=1;inp.addEventListener('input',(e)=>{comments[idx]=e.target.value;});const del=document.createElement('button');del.textContent='-';del.onclick=()=>{comments.splice(idx,1);renderComments(containerId,comments,type);};div.appendChild(inp);div.appendChild(del);cont.appendChild(div);});}
         renderComments('detailExpectation',expectationComments,'Ожидание');renderComments('detailReality',realityComments,'Реальность');
         const addExp=$('addExpectation');if(addExp)addExp.onclick=()=>{if(expectationComments.length<3){expectationComments.push('');renderComments('detailExpectation',expectationComments,'Ожидание');}};
         const addReal=$('addReality');if(addReal)addReal.onclick=()=>{if(realityComments.length<3){realityComments.push('');renderComments('detailReality',realityComments,'Реальность');}};
-        const stopwatchDisplay=$('stopwatchDisplay');function updateStopwatchDisplay(){if(stopwatchDisplay)stopwatchDisplay.innerText=formatTime(stopwatchSeconds);}
+        const stopwatchDisplay=$('stopwatchDisplay');function updateStopwatchDisplay(){if(stopwatchDisplay)stopwatchDisplay.innerText=formatTime(stopwatchSeconds); updateStopwatchColor();}
         const startBtn=$('stopwatchStart');if(startBtn)startBtn.onclick=()=>{if(!stopwatchRunning){stopwatchRunning=true;if(stopwatchInterval)clearInterval(stopwatchInterval);stopwatchInterval=setInterval(()=>{if(stopwatchRunning){stopwatchSeconds++;updateStopwatchDisplay();}},1000);}};
         const pauseBtn=$('stopwatchPause');if(pauseBtn)pauseBtn.onclick=()=>{stopwatchRunning=false;if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}};
         const resetBtn=$('stopwatchReset');if(resetBtn)resetBtn.onclick=()=>{stopwatchRunning=false;if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}stopwatchSeconds=0;updateStopwatchDisplay();};
-        const completeFromDetail=$('completeFromDetailBtn');if(completeFromDetail)completeFromDetail.onclick=()=>{const taskFound=currentTasks.find(t=>t.id===currentDetailTaskId);if(taskFound){openCompleteModal(taskFound, stopwatchSeconds);document.getElementById('detailModal').classList.remove('show');}else{alert('Задача не найдена');}};
+        const completeFromDetail=$('completeFromDetailBtn');if(completeFromDetail)completeFromDetail.onclick=()=>{const taskFound=currentTasks.find(t=>t.id===currentDetailTaskId);if(taskFound){
+            const timeInp=$('actualTimeSec'); if(timeInp) timeInp.value=stopwatchSeconds;
+            openCompleteModal(taskFound);
+            document.getElementById('detailModal').classList.remove('show');
+        }else{alert('Задача не найдена');}};
         const saveDetail=$('saveDetailBtn');if(saveDetail)saveDetail.onclick=async()=>{const params={action:'updateDetails',id:currentDetailTaskId,microsteps:JSON.stringify(microsteps),expectation_comments:JSON.stringify(expectationComments),reality_comments:JSON.stringify(realityComments),actual_time_seconds:stopwatchSeconds};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);await loadTasksByType(currentType);const modal=$('detailModal');if(modal)modal.classList.remove('show');}catch(e){alert('Ошибка: '+e.message);}};
         const closeDetail=$('closeDetailBtn');if(closeDetail)closeDetail.onclick=()=>{if(stopwatchInterval){clearInterval(stopwatchInterval);stopwatchInterval=null;}const modal=$('detailModal');if(modal)modal.classList.remove('show');};
         const modal=$('detailModal');if(modal)modal.classList.add('show');
+        updateStopwatchColor();
     }
     
     async function initApp(){const url=getAppUrl();if(!url){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');return;}try{await testConnection(url);const trialData=await apiCall({action:'trial_info'});if(trialData.error)throw new Error(trialData.error);if(trialData.isExpired){showTrialExpired();return;}if(trialData.daysLeft<=3&&trialData.daysLeft>0&&!trialWarningShown){showTrialWarning(trialData.daysLeft);trialWarningShown=true;}const overlay=$('connectionOverlay');if(overlay)overlay.classList.remove('show');const appContainer=$('appContainer');if(appContainer)appContainer.style.display='flex';const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');await loadCategories();await loadEpics();await loadFlowTasks();await loadTasksByType('long');switchScreen('drift');showDailyDigest();const themeToggle=$('themeToggle');if(themeToggle){themeToggle.addEventListener('click',()=>{document.body.classList.toggle('invert');});}}catch(e){const loading=$('loadingScreen');if(loading)loading.classList.add('hidden');const overlay=$('connectionOverlay');if(overlay)overlay.classList.add('show');const statusDiv=$('connectionStatus');if(statusDiv)statusDiv.innerText='Ошибка: '+e.message;}}
