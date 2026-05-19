@@ -172,7 +172,7 @@
     let flowTasksList=[],epicsList=[];
     let currentSelectedEpicId=null;
     let currentAvgSeconds=0;
-    let categoryAvgMap = {};
+    let categoryAvgMap = {}; // будет заполнено из loadCategories
     
     function $(id){return document.getElementById(id);}
     function $$(sel){return document.querySelectorAll(sel);}
@@ -465,12 +465,14 @@
             if(data.error) throw new Error(data.error);
             categoriesList = data.categories || [];
             categoryAvgMap = data.avgTimeMap || {};
-            initCustomSelect('categoryButton','categoryDropdown', categoriesList, (value) => {
+            // Инициализируем селект категорий с правильным обработчиком onSelect
+            const selectHandler = initCustomSelect('categoryButton','categoryDropdown', categoriesList, (value) => {
                 const catText = $('#categorySelectedText');
                 if(catText) catText.textContent = value;
                 window.selectedCategory = value;
                 updateAvgTimeDisplay();
             });
+            // Аналогично для селекта в модалке редактирования (он может быть отдельно)
             initCustomSelect('editCategoryButton','editCategoryDropdown', categoriesList, (value) => {
                 const catText = $('#editCategorySelectedText');
                 if(catText) catText.textContent = value;
