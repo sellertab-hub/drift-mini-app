@@ -172,7 +172,6 @@
     let flowTasksList=[],epicsList=[];
     let currentSelectedEpicId=null;
     let currentAvgSeconds=0;
-    let categoryAvgMap = {}; // будет заполнено из loadCategories
     
     function $(id){return document.getElementById(id);}
     function $$(sel){return document.querySelectorAll(sel);}
@@ -375,9 +374,9 @@
     const deleteTaskBtn=$('deleteTaskBtn');if(deleteTaskBtn)deleteTaskBtn.addEventListener('click',async()=>{if(!currentEditId)return;if(!confirm('Удалить задачу?'))return;try{const res=await apiCall({action:'deleteTask',id:currentEditId},'POST');if(res.error)throw new Error(res.error);const modal=$('editModal');if(modal)modal.classList.remove('show');currentEditId=null;await loadTasksByType(currentType);}catch(e){alert('Ошибка: '+e.message);}});
     
     let selectedAddType='long';
-    const addTypeBtns=$$('#addTypeButtons button');addTypeBtns.forEach(btn=>{btn.addEventListener('click',()=>{addTypeBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedAddType=btn.dataset.type;const epicDiv=$('epicAddContainer');if(epicDiv) epicDiv.style.display=selectedAddType==='long'?'flex':'none'; updateAvgTimeDisplay();});});
+    const addTypeBtns=$$('#addTypeButtons button');addTypeBtns.forEach(btn=>{btn.addEventListener('click',()=>{addTypeBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedAddType=btn.dataset.type;const epicDiv=$('epicAddContainer');if(epicDiv) epicDiv.style.display=selectedAddType==='long'?'flex':'none'; updateAvgTime();});});
     
-    function updateAvgTimeDisplay(){
+    async function updateAvgTime(){
         const category = window.selectedCategory;
         const avgDiv = $('#avgTimeDisplay');
         if(!category){
@@ -385,14 +384,22 @@
             currentAvgSeconds = 0;
             return;
         }
-        const avgSec = categoryAvgMap[category] || 0;
-        currentAvgSeconds = avgSec;
-        if(avgDiv){
-            if(avgSec > 0){
-                avgDiv.innerHTML = `⏱ Среднее время для категории «${escapeHtml(category)}»: ${formatTimeSec(avgSec)}`;
-            } else {
-                avgDiv.innerHTML = `⏱ Нет данных для категории «${escapeHtml(category)}»`;
+        try {
+            const res = await apiCall({action:'avg_time_by_category', category: category});
+            if(res.error) throw new Error(res.error);
+            const avgSec = res.avgSeconds || 0;
+            currentAvgSeconds = avgSec;
+            if(avgDiv){
+                if(avgSec > 0){
+                    avgDiv.innerHTML = `⏱ Среднее время для категории «${escapeHtml(category)}»: ${formatTimeSec(avgSec)} (на основе ${res.count || 0} задач)`;
+                } else {
+                    avgDiv.innerHTML = `⏱ Нет данных для категории «${escapeHtml(category)}»`;
+                }
             }
+        } catch(e){
+            console.error(e);
+            if(avgDiv) avgDiv.innerHTML = '⏱ Ошибка загрузки';
+            currentAvgSeconds = 0;
         }
     }
     
@@ -459,27 +466,7 @@
     
     const saveTask=$('saveTaskBtn');if(saveTask)saveTask.addEventListener('click',async()=>{const category=window.selectedCategory||'';const title=$('taskTitle')?$('taskTitle').value:'';if(!category||!title){showStatus('addStatus','Заполните категорию и название','error');return;}const microsteps=getMicrosteps($('microstepsContainer'));const params={action:'addTask',category,title,microsteps:JSON.stringify(microsteps),complexity:$('complexity')?$('complexity').value:5,creativity:$('creativity')?$('creativity').value:5,focus:$('focus')?$('focus').value:5,cost:$('cost')?$('cost').value:0,stress:$('stress')?$('stress').value:5,task_type:selectedAddType,estimated_time_seconds:currentAvgSeconds,epic_id:currentSelectedEpicId};try{const res=await apiCall(params,'POST');if(res.error)throw new Error(res.error);showStatus('addStatus','Задача добавлена','success');if($('taskTitle'))$('taskTitle').value='';const catText=$('categorySelectedText');if(catText)catText.textContent='Выберите категорию';window.selectedCategory='';renderMicrostepsDynamic($('microstepsContainer'),[]);['complexity','creativity','focus','stress'].forEach(id=>{const el=$(id);if(el)el.value=5;const valSpan=$(id+'Val');if(valSpan)valSpan.innerText='5';});const costEl=$('cost');if(costEl)costEl.value=0;const costSpan=$('costVal');if(costSpan)costSpan.innerText='0';currentAvgSeconds=0;const avgDiv=$('avgTimeDisplay');if(avgDiv)avgDiv.innerHTML='⏱ Среднее время: —';currentSelectedEpicId=null;const epicSpan=$('epicSelectedText');if(epicSpan)epicSpan.textContent='Без эпика';await loadTasksByType(currentType);}catch(e){showStatus('addStatus','Ошибка: '+e.message,'error');}});
     
-    async function loadCategories(){
-        try{
-            const data = await apiCall({action:'categories'});
-            if(data.error) throw new Error(data.error);
-            categoriesList = data.categories || [];
-            categoryAvgMap = data.avgTimeMap || {};
-            // Инициализируем селект категорий с правильным обработчиком onSelect
-            const selectHandler = initCustomSelect('categoryButton','categoryDropdown', categoriesList, (value) => {
-                const catText = $('#categorySelectedText');
-                if(catText) catText.textContent = value;
-                window.selectedCategory = value;
-                updateAvgTimeDisplay();
-            });
-            // Аналогично для селекта в модалке редактирования (он может быть отдельно)
-            initCustomSelect('editCategoryButton','editCategoryDropdown', categoriesList, (value) => {
-                const catText = $('#editCategorySelectedText');
-                if(catText) catText.textContent = value;
-                window.editSelectedCategory = value;
-            });
-        } catch(e){ console.error(e); }
-    }
+    async function loadCategories(){try{const data=await apiCall({action:'categories'});if(data.error)throw new Error(data.error);categoriesList=data;initCustomSelect('categoryButton','categoryDropdown',categoriesList,(value)=>{const catText=$('categorySelectedText');if(catText)catText.textContent=value;window.selectedCategory=value;updateAvgTime();});initCustomSelect('editCategoryButton','editCategoryDropdown',categoriesList,(value)=>{const catText=$('editCategorySelectedText');if(catText)catText.textContent=value;window.editSelectedCategory=value;});}catch(e){console.error(e);}}
     
     const manageCategoriesBtn=$('manageCategoriesBtn');
     const categoryModal=$('categoryModal');
