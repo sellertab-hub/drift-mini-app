@@ -171,8 +171,7 @@
     let cachedAppUrl=null,categoriesList=[],currentType='long',currentTasks=[],trialWarningShown=false,stopwatchInterval=null,stopwatchRunning=false,stopwatchSeconds=0,currentDetailTaskId=null;
     let flowTasksList=[],epicsList=[];
     let currentSelectedEpicId=null;
-    let currentAvgSeconds=0;   // среднее время для выбранной категории
-    let currentCategory=null;
+    let currentAvgSeconds=0;
     
     function $(id){return document.getElementById(id);}
     function $$(sel){return document.querySelectorAll(sel);}
@@ -379,18 +378,17 @@
     
     async function updateAvgTime(){
         const category = window.selectedCategory;
+        const avgDiv = $('#avgTimeDisplay');
         if(!category){
-            const avgDiv = $('#avgTimeDisplay');
             if(avgDiv) avgDiv.innerHTML = '⏱ Среднее время: —';
             currentAvgSeconds = 0;
             return;
         }
         try {
-            const res = await apiCall({action:'avg_time_by_category', category: category, task_type: selectedAddType});
+            const res = await apiCall({action:'avg_time_by_category', category: category});
             if(res.error) throw new Error(res.error);
             const avgSec = res.avgSeconds || 0;
             currentAvgSeconds = avgSec;
-            const avgDiv = $('#avgTimeDisplay');
             if(avgDiv){
                 if(avgSec > 0){
                     avgDiv.innerHTML = `⏱ Среднее время для категории «${escapeHtml(category)}»: ${formatTimeSec(avgSec)} (на основе ${res.count || 0} задач)`;
@@ -400,7 +398,6 @@
             }
         } catch(e){
             console.error(e);
-            const avgDiv = $('#avgTimeDisplay');
             if(avgDiv) avgDiv.innerHTML = '⏱ Ошибка загрузки';
             currentAvgSeconds = 0;
         }
@@ -415,24 +412,18 @@
             container.innerHTML='<div style="color:#555;text-align:center;padding:30px;">Нет выполненных задач</div>';
             return;
         }
-        
         const groups = new Map();
         for(let item of flowTasksList){
             if(!item.completed) continue;
             const dateObj = new Date(item.completed);
             const dateKey = dateObj.toISOString().slice(0,10);
-            if(!groups.has(dateKey)){
-                groups.set(dateKey, { tasks: [], totalTime: 0 });
-            }
+            if(!groups.has(dateKey)) groups.set(dateKey, { tasks: [], totalTime: 0 });
             const group = groups.get(dateKey);
             group.tasks.push(item);
             group.totalTime += (item.actualTimeSec || 0);
         }
-        
-        const sortedGroups = Array.from(groups.entries()).sort((a,b) => b[0].localeCompare(a[0]));
-        
+        const sortedGroups = Array.from(groups.entries()).sort((a,b)=>b[0].localeCompare(a[0]));
         container.innerHTML = '';
-        
         for(let [dateKey, group] of sortedGroups){
             const dateObj = new Date(dateKey);
             const day = dateObj.getDate().toString().padStart(2,'0');
@@ -447,43 +438,28 @@
             if(totalHours > 0) timeStr += totalHours + 'ч ';
             if(totalMinutes > 0) timeStr += totalMinutes + 'м';
             if(timeStr === '') timeStr = '0м';
-            
             const groupDiv = document.createElement('div');
             groupDiv.className = 'flow-day-group';
-            
             const headerDiv = document.createElement('div');
             headerDiv.className = 'flow-day-header';
-            headerDiv.innerHTML = `
-                <span class="day-title">📅 ${formattedDate}</span>
-                <span class="day-stats">📋 ${taskCount} задач | ⏱ ${timeStr}</span>
-                <span class="toggle-icon">▼</span>
-            `;
-            
+            headerDiv.innerHTML = `<span class="day-title">📅 ${formattedDate}</span><span class="day-stats">📋 ${taskCount} задач | ⏱ ${timeStr}</span><span class="toggle-icon">▼</span>`;
             const tasksDiv = document.createElement('div');
             tasksDiv.className = 'flow-day-tasks';
-            
             for(let item of group.tasks){
                 const card = document.createElement('div');
                 card.className = 'flow-task-card';
                 const dateStr = new Date(item.completed).toLocaleDateString();
-                card.innerHTML = `
-                    <div class="task-header"><span class="task-title">${escapeHtml(item.title)}</span></div>
-                    <div class="task-category">${dateStr}</div>
-                    <div class="flow-time">⏱ Время: ${formatTimeSec(item.actualTimeSec)}</div>
-                `;
+                card.innerHTML = `<div class="task-header"><span class="task-title">${escapeHtml(item.title)}</span></div><div class="task-category">${dateStr}</div><div class="flow-time">⏱ Время: ${formatTimeSec(item.actualTimeSec)}</div>`;
                 tasksDiv.appendChild(card);
             }
-            
             groupDiv.appendChild(headerDiv);
             groupDiv.appendChild(tasksDiv);
-            
             let collapsed = false;
             headerDiv.addEventListener('click', () => {
                 collapsed = !collapsed;
                 tasksDiv.classList.toggle('collapsed', collapsed);
                 headerDiv.querySelector('.toggle-icon').textContent = collapsed ? '▶' : '▼';
             });
-            
             container.appendChild(groupDiv);
         }
     }
@@ -529,7 +505,6 @@
         try {
             const digest = await apiCall({action:'daily_digest'});
             if (digest.error) throw new Error(digest.error);
-            
             function formatTotalTime(sec) {
                 const h = Math.floor(sec / 3600);
                 const m = Math.floor((sec % 3600) / 60);
@@ -539,33 +514,18 @@
                 if (str === '') str = '0м';
                 return str;
             }
-            
             let highPriorityHtml = '';
             if (digest.highPriorityTasks.length > 0) {
                 highPriorityHtml = '<div style="margin-top:12px;"><strong>🔥 Задачи с высоким приоритетом (>20):</strong><ul style="margin-top:6px;">';
                 for (let task of digest.highPriorityTasks.slice(0,5)) {
                     highPriorityHtml += `<li>${escapeHtml(task.category)} | ${escapeHtml(task.title)} — приоритет ${task.priority.toFixed(1)}</li>`;
                 }
-                if (digest.highPriorityTasks.length > 5) {
-                    highPriorityHtml += `<li>... и ещё ${digest.highPriorityTasks.length - 5}</li>`;
-                }
+                if (digest.highPriorityTasks.length > 5) highPriorityHtml += `<li>... и ещё ${digest.highPriorityTasks.length - 5}</li>`;
                 highPriorityHtml += '</ul></div>';
             } else {
                 highPriorityHtml = '<div style="margin-top:12px;">✅ Нет задач с высоким приоритетом.</div>';
             }
-            
-            const message = `
-                <div style="text-align:left;">
-                    <p>📅 <strong>Ваш ежедневный дайджест</strong></p>
-                    <p>✅ Выполнено вчера: <strong>${digest.completedYesterday}</strong> задач<br>
-                    ⏱ Общее время: <strong>${formatTotalTime(digest.totalTimeYesterday)}</strong></p>
-                    <p>📋 Всего активных задач: <strong>${digest.activeTasksCount}</strong></p>
-                    ${highPriorityHtml}
-                    <hr style="margin:12px 0; border-color:#333;">
-                    <p style="font-size:12px; color:#aaa;">Дайджест показывается раз в день.</p>
-                </div>
-            `;
-            
+            const message = `<div style="text-align:left;"><p>📅 <strong>Ваш ежедневный дайджест</strong></p><p>✅ Выполнено вчера: <strong>${digest.completedYesterday}</strong> задач<br>⏱ Общее время: <strong>${formatTotalTime(digest.totalTimeYesterday)}</strong></p><p>📋 Всего активных задач: <strong>${digest.activeTasksCount}</strong></p>${highPriorityHtml}<hr style="margin:12px 0; border-color:#333;"><p style="font-size:12px; color:#aaa;">Дайджест показывается раз в день.</p></div>`;
             let digestModal = document.getElementById('digestModal');
             if (!digestModal) {
                 digestModal = document.createElement('div');
@@ -586,9 +546,7 @@
             }
             document.getElementById('digestMessage').innerHTML = message;
             digestModal.classList.add('show');
-        } catch(e) {
-            console.error('Ошибка загрузки дайджеста:', e);
-        }
+        } catch(e) { console.error('Ошибка загрузки дайджеста:', e); }
     }
     
     async function openDetailModal(task){
